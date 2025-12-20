@@ -1,16 +1,16 @@
 const CACHE_VERSION = 'v1.0.0';
 const CACHE_NAME = `efsin-inventur-${CACHE_VERSION}`;
-const OFFLINE_URL = '/offline.html';
+const OFFLINE_URL = './offline.html';
 
 // Dateien die beim Installation gecached werden sollen
 const PRECACHE_ASSETS = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/scanner.js',
-  '/offline.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './styles.css',
+  './app.js',
+  './scanner.js',
+  './offline.html',
+  './manifest.json'
 ];
 
 // Installation - Cache vorbereiten
