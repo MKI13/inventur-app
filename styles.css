@@ -1174,6 +1174,46 @@ body {
 }
 
 /* ===================================
+   Notizen-Anzeige
+   =================================== */
+.modal-large .modal-content {
+    max-width: 800px;
+    max-height: 90vh;
+}
+
+.notes-display {
+    white-space: pre-wrap;
+    line-height: 1.8;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    background: var(--background);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    border: 2px solid var(--border);
+    max-height: calc(90vh - 200px);
+    overflow-y: auto;
+    font-family: var(--font-body);
+}
+
+.notes-display::-webkit-scrollbar {
+    width: 12px;
+}
+
+.notes-display::-webkit-scrollbar-track {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+}
+
+.notes-display::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: var(--radius-sm);
+}
+
+.notes-display::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* ===================================
    Print Styles
    =================================== */
 @media print {
