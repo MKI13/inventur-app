@@ -328,7 +328,7 @@ class InventoryApp {
     renderItemCard(item) {
         const stockPercentage = this.getStockPercentage(item);
         const stockClass = this.getStockClass(item);
-        const hasPhoto = item.photo && item.photo.length > 0;
+        const hasPhoto = item.photo && item.photo.trim() && item.photo.startsWith('data:image');
         const hasNotes = item.notes && item.notes.trim().length > 0;
 
         return `
@@ -357,7 +357,7 @@ class InventoryApp {
         const stockPercentage = this.getStockPercentage(item);
         const stockClass = this.getStockClass(item);
         const stockFillClass = stockPercentage < 20 ? 'critical' : (stockPercentage < 50 ? 'low' : '');
-        const hasPhoto = item.photo && item.photo.length > 0;
+        const hasPhoto = item.photo && item.photo.trim() && item.photo.startsWith('data:image');
         const hasNotes = item.notes && item.notes.trim().length > 0;
 
         return `
@@ -672,12 +672,17 @@ class InventoryApp {
             if (!item) return;
             
             const notes = item.notes || 'Keine Notizen vorhanden';
-            const message = `📝 Notizen: ${item.name}\n\n${notes}`;
             
-            alert(message);
+            document.getElementById('notesTitle').textContent = `📝 Notizen: ${item.name}`;
+            document.getElementById('notesContent').textContent = notes;
+            document.getElementById('notesModal').classList.add('active');
         } catch (error) {
             console.error('Error showing notes:', error);
         }
+    }
+
+    closeNotes() {
+        document.getElementById('notesModal').classList.remove('active');
     }
 
     checkOnlineStatus() {
