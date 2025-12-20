@@ -328,15 +328,21 @@ class InventoryApp {
     renderItemCard(item) {
         const stockPercentage = this.getStockPercentage(item);
         const stockClass = this.getStockClass(item);
+        const hasPhoto = item.photo && item.photo.length > 0;
+        const hasNotes = item.notes && item.notes.trim().length > 0;
 
         return `
             <div class="inventory-item ${stockClass}" onclick="app.editItem('${item.id}')">
+                ${hasPhoto ? `<div class="item-photo"><img src="${item.photo}" alt="${item.name}"></div>` : ''}
                 <div class="item-header">
                     <div>
                         <div class="item-name">${item.name}</div>
                         <div class="item-sku">${item.sku || 'N/A'}</div>
                     </div>
-                    <div class="item-badge badge-category">${item.category}</div>
+                    <div class="item-badges">
+                        <div class="item-badge badge-category">${item.category}</div>
+                        ${hasNotes ? `<button class="btn-notes" onclick="event.stopPropagation(); app.showNotes('${item.id}')" title="Notizen anzeigen">📝</button>` : ''}
+                    </div>
                 </div>
                 <div class="item-stock">
                     <span class="stock-value">${item.stock}</span>
@@ -351,15 +357,21 @@ class InventoryApp {
         const stockPercentage = this.getStockPercentage(item);
         const stockClass = this.getStockClass(item);
         const stockFillClass = stockPercentage < 20 ? 'critical' : (stockPercentage < 50 ? 'low' : '');
+        const hasPhoto = item.photo && item.photo.length > 0;
+        const hasNotes = item.notes && item.notes.trim().length > 0;
 
         return `
             <div class="inventory-item ${stockClass}" onclick="app.editItem('${item.id}')">
+                ${hasPhoto ? `<div class="item-photo"><img src="${item.photo}" alt="${item.name}"></div>` : ''}
                 <div class="item-header">
                     <div>
                         <div class="item-name">${item.name}</div>
                         <div class="item-sku">${item.sku || 'N/A'}</div>
                     </div>
-                    <div class="item-badge badge-category">${item.category}</div>
+                    <div class="item-badges">
+                        <div class="item-badge badge-category">${item.category}</div>
+                        ${hasNotes ? `<button class="btn-notes" onclick="event.stopPropagation(); app.showNotes('${item.id}')" title="Notizen anzeigen">📝</button>` : ''}
+                    </div>
                 </div>
                 <div class="item-stock">
                     <span class="stock-value">${item.stock}</span>
@@ -651,7 +663,21 @@ class InventoryApp {
     }
 
     showAbout() {
-        alert('ef-sin Inventur v1.0.0\n\nInventur-App für ef-sin Schreinerei\nMünchen / Unterhaching\n\n© 2024 ef-sin.de');
+        alert('ef-sin Inventur v1.3.0\n\nInventur-App für ef-sin Schreinerei\nMünchen / Unterhaching\n\n© 2024 ef-sin.de');
+    }
+
+    async showNotes(itemId) {
+        try {
+            const item = await this.db.getById(itemId);
+            if (!item) return;
+            
+            const notes = item.notes || 'Keine Notizen vorhanden';
+            const message = `📝 Notizen: ${item.name}\n\n${notes}`;
+            
+            alert(message);
+        } catch (error) {
+            console.error('Error showing notes:', error);
+        }
     }
 
     checkOnlineStatus() {
