@@ -410,6 +410,7 @@ body {
     padding: var(--spacing-lg);
     cursor: pointer;
     transition: all var(--transition);
+    overflow: hidden;
 }
 
 .inventory-item:hover {
@@ -424,6 +425,22 @@ body {
 
 .inventory-item.out-of-stock {
     border-color: var(--danger);
+}
+
+.item-photo {
+    width: 100%;
+    height: 150px;
+    margin: calc(var(--spacing-lg) * -1);
+    margin-bottom: var(--spacing-md);
+    overflow: hidden;
+    background: var(--background);
+}
+
+.item-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
 .item-header {
@@ -457,6 +474,32 @@ body {
 .badge-category {
     background: var(--primary);
     color: var(--background);
+}
+
+.item-badges {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+.btn-notes {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 2px solid var(--info);
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-notes:hover {
+    background: var(--info);
+    transform: scale(1.1);
 }
 
 .item-stock {
