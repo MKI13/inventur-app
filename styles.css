@@ -1214,6 +1214,72 @@ body {
 }
 
 /* ===================================
+   GitHub Setup
+   =================================== */
+.github-setup-info {
+    background: var(--surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+    border-left: 4px solid var(--info);
+}
+
+.github-setup-info h3 {
+    color: var(--info);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.1rem;
+}
+
+.github-setup-info ol {
+    margin-left: var(--spacing-lg);
+    line-height: 1.8;
+}
+
+.github-setup-info li {
+    margin-bottom: var(--spacing-md);
+}
+
+.github-setup-info code {
+    background: var(--background);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    color: var(--primary);
+}
+
+.github-setup-warning {
+    background: var(--warning);
+    color: var(--background);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-top: var(--spacing-lg);
+    font-weight: 600;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+/* Sync Button Animation */
+.sync-icon {
+    display: inline-block;
+    font-size: 20px;
+    transition: transform 0.3s ease;
+}
+
+.sync-icon.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ===================================
    Print Styles
    =================================== */
 @media print {
