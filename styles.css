@@ -1037,7 +1037,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
     padding: var(--spacing-sm);
     background: var(--background);
@@ -1059,13 +1059,21 @@ body {
     border-color: var(--primary);
 }
 
-.category-item.default {
-    opacity: 0.7;
+.category-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
 }
 
 .category-name {
     font-weight: 600;
     color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.category-count {
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 .category-actions {
@@ -1073,26 +1081,44 @@ body {
     gap: var(--spacing-sm);
 }
 
+.btn-edit-category,
 .btn-delete-category {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    width: 40px;
+    height: 40px;
+    padding: 0;
     background: transparent;
-    border: 2px solid var(--danger);
-    color: var(--danger);
+    border: 2px solid var(--border);
     border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 1.2rem;
     transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.btn-delete-category:hover {
+.btn-edit-category {
+    border-color: var(--info);
+}
+
+.btn-edit-category:hover {
+    background: var(--info);
+    transform: scale(1.1);
+}
+
+.btn-delete-category {
+    border-color: var(--danger);
+}
+
+.btn-delete-category:hover:not(:disabled) {
     background: var(--danger);
-    color: var(--text-primary);
+    transform: scale(1.1);
 }
 
 .btn-delete-category:disabled {
-    opacity: 0.3;
+    opacity: 0.4;
     cursor: not-allowed;
+    border-color: var(--text-muted);
 }
 
 .fab.hidden-view {
