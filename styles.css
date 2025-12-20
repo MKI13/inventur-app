@@ -231,6 +231,16 @@ body {
     box-shadow: 0 8px 24px var(--shadow);
 }
 
+.stat-card.clickable {
+    cursor: pointer;
+}
+
+.stat-card.clickable:hover {
+    border-color: var(--primary);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(255, 107, 0, 0.4);
+}
+
 .stat-card.warn {
     border-color: var(--warning);
 }
@@ -1018,6 +1028,76 @@ body {
     color: var(--text-muted);
     font-size: 0.9rem;
     margin-top: var(--spacing-sm);
+}
+
+/* ===================================
+   Kategorie-Verwaltung
+   =================================== */
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 300px;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+    background: var(--background);
+    border-radius: var(--radius-md);
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: all var(--transition);
+}
+
+.category-item:hover {
+    border-color: var(--primary);
+}
+
+.category-item.default {
+    opacity: 0.7;
+}
+
+.category-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.category-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.btn-delete-category {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: transparent;
+    border: 2px solid var(--danger);
+    color: var(--danger);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all var(--transition);
+}
+
+.btn-delete-category:hover {
+    background: var(--danger);
+    color: var(--text-primary);
+}
+
+.btn-delete-category:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.fab.hidden-view {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* ===================================
