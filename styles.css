@@ -428,12 +428,15 @@ body {
 }
 
 .item-photo {
-    width: 100%;
+    width: calc(100% + calc(var(--spacing-lg) * 2));
     height: 150px;
-    margin: calc(var(--spacing-lg) * -1);
+    margin-left: calc(var(--spacing-lg) * -1);
+    margin-right: calc(var(--spacing-lg) * -1);
+    margin-top: calc(var(--spacing-lg) * -1);
     margin-bottom: var(--spacing-md);
     overflow: hidden;
     background: var(--background);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .item-photo img {
@@ -441,6 +444,7 @@ body {
     height: 100%;
     object-fit: cover;
     object-position: center;
+    display: block;
 }
 
 .item-header {
