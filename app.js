@@ -6,6 +6,8 @@ const APP_CONFIG = {
     DB_VERSION: 1,
     STORE_NAME: 'inventory',
     CATEGORIES_KEY: 'efsin_categories',
+    LAST_BACKUP_KEY: 'efsin_last_backup',
+    BACKUP_REMINDER_DAYS: 7, // Erinnere alle 7 Tage
     DEFAULT_CATEGORIES: [
         'Holz',
         'Platten',
@@ -143,6 +145,7 @@ class InventoryApp {
             this.setupEventListeners();
             this.updateUI();
             this.checkOnlineStatus();
+            this.checkBackupReminder();
             console.log('App initialized successfully');
         } catch (error) {
             console.error('Initialization error:', error);
@@ -520,6 +523,7 @@ class InventoryApp {
             const exportData = {
                 version: '1.0.0',
                 exportDate: new Date().toISOString(),
+                categories: this.categories,
                 items: this.items
             };
 
@@ -534,10 +538,55 @@ class InventoryApp {
             a.click();
             URL.revokeObjectURL(url);
 
-            this.showToast('Daten exportiert', 'success');
+            // Speichere Backup-Zeitstempel
+            localStorage.setItem(APP_CONFIG.LAST_BACKUP_KEY, new Date().toISOString());
+
+            this.showToast('Backup erfolgreich erstellt! 💾', 'success');
+            this.closeMenu();
         } catch (error) {
             console.error('Export error:', error);
             this.showToast('Fehler beim Export', 'error');
+        }
+    }
+
+    checkBackupReminder() {
+        // Nur erinnern wenn Artikel vorhanden
+        if (this.items.length === 0) return;
+
+        const lastBackup = localStorage.getItem(APP_CONFIG.LAST_BACKUP_KEY);
+        const now = new Date();
+        
+        if (!lastBackup) {
+            // Noch nie Backup gemacht
+            if (this.items.length >= 5) {
+                setTimeout(() => {
+                    this.showBackupReminder('Du hast noch kein Backup erstellt!');
+                }, 3000);
+            }
+            return;
+        }
+
+        const lastBackupDate = new Date(lastBackup);
+        const daysSinceBackup = Math.floor((now - lastBackupDate) / (1000 * 60 * 60 * 24));
+
+        if (daysSinceBackup >= APP_CONFIG.BACKUP_REMINDER_DAYS) {
+            setTimeout(() => {
+                this.showBackupReminder(`Letztes Backup vor ${daysSinceBackup} Tagen!`);
+            }, 3000);
+        }
+    }
+
+    showBackupReminder(message) {
+        const reminder = confirm(
+            `⚠️ BACKUP EMPFOHLEN\n\n${message}\n\n` +
+            `Du hast ${this.items.length} Artikel gespeichert.\n\n` +
+            `WICHTIG: Wenn Browser-Daten gelöscht werden,\n` +
+            `sind alle Artikel verloren!\n\n` +
+            `Jetzt Backup erstellen?`
+        );
+
+        if (reminder) {
+            this.exportData();
         }
     }
 
