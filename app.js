@@ -5,6 +5,7 @@ const APP_CONFIG = {
     DB_NAME: 'efsinInventurDB',
     DB_VERSION: 1,
     STORE_NAME: 'inventory',
+    CATEGORIES_KEY: 'efsin_categories',
     DEFAULT_CATEGORIES: [
         'Holz',
         'Platten',
@@ -130,6 +131,7 @@ class InventoryApp {
         this.currentView = 'overview';
         this.items = [];
         this.editingItem = null;
+        this.categories = this.loadCategories();
         this.init();
     }
 
@@ -137,6 +139,7 @@ class InventoryApp {
         try {
             await this.db.init();
             await this.loadItems();
+            this.updateCategorySelects();
             this.setupEventListeners();
             this.updateUI();
             this.checkOnlineStatus();
@@ -233,6 +236,9 @@ class InventoryApp {
         } else if (viewName === 'stats') {
             this.renderStats();
         }
+        
+        // Update FAB visibility
+        this.updateFAB();
     }
 
     renderOverview() {
@@ -392,6 +398,7 @@ class InventoryApp {
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('photoPreview').innerHTML = '';
+        this.updateCategorySelects();
         document.getElementById('itemModal').classList.add('active');
     }
 
@@ -403,6 +410,8 @@ class InventoryApp {
                 return;
             }
 
+            this.updateCategorySelects();
+            
             document.getElementById('modalTitle').textContent = 'Artikel bearbeiten';
             document.getElementById('itemId').value = this.editingItem.id;
             document.getElementById('itemName').value = this.editingItem.name;
@@ -673,6 +682,162 @@ class InventoryApp {
         } else if (this.currentView === 'stats') {
             this.renderStats();
         }
+        
+        // FAB nur auf bestimmten Views zeigen
+        this.updateFAB();
+    }
+
+    updateFAB() {
+        const fab = document.getElementById('addBtn');
+        if (this.currentView === 'scan' || this.currentView === 'stats') {
+            fab.classList.add('hidden-view');
+        } else {
+            fab.classList.remove('hidden-view');
+        }
+    }
+
+    // ===================================
+    // Kategorie-Verwaltung
+    // ===================================
+    
+    loadCategories() {
+        const stored = localStorage.getItem(APP_CONFIG.CATEGORIES_KEY);
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch (e) {
+                console.error('Error loading categories:', e);
+            }
+        }
+        return [...APP_CONFIG.DEFAULT_CATEGORIES];
+    }
+
+    saveCategories() {
+        localStorage.setItem(APP_CONFIG.CATEGORIES_KEY, JSON.stringify(this.categories));
+        this.updateCategorySelects();
+    }
+
+    updateCategorySelects() {
+        // Update Formular-Select
+        const formSelect = document.getElementById('itemCategory');
+        const currentValue = formSelect.value;
+        formSelect.innerHTML = '';
+        
+        this.categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            formSelect.appendChild(option);
+        });
+        
+        if (currentValue && this.categories.includes(currentValue)) {
+            formSelect.value = currentValue;
+        }
+
+        // Update Filter-Select
+        this.updateCategoryFilter();
+    }
+
+    manageCategories() {
+        this.renderCategoryList();
+        document.getElementById('categoryModal').classList.add('active');
+        this.closeMenu();
+    }
+
+    closeCategoryManager() {
+        document.getElementById('categoryModal').classList.remove('active');
+    }
+
+    renderCategoryList() {
+        const listDiv = document.getElementById('categoryList');
+        const defaultCats = APP_CONFIG.DEFAULT_CATEGORIES;
+        
+        const html = this.categories.map(cat => {
+            const isDefault = defaultCats.includes(cat);
+            const usedCount = this.items.filter(item => item.category === cat).length;
+            
+            return `
+                <div class="category-item ${isDefault ? 'default' : ''}">
+                    <div>
+                        <span class="category-name">${cat}</span>
+                        ${usedCount > 0 ? `<span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 0.5rem;">(${usedCount} Artikel)</span>` : ''}
+                    </div>
+                    <div class="category-actions">
+                        <button class="btn-delete-category" 
+                                onclick="app.deleteCategory('${cat}')"
+                                ${isDefault || usedCount > 0 ? 'disabled' : ''}>
+                            ${isDefault ? 'Standard' : (usedCount > 0 ? 'In Verwendung' : 'Löschen')}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        listDiv.innerHTML = html || '<p class="hint">Keine Kategorien vorhanden</p>';
+    }
+
+    addCategory() {
+        const input = document.getElementById('newCategory');
+        const categoryName = input.value.trim();
+        
+        if (!categoryName) {
+            this.showToast('Bitte Kategorie-Namen eingeben', 'error');
+            return;
+        }
+        
+        if (this.categories.includes(categoryName)) {
+            this.showToast('Kategorie existiert bereits', 'error');
+            return;
+        }
+        
+        this.categories.push(categoryName);
+        this.saveCategories();
+        this.renderCategoryList();
+        input.value = '';
+        this.showToast(`Kategorie "${categoryName}" hinzugefügt`, 'success');
+    }
+
+    deleteCategory(categoryName) {
+        // Prüfe ob Standard-Kategorie
+        if (APP_CONFIG.DEFAULT_CATEGORIES.includes(categoryName)) {
+            this.showToast('Standard-Kategorien können nicht gelöscht werden', 'error');
+            return;
+        }
+        
+        // Prüfe ob in Verwendung
+        const usedCount = this.items.filter(item => item.category === categoryName).length;
+        if (usedCount > 0) {
+            this.showToast(`Kategorie wird von ${usedCount} Artikel(n) verwendet`, 'error');
+            return;
+        }
+        
+        if (!confirm(`Kategorie "${categoryName}" wirklich löschen?`)) {
+            return;
+        }
+        
+        this.categories = this.categories.filter(cat => cat !== categoryName);
+        this.saveCategories();
+        this.renderCategoryList();
+        this.showToast(`Kategorie "${categoryName}" gelöscht`, 'success');
+    }
+
+    showCategories() {
+        this.switchView('inventory');
+        // Zeige alle Kategorien im Filter
+    }
+
+    showLowStock() {
+        this.switchView('inventory');
+        setTimeout(() => {
+            // Filter auf Low-Stock Artikel setzen
+            const lowStockItems = this.items.filter(item => this.isLowStock(item));
+            this.renderFilteredItems(lowStockItems);
+        }, 100);
+    }
+
+    renderFilteredItems(items) {
+        const html = items.map(item => this.renderInventoryCard(item)).join('');
+        document.getElementById('inventoryList').innerHTML = html || '<p class="hint">Keine Artikel gefunden</p>';
     }
 
     generateId() {
