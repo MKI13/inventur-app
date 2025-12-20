@@ -19,6 +19,17 @@ const APP_CONFIG = {
     ]
 };
 
+const GITHUB_CONFIG = {
+    TOKEN_KEY: 'efsin_github_token',
+    REPO_KEY: 'efsin_github_repo',
+    OWNER_KEY: 'efsin_github_owner',
+    LAST_SYNC_KEY: 'efsin_last_sync',
+    LAST_SHA_KEY: 'efsin_last_sha',
+    SYNC_INTERVAL: 5 * 60 * 1000, // 5 Minuten
+    FILE_PATH: 'data/inventory.json',
+    BRANCH: 'main'
+};
+
 // ===================================
 // Database Manager
 // ===================================
@@ -125,11 +136,209 @@ class DatabaseManager {
 }
 
 // ===================================
+// GitHub Sync Manager
+// ===================================
+class GitHubManager {
+    constructor() {
+        this.token = localStorage.getItem(GITHUB_CONFIG.TOKEN_KEY);
+        this.owner = localStorage.getItem(GITHUB_CONFIG.OWNER_KEY);
+        this.repo = localStorage.getItem(GITHUB_CONFIG.REPO_KEY);
+        this.lastSHA = localStorage.getItem(GITHUB_CONFIG.LAST_SHA_KEY);
+        this.syncInterval = null;
+        this.isSyncing = false;
+    }
+
+    isConfigured() {
+        return !!(this.token && this.owner && this.repo);
+    }
+
+    configure(token, owner, repo) {
+        this.token = token;
+        this.owner = owner;
+        this.repo = repo;
+        
+        localStorage.setItem(GITHUB_CONFIG.TOKEN_KEY, token);
+        localStorage.setItem(GITHUB_CONFIG.OWNER_KEY, owner);
+        localStorage.setItem(GITHUB_CONFIG.REPO_KEY, repo);
+    }
+
+    async getFile() {
+        if (!this.isConfigured()) throw new Error('GitHub nicht konfiguriert');
+
+        const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${GITHUB_CONFIG.FILE_PATH}`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `token ${this.token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+
+        if (response.status === 404) {
+            return null; // Datei existiert noch nicht
+        }
+
+        if (!response.ok) {
+            throw new Error(`GitHub API Fehler: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const content = JSON.parse(atob(data.content));
+        
+        this.lastSHA = data.sha;
+        localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, data.sha);
+        
+        return content;
+    }
+
+    async putFile(data, message = 'Auto-Sync') {
+        if (!this.isConfigured()) throw new Error('GitHub nicht konfiguriert');
+
+        const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${GITHUB_CONFIG.FILE_PATH}`;
+        
+        const content = btoa(JSON.stringify(data, null, 2));
+        
+        const body = {
+            message: message,
+            content: content,
+            branch: GITHUB_CONFIG.BRANCH
+        };
+
+        // Wenn Datei existiert, SHA mitschicken
+        if (this.lastSHA) {
+            body.sha = this.lastSHA;
+        }
+
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${this.token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`GitHub API Fehler: ${error.message}`);
+        }
+
+        const result = await response.json();
+        this.lastSHA = result.content.sha;
+        localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, result.content.sha);
+        localStorage.setItem(GITHUB_CONFIG.LAST_SYNC_KEY, new Date().toISOString());
+        
+        return result;
+    }
+
+    async sync(localData, onConflict) {
+        if (this.isSyncing) {
+            console.log('Sync läuft bereits');
+            return;
+        }
+
+        this.isSyncing = true;
+
+        try {
+            // Hole aktuelle Version von GitHub
+            const remoteData = await this.getFile();
+
+            if (!remoteData) {
+                // Datei existiert noch nicht - erste Upload
+                await this.putFile(localData, 'Initialer Sync');
+                return { action: 'uploaded', message: 'Erste Synchronisation erfolgreich' };
+            }
+
+            // Vergleiche Versionen
+            const localTimestamp = this.getLatestTimestamp(localData);
+            const remoteTimestamp = this.getLatestTimestamp(remoteData);
+
+            if (localTimestamp > remoteTimestamp) {
+                // Lokale Version ist neuer
+                await this.putFile(localData, 'Auto-Sync: Lokale Änderungen');
+                return { action: 'uploaded', message: 'Lokale Änderungen hochgeladen' };
+            } else if (remoteTimestamp > localTimestamp) {
+                // Remote Version ist neuer
+                if (onConflict) {
+                    const result = await onConflict(remoteData, localData);
+                    if (result === 'remote') {
+                        return { action: 'downloaded', data: remoteData, message: 'Remote-Version übernommen' };
+                    } else if (result === 'local') {
+                        await this.putFile(localData, 'Konflikt gelöst: Lokale Version');
+                        return { action: 'uploaded', message: 'Lokale Version beibehalten' };
+                    }
+                } else {
+                    return { action: 'downloaded', data: remoteData, message: 'Remote-Version heruntergeladen' };
+                }
+            } else {
+                // Keine Änderungen
+                return { action: 'none', message: 'Bereits synchronisiert' };
+            }
+        } finally {
+            this.isSyncing = false;
+        }
+    }
+
+    getLatestTimestamp(data) {
+        if (!data || !data.items || data.items.length === 0) {
+            return new Date(0).toISOString();
+        }
+
+        const timestamps = data.items.map(item => 
+            new Date(item.updatedAt || item.createdAt || 0)
+        );
+
+        return new Date(Math.max(...timestamps)).toISOString();
+    }
+
+    startAutoSync(syncCallback) {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+        }
+
+        this.syncInterval = setInterval(() => {
+            console.log('Auto-Sync gestartet...');
+            syncCallback();
+        }, GITHUB_CONFIG.SYNC_INTERVAL);
+
+        console.log(`Auto-Sync aktiviert (alle ${GITHUB_CONFIG.SYNC_INTERVAL / 60000} Minuten)`);
+    }
+
+    stopAutoSync() {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+            this.syncInterval = null;
+            console.log('Auto-Sync gestoppt');
+        }
+    }
+
+    getLastSyncTime() {
+        const lastSync = localStorage.getItem(GITHUB_CONFIG.LAST_SYNC_KEY);
+        if (!lastSync) return null;
+        
+        const date = new Date(lastSync);
+        const now = new Date();
+        const diffMinutes = Math.floor((now - date) / 60000);
+        
+        if (diffMinutes < 1) return 'Gerade eben';
+        if (diffMinutes < 60) return `vor ${diffMinutes} Min`;
+        
+        const diffHours = Math.floor(diffMinutes / 60);
+        if (diffHours < 24) return `vor ${diffHours} Std`;
+        
+        const diffDays = Math.floor(diffHours / 24);
+        return `vor ${diffDays} Tagen`;
+    }
+}
+
+// ===================================
 // Main Application Class
 // ===================================
 class InventoryApp {
     constructor() {
         this.db = new DatabaseManager();
+        this.github = new GitHubManager();
         this.currentView = 'overview';
         this.items = [];
         this.editingItem = null;
@@ -146,6 +355,7 @@ class InventoryApp {
             this.updateUI();
             this.checkOnlineStatus();
             this.checkBackupReminder();
+            this.initGitHubSync();
             console.log('App initialized successfully');
         } catch (error) {
             console.error('Initialization error:', error);
@@ -587,6 +797,220 @@ class InventoryApp {
 
         if (reminder) {
             this.exportData();
+        }
+    }
+
+    // ===================================
+    // GitHub Sync Functions
+    // ===================================
+
+    initGitHubSync() {
+        this.updateSyncStatus();
+        
+        if (this.github.isConfigured()) {
+            // Starte Auto-Sync
+            this.github.startAutoSync(() => this.autoSync());
+            this.showToast('GitHub Auto-Sync aktiviert (alle 5 Min)', 'success');
+        } else {
+            // Zeige Setup-Hinweis wenn nicht konfiguriert
+            setTimeout(() => {
+                const setup = confirm(
+                    '🔄 GITHUB SYNC VERFÜGBAR\n\n' +
+                    'Möchtest du GitHub Auto-Sync einrichten?\n\n' +
+                    'Vorteile:\n' +
+                    '✓ Automatische Backups alle 5 Min\n' +
+                    '✓ Sync zwischen mehreren Geräten\n' +
+                    '✓ Sicher in privatem Repository\n\n' +
+                    'Jetzt einrichten?'
+                );
+                
+                if (setup) {
+                    this.showGitHubSetup();
+                }
+            }, 5000);
+        }
+    }
+
+    showGitHubSetup() {
+        document.getElementById('githubSetupModal').classList.add('active');
+    }
+
+    closeGitHubSetup() {
+        document.getElementById('githubSetupModal').classList.remove('active');
+    }
+
+    async saveGitHubConfig() {
+        const token = document.getElementById('githubToken').value.trim();
+        const owner = document.getElementById('githubOwner').value.trim();
+        const repo = document.getElementById('githubRepo').value.trim();
+
+        if (!token || !owner || !repo) {
+            this.showToast('Bitte alle Felder ausfüllen', 'error');
+            return;
+        }
+
+        // Test der Verbindung
+        this.showToast('Teste GitHub Verbindung...', 'info');
+
+        try {
+            this.github.configure(token, owner, repo);
+            
+            // Test API Call
+            const testUrl = `https://api.github.com/repos/${owner}/${repo}`;
+            const response = await fetch(testUrl, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Repository nicht gefunden oder kein Zugriff');
+            }
+
+            const repoData = await response.json();
+            
+            if (!repoData.private) {
+                const warning = confirm(
+                    '⚠️ WARNUNG: Repository ist ÖFFENTLICH!\n\n' +
+                    'Deine Daten würden öffentlich sichtbar sein.\n\n' +
+                    'Bitte erstelle ein PRIVATES Repository!\n\n' +
+                    'Trotzdem fortfahren? (NICHT EMPFOHLEN!)'
+                );
+                
+                if (!warning) {
+                    this.github.configure('', '', '');
+                    return;
+                }
+            }
+
+            this.showToast('GitHub erfolgreich verbunden! ✅', 'success');
+            this.closeGitHubSetup();
+            
+            // Starte Auto-Sync
+            this.github.startAutoSync(() => this.autoSync());
+            this.updateSyncStatus();
+            
+            // Initiale Synchronisation
+            setTimeout(() => this.syncWithGitHub(), 1000);
+
+        } catch (error) {
+            console.error('GitHub Setup Fehler:', error);
+            this.showToast(`Fehler: ${error.message}`, 'error');
+            this.github.configure('', '', '');
+        }
+    }
+
+    async syncWithGitHub() {
+        if (!this.github.isConfigured()) {
+            this.showGitHubSetup();
+            return;
+        }
+
+        if (this.github.isSyncing) {
+            this.showToast('Sync läuft bereits...', 'info');
+            return;
+        }
+
+        this.updateSyncStatus('syncing');
+
+        try {
+            const localData = {
+                version: '1.4.0',
+                exportDate: new Date().toISOString(),
+                categories: this.categories,
+                items: this.items
+            };
+
+            const result = await this.github.sync(localData, (remote, local) => 
+                this.handleSyncConflict(remote, local)
+            );
+
+            if (result.action === 'downloaded' && result.data) {
+                // Remote Daten übernehmen
+                await this.importFromGitHub(result.data);
+            }
+
+            this.showToast(result.message, 'success');
+            this.updateSyncStatus();
+
+        } catch (error) {
+            console.error('Sync Fehler:', error);
+            this.showToast(`Sync Fehler: ${error.message}`, 'error');
+            this.updateSyncStatus();
+        }
+    }
+
+    async autoSync() {
+        if (!this.github.isConfigured() || this.items.length === 0) {
+            return;
+        }
+
+        console.log('Auto-Sync wird ausgeführt...');
+        await this.syncWithGitHub();
+    }
+
+    async handleSyncConflict(remoteData, localData) {
+        const remoteTime = new Date(remoteData.exportDate);
+        const localTime = this.github.getLatestTimestamp(localData);
+
+        const choice = confirm(
+            '⚠️ SYNC-KONFLIKT ERKANNT\n\n' +
+            `Remote (GitHub): ${remoteTime.toLocaleString()}\n` +
+            `Lokal (Gerät): ${new Date(localTime).toLocaleString()}\n\n` +
+            'Welche Version möchtest du behalten?\n\n' +
+            'OK = Remote (GitHub)\n' +
+            'Abbrechen = Lokal (dieses Gerät)'
+        );
+
+        return choice ? 'remote' : 'local';
+    }
+
+    async importFromGitHub(data) {
+        // Kategorien importieren
+        if (data.categories) {
+            this.categories = data.categories;
+            this.saveCategories();
+            this.updateCategorySelects();
+        }
+
+        // Artikel importieren
+        if (data.items && data.items.length > 0) {
+            for (const item of data.items) {
+                const existing = await this.db.getById(item.id);
+                if (existing) {
+                    await this.db.update(item);
+                } else {
+                    await this.db.add(item);
+                }
+            }
+            
+            await this.loadItems();
+            this.updateUI();
+        }
+    }
+
+    updateSyncStatus(status = 'idle') {
+        const syncBtn = document.getElementById('syncBtn');
+        if (!syncBtn) return;
+
+        const icon = syncBtn.querySelector('.sync-icon');
+        const text = syncBtn.querySelector('.sync-text');
+
+        if (status === 'syncing') {
+            icon.textContent = '🔄';
+            icon.classList.add('spinning');
+            if (text) text.textContent = 'Sync...';
+        } else {
+            icon.textContent = '🔄';
+            icon.classList.remove('spinning');
+            
+            if (this.github.isConfigured()) {
+                const lastSync = this.github.getLastSyncTime();
+                if (text) text.textContent = lastSync || 'Sync';
+            } else {
+                if (text) text.textContent = 'Setup';
+            }
         }
     }
 
