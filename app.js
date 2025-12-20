@@ -750,23 +750,27 @@ class InventoryApp {
 
     renderCategoryList() {
         const listDiv = document.getElementById('categoryList');
-        const defaultCats = APP_CONFIG.DEFAULT_CATEGORIES;
         
         const html = this.categories.map(cat => {
-            const isDefault = defaultCats.includes(cat);
             const usedCount = this.items.filter(item => item.category === cat).length;
             
             return `
-                <div class="category-item ${isDefault ? 'default' : ''}">
-                    <div>
+                <div class="category-item">
+                    <div class="category-info">
                         <span class="category-name">${cat}</span>
-                        ${usedCount > 0 ? `<span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 0.5rem;">(${usedCount} Artikel)</span>` : ''}
+                        ${usedCount > 0 ? `<span class="category-count">(${usedCount} Artikel)</span>` : ''}
                     </div>
                     <div class="category-actions">
+                        <button class="btn-edit-category" 
+                                onclick="app.editCategory('${cat}')"
+                                title="Bearbeiten">
+                            ✏️
+                        </button>
                         <button class="btn-delete-category" 
                                 onclick="app.deleteCategory('${cat}')"
-                                ${isDefault || usedCount > 0 ? 'disabled' : ''}>
-                            ${isDefault ? 'Standard' : (usedCount > 0 ? 'In Verwendung' : 'Löschen')}
+                                ${usedCount > 0 ? 'disabled' : ''}
+                                title="${usedCount > 0 ? 'In Verwendung - kann nicht gelöscht werden' : 'Löschen'}">
+                            ${usedCount > 0 ? '🔒' : '🗑️'}
                         </button>
                     </div>
                 </div>
@@ -798,16 +802,16 @@ class InventoryApp {
     }
 
     deleteCategory(categoryName) {
-        // Prüfe ob Standard-Kategorie
-        if (APP_CONFIG.DEFAULT_CATEGORIES.includes(categoryName)) {
-            this.showToast('Standard-Kategorien können nicht gelöscht werden', 'error');
-            return;
-        }
-        
         // Prüfe ob in Verwendung
         const usedCount = this.items.filter(item => item.category === categoryName).length;
         if (usedCount > 0) {
             this.showToast(`Kategorie wird von ${usedCount} Artikel(n) verwendet`, 'error');
+            return;
+        }
+        
+        // Warnung wenn letzte Kategorie
+        if (this.categories.length === 1) {
+            this.showToast('Mindestens eine Kategorie muss vorhanden sein', 'error');
             return;
         }
         
@@ -819,6 +823,55 @@ class InventoryApp {
         this.saveCategories();
         this.renderCategoryList();
         this.showToast(`Kategorie "${categoryName}" gelöscht`, 'success');
+    }
+
+    editCategory(oldName) {
+        const newName = prompt(`Kategorie umbenennen:\n\nAktueller Name: ${oldName}\n\nNeuer Name:`, oldName);
+        
+        if (!newName || newName.trim() === '') {
+            return;
+        }
+        
+        const trimmedName = newName.trim();
+        
+        if (trimmedName === oldName) {
+            return; // Keine Änderung
+        }
+        
+        // Prüfe ob neuer Name bereits existiert
+        if (this.categories.includes(trimmedName)) {
+            this.showToast('Kategorie mit diesem Namen existiert bereits', 'error');
+            return;
+        }
+        
+        // Update Kategorie in der Liste
+        const index = this.categories.indexOf(oldName);
+        if (index !== -1) {
+            this.categories[index] = trimmedName;
+        }
+        
+        // Update alle Artikel die diese Kategorie verwenden
+        const itemsToUpdate = this.items.filter(item => item.category === oldName);
+        
+        if (itemsToUpdate.length > 0) {
+            if (confirm(`${itemsToUpdate.length} Artikel verwenden diese Kategorie.\n\nKategorie für alle Artikel umbenennen?`)) {
+                itemsToUpdate.forEach(async (item) => {
+                    item.category = trimmedName;
+                    item.updatedAt = new Date().toISOString();
+                    await this.db.update(item);
+                });
+                
+                // Reload items
+                setTimeout(async () => {
+                    await this.loadItems();
+                    this.updateUI();
+                }, 100);
+            }
+        }
+        
+        this.saveCategories();
+        this.renderCategoryList();
+        this.showToast(`Kategorie umbenannt: "${oldName}" → "${trimmedName}"`, 'success');
     }
 
     showCategories() {
