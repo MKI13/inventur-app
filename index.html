@@ -32,10 +32,8 @@
                 <span class="logo-text">INVENTUR</span>
             </h1>
             <div class="header-actions">
-                <button class="btn-icon" id="syncBtn" title="Synchronisieren">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                    </svg>
+                <button class="btn-icon" id="syncBtn" onclick="app.syncWithGitHub()" title="Mit GitHub synchronisieren">
+                    <span class="sync-icon">🔄</span>
                 </button>
                 <button class="btn-icon" id="menuBtn" title="Menü">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -378,6 +376,62 @@
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="app.closeNotes()">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GitHub Setup Modal -->
+    <div class="modal" id="githubSetupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔄 GitHub Sync einrichten</h2>
+                <button class="btn-close" onclick="app.closeGitHubSetup()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="github-setup-info">
+                    <h3>📌 Voraussetzungen:</h3>
+                    <ol>
+                        <li><strong>Private Repository erstellen:</strong><br>
+                            → GitHub.com → New Repository<br>
+                            → Name: <code>inventur-data-backup</code><br>
+                            → ⚠️ WICHTIG: <strong>Private</strong> wählen!
+                        </li>
+                        <li><strong>Personal Access Token (PAT) erstellen:</strong><br>
+                            → GitHub → Settings → Developer Settings<br>
+                            → Personal Access Tokens → Tokens (classic)<br>
+                            → Generate new token (classic)<br>
+                            → Berechtigungen: <code>repo</code> (voller Zugriff)<br>
+                            → Token kopieren (wird nur 1x angezeigt!)
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="form-group">
+                    <label for="githubToken">Personal Access Token (PAT)</label>
+                    <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" required>
+                    <small>Token wird lokal verschlüsselt gespeichert</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="githubOwner">GitHub Username</label>
+                    <input type="text" id="githubOwner" placeholder="z.B. MKI13" required>
+                    <small>Dein GitHub Benutzername</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="githubRepo">Repository Name</label>
+                    <input type="text" id="githubRepo" value="inventur-data-backup" required>
+                    <small>Name des privaten Repositories</small>
+                </div>
+
+                <div class="github-setup-warning">
+                    ⚠️ <strong>WICHTIG:</strong> Das Repository muss <strong>PRIVAT</strong> sein!<br>
+                    Sonst sind deine Daten öffentlich sichtbar!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="app.closeGitHubSetup()">Abbrechen</button>
+                <button class="btn-primary" onclick="app.saveGitHubConfig()">Verbinden</button>
             </div>
         </div>
     </div>
