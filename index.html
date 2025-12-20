@@ -11,10 +11,10 @@
     
     <title>ef-sin Inventur</title>
     
-    <link rel="manifest" href="/manifest.json">
-    <link rel="stylesheet" href="/styles.css">
-    <link rel="icon" type="image/png" href="/icon-192.png">
-    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="icon" type="image/png" href="./icon-192.png">
+    <link rel="apple-touch-icon" href="./icon-192.png">
     
     <!-- Preconnect für Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -344,14 +344,14 @@
     <div id="toast" class="toast"></div>
 
     <!-- Scripts -->
-    <script src="/scanner.js"></script>
-    <script src="/app.js"></script>
+    <script src="./scanner.js"></script>
+    <script src="./app.js"></script>
     
     <script>
         // Service Worker registrieren
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
+                navigator.serviceWorker.register('./service-worker.js')
                     .then(reg => console.log('ServiceWorker registriert:', reg.scope))
                     .catch(err => console.error('ServiceWorker Fehler:', err));
             });
