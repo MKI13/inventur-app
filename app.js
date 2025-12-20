@@ -136,6 +136,23 @@ class DatabaseManager {
 }
 
 // ===================================
+// UTF-8 Base64 Helper Functions
+// ===================================
+function base64EncodeUTF8(str) {
+    // Konvertiere String zu UTF-8 Bytes, dann zu Base64
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+    }));
+}
+
+function base64DecodeUTF8(str) {
+    // Konvertiere Base64 zu UTF-8 String
+    return decodeURIComponent(atob(str).split('').map((c) => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+}
+
+// ===================================
 // GitHub Sync Manager
 // ===================================
 class GitHubManager {
@@ -183,7 +200,9 @@ class GitHubManager {
         }
 
         const data = await response.json();
-        const content = JSON.parse(atob(data.content));
+        // GitHub fügt Zeilenumbrüche in base64 ein - entfernen
+        const base64Content = data.content.replace(/\s/g, '');
+        const content = JSON.parse(base64DecodeUTF8(base64Content));
         
         this.lastSHA = data.sha;
         localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, data.sha);
@@ -196,7 +215,7 @@ class GitHubManager {
 
         const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${GITHUB_CONFIG.FILE_PATH}`;
         
-        const content = btoa(JSON.stringify(data, null, 2));
+        const content = base64EncodeUTF8(JSON.stringify(data, null, 2));
         
         const body = {
             message: message,
