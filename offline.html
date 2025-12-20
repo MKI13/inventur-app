@@ -88,7 +88,7 @@
             Die App funktioniert offline weiter. Alle Änderungen werden lokal gespeichert 
             und synchronisiert, sobald die Verbindung wiederhergestellt ist.
         </p>
-        <a href="/" class="btn">Zurück zur App</a>
+        <a href="./" class="btn">Zurück zur App</a>
 
         <div class="info">
             <h3>Offline-Modus</h3>
@@ -103,12 +103,12 @@
     <script>
         // Prüfe Verbindung und leite bei Online weiter
         window.addEventListener('online', () => {
-            window.location.href = '/';
+            window.location.href = './';
         });
 
         // Zeige aktuellen Status
         if (navigator.onLine) {
-            window.location.href = '/';
+            window.location.href = './';
         }
     </script>
 </body>
