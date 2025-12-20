@@ -59,22 +59,22 @@
         <!-- Übersicht View -->
         <section class="view active" id="overview-view">
             <div class="stats-grid">
-                <div class="stat-card">
+                <div class="stat-card clickable" onclick="app.switchView('inventory')">
                     <div class="stat-icon">📦</div>
                     <div class="stat-value" id="totalItems">0</div>
                     <div class="stat-label">Artikel</div>
                 </div>
-                <div class="stat-card warn">
+                <div class="stat-card warn clickable" onclick="app.showLowStock()">
                     <div class="stat-icon">⚠️</div>
                     <div class="stat-value" id="lowStock">0</div>
                     <div class="stat-label">Niedrig</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card clickable" onclick="app.showCategories()">
                     <div class="stat-icon">📁</div>
                     <div class="stat-value" id="categories">0</div>
                     <div class="stat-label">Kategorien</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card clickable" onclick="app.switchView('stats')">
                     <div class="stat-icon">💶</div>
                     <div class="stat-value" id="totalValue">0€</div>
                     <div class="stat-label">Gesamtwert</div>
@@ -274,7 +274,7 @@
 
                 <div class="form-group">
                     <label for="itemPhoto">Foto</label>
-                    <input type="file" id="itemPhoto" accept="image/*" capture="environment">
+                    <input type="file" id="itemPhoto" accept="image/*">
                     <div id="photoPreview" class="photo-preview"></div>
                 </div>
 
@@ -295,6 +295,10 @@
             </div>
             <div class="modal-body">
                 <div class="menu-list">
+                    <button class="menu-item" onclick="app.manageCategories()">
+                        <span class="menu-icon">📁</span>
+                        <span class="menu-text">Kategorien verwalten</span>
+                    </button>
                     <button class="menu-item" onclick="app.exportData()">
                         <span class="menu-icon">💾</span>
                         <span class="menu-text">Daten exportieren (JSON)</span>
@@ -336,6 +340,32 @@
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="app.closeImport()">Abbrechen</button>
                 <button class="btn-primary" onclick="app.importData()">Importieren</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kategorie-Verwaltungs Modal -->
+    <div class="modal" id="categoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Kategorien verwalten</h2>
+                <button class="btn-close" onclick="app.closeCategoryManager()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newCategory">Neue Kategorie hinzufügen</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="newCategory" placeholder="z.B. Kanten, Leim, etc.">
+                        <button class="btn-primary" onclick="app.addCategory()" style="white-space: nowrap;">+ Hinzufügen</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Vorhandene Kategorien</label>
+                    <div id="categoryList" class="category-list"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="app.closeCategoryManager()">Schließen</button>
             </div>
         </div>
     </div>
