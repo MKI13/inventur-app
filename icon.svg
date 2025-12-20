@@ -1,0 +1,29 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Hintergrund -->
+  <rect width="512" height="512" fill="#ff6b00"/>
+  
+  <!-- Box Icon -->
+  <g transform="translate(128, 128)">
+    <!-- Oberer Teil der Box -->
+    <path d="M 0 64 L 128 0 L 256 64 L 256 96 L 128 160 L 0 96 Z" 
+          fill="#ffffff" opacity="0.9"/>
+    
+    <!-- Linke Seite -->
+    <path d="M 0 96 L 0 256 L 128 320 L 128 160 Z" 
+          fill="#ffffff" opacity="0.7"/>
+    
+    <!-- Rechte Seite -->
+    <path d="M 256 96 L 256 256 L 128 320 L 128 160 Z" 
+          fill="#ffffff" opacity="0.5"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="256" y="440" 
+        font-family="Arial, sans-serif" 
+        font-size="80" 
+        font-weight="bold" 
+        text-anchor="middle" 
+        fill="#ffffff">
+    INV
+  </text>
+</svg>

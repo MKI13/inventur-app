@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Inventur-App für ef-sin Schreinerei">
+    <meta name="theme-color" content="#ff6b00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Inventur">
+    
+    <title>ef-sin Inventur</title>
+    
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" type="image/png" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    
+    <!-- Preconnect für Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Industrielle Schriftarten -->
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <h1 class="logo">
+                <span class="logo-icon">📦</span>
+                <span class="logo-text">INVENTUR</span>
+            </h1>
+            <div class="header-actions">
+                <button class="btn-icon" id="syncBtn" title="Synchronisieren">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="menuBtn" title="Menü">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Tab Navigation -->
+        <nav class="tabs">
+            <button class="tab active" data-view="overview">Übersicht</button>
+            <button class="tab" data-view="inventory">Bestand</button>
+            <button class="tab" data-view="scan">Scanner</button>
+            <button class="tab" data-view="stats">Statistik</button>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+        <!-- Übersicht View -->
+        <section class="view active" id="overview-view">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-value" id="totalItems">0</div>
+                    <div class="stat-label">Artikel</div>
+                </div>
+                <div class="stat-card warn">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-value" id="lowStock">0</div>
+                    <div class="stat-label">Niedrig</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📁</div>
+                    <div class="stat-value" id="categories">0</div>
+                    <div class="stat-label">Kategorien</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💶</div>
+                    <div class="stat-value" id="totalValue">0€</div>
+                    <div class="stat-label">Gesamtwert</div>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <h2>Schnellzugriff</h2>
+                <div class="action-grid">
+                    <button class="action-btn" onclick="app.showAddItem()">
+                        <span class="action-icon">➕</span>
+                        <span>Artikel hinzufügen</span>
+                    </button>
+                    <button class="action-btn" onclick="app.showScanner()">
+                        <span class="action-icon">📷</span>
+                        <span>QR scannen</span>
+                    </button>
+                    <button class="action-btn" onclick="app.exportData()">
+                        <span class="action-icon">💾</span>
+                        <span>Export JSON</span>
+                    </button>
+                    <button class="action-btn" onclick="app.showImport()">
+                        <span class="action-icon">📥</span>
+                        <span>Import</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="recent-section">
+                <h2>Zuletzt geändert</h2>
+                <div id="recentItems" class="item-list"></div>
+            </div>
+        </section>
+
+        <!-- Bestand View -->
+        <section class="view" id="inventory-view">
+            <div class="inventory-header">
+                <div class="search-bar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Suchen nach Artikel, SKU, Kategorie...">
+                </div>
+                <div class="filter-bar">
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">Alle Kategorien</option>
+                    </select>
+                    <select id="sortFilter" class="filter-select">
+                        <option value="name">Name A-Z</option>
+                        <option value="name-desc">Name Z-A</option>
+                        <option value="stock">Bestand ↑</option>
+                        <option value="stock-desc">Bestand ↓</option>
+                        <option value="date">Neueste</option>
+                    </select>
+                </div>
+            </div>
+            <div id="inventoryList" class="inventory-grid"></div>
+        </section>
+
+        <!-- Scanner View -->
+        <section class="view" id="scan-view">
+            <div class="scanner-container">
+                <div id="scanner" class="scanner-viewport">
+                    <div class="scanner-overlay">
+                        <div class="scanner-frame"></div>
+                        <p class="scanner-hint">QR-Code oder Barcode in den Rahmen positionieren</p>
+                    </div>
+                </div>
+                <div class="scanner-controls">
+                    <button class="btn-primary" id="startScanBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M9 9h.01M15 9h.01M9 15h6"/>
+                        </svg>
+                        Scanner starten
+                    </button>
+                    <button class="btn-secondary" id="stopScanBtn" style="display:none;">Scanner stoppen</button>
+                </div>
+                <div id="scanResult" class="scan-result"></div>
+            </div>
+        </section>
+
+        <!-- Statistik View -->
+        <section class="view" id="stats-view">
+            <div class="stats-container">
+                <h2>Bestandsverteilung</h2>
+                <canvas id="categoryChart" width="400" height="300"></canvas>
+                
+                <h2>Top 10 Artikel nach Wert</h2>
+                <div id="topItems" class="top-items-list"></div>
+                
+                <h2>Warnstufen</h2>
+                <div class="warning-levels">
+                    <div class="warning-item critical">
+                        <span class="warning-label">Kritisch (0%)</span>
+                        <span class="warning-count" id="criticalCount">0</span>
+                    </div>
+                    <div class="warning-item low">
+                        <span class="warning-label">Niedrig (< 20%)</span>
+                        <span class="warning-count" id="lowCount">0</span>
+                    </div>
+                    <div class="warning-item ok">
+                        <span class="warning-label">OK (≥ 20%)</span>
+                        <span class="warning-count" id="okCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button class="fab" id="addBtn" title="Artikel hinzufügen">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+    </button>
+
+    <!-- Modal für Artikel hinzufügen/bearbeiten -->
+    <div class="modal" id="itemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Artikel hinzufügen</h2>
+                <button class="btn-close" onclick="app.closeModal()">×</button>
+            </div>
+            <form id="itemForm" class="modal-body">
+                <input type="hidden" id="itemId">
+                
+                <div class="form-group">
+                    <label for="itemName">Artikelname *</label>
+                    <input type="text" id="itemName" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemSKU">SKU / Artikelnr.</label>
+                        <input type="text" id="itemSKU">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemCategory">Kategorie *</label>
+                        <select id="itemCategory" required>
+                            <option value="Holz">Holz</option>
+                            <option value="Platten">Platten</option>
+                            <option value="Beschläge">Beschläge</option>
+                            <option value="Werkzeuge">Werkzeuge</option>
+                            <option value="Lacke">Lacke & Öle</option>
+                            <option value="Schrauben">Schrauben & Dübel</option>
+                            <option value="Sonstiges">Sonstiges</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemStock">Bestand *</label>
+                        <input type="number" id="itemStock" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemUnit">Einheit</label>
+                        <select id="itemUnit">
+                            <option value="Stück">Stück</option>
+                            <option value="m">Meter</option>
+                            <option value="m²">m²</option>
+                            <option value="m³">m³</option>
+                            <option value="kg">kg</option>
+                            <option value="l">Liter</option>
+                            <option value="Pkg">Paket</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemMin">Mindestbestand</label>
+                        <input type="number" id="itemMin" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemMax">Maximalbestand</label>
+                        <input type="number" id="itemMax" min="0" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemPrice">Stückpreis (€)</label>
+                        <input type="number" id="itemPrice" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemLocation">Lagerort</label>
+                        <input type="text" id="itemLocation" placeholder="z.B. Regal A3">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="itemNotes">Notizen</label>
+                    <textarea id="itemNotes" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="itemPhoto">Foto</label>
+                    <input type="file" id="itemPhoto" accept="image/*" capture="environment">
+                    <div id="photoPreview" class="photo-preview"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="app.closeModal()">Abbrechen</button>
+                    <button type="submit" class="btn-primary">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Menu Modal -->
+    <div class="modal" id="menuModal">
+        <div class="modal-content modal-menu">
+            <div class="modal-header">
+                <h2>Menü</h2>
+                <button class="btn-close" onclick="app.closeMenu()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="menu-list">
+                    <button class="menu-item" onclick="app.exportData()">
+                        <span class="menu-icon">💾</span>
+                        <span class="menu-text">Daten exportieren (JSON)</span>
+                    </button>
+                    <button class="menu-item" onclick="app.showImport()">
+                        <span class="menu-icon">📥</span>
+                        <span class="menu-text">Daten importieren</span>
+                    </button>
+                    <button class="menu-item" onclick="app.clearAllData()">
+                        <span class="menu-icon">🗑️</span>
+                        <span class="menu-text">Alle Daten löschen</span>
+                    </button>
+                    <button class="menu-item" onclick="app.showAbout()">
+                        <span class="menu-icon">ℹ️</span>
+                        <span class="menu-text">Über die App</span>
+                    </button>
+                </div>
+                
+                <div class="app-info">
+                    <p><strong>ef-sin Inventur</strong></p>
+                    <p>Version 1.0.0</p>
+                    <p id="offlineStatus" class="status-online">● Online</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Daten importieren</h2>
+                <button class="btn-close" onclick="app.closeImport()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="file" id="importFile" accept=".json">
+                <p class="hint">JSON-Datei mit Inventardaten auswählen</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="app.closeImport()">Abbrechen</button>
+                <button class="btn-primary" onclick="app.importData()">Importieren</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Scripts -->
+    <script src="/scanner.js"></script>
+    <script src="/app.js"></script>
+    
+    <script>
+        // Service Worker registrieren
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('ServiceWorker registriert:', reg.scope))
+                    .catch(err => console.error('ServiceWorker Fehler:', err));
+            });
+        }
+
+        // Install Prompt Handler
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Zeige Install-Button wenn gewünscht
+        });
+    </script>
+</body>
+</html>

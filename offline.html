@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - ef-sin Inventur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .offline-container {
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .offline-icon {
+            font-size: 5rem;
+            margin-bottom: 2rem;
+            opacity: 0.5;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #ff6b00;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #b3b3b3;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: #ff6b00;
+            color: #1a1a1a;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .info {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            background: #242424;
+            border-radius: 12px;
+            border-left: 4px solid #ff6b00;
+        }
+
+        .info h3 {
+            margin-bottom: 0.5rem;
+            color: #ff6b00;
+        }
+
+        .info p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📶</div>
+        <h1>Keine Internetverbindung</h1>
+        <p>
+            Die App funktioniert offline weiter. Alle Änderungen werden lokal gespeichert 
+            und synchronisiert, sobald die Verbindung wiederhergestellt ist.
+        </p>
+        <a href="/" class="btn">Zurück zur App</a>
+
+        <div class="info">
+            <h3>Offline-Modus</h3>
+            <p>
+                ✓ Alle Funktionen verfügbar<br>
+                ✓ Daten werden lokal gespeichert<br>
+                ✓ Automatische Synchronisation bei Wiederverbindung
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Prüfe Verbindung und leite bei Online weiter
+        window.addEventListener('online', () => {
+            window.location.href = '/';
+        });
+
+        // Zeige aktuellen Status
+        if (navigator.onLine) {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
