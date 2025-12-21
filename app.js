@@ -240,7 +240,77 @@ class GitHubManager {
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(`GitHub API Fehler: ${error.message}`);
+            const errorMsg = (error.message || JSON.stringify(error)).toLowerCase();
+            
+            // SHA-Mismatch: Hole aktuellen SHA und versuche nochmal
+            // Verschiedene Error-Formate: "does not match", "sha", "409 conflict"
+            if (response.status === 409 || 
+                errorMsg.includes('does not match') || 
+                errorMsg.includes('sha') ||
+                errorMsg.includes('conflict')) {
+                
+                console.log('SHA-Mismatch erkannt, hole aktuellen SHA...');
+                console.log('Original Error:', error.message || error);
+                
+                try {
+                    // Hole NUR den SHA (ohne Datei-Inhalt zu laden/überschreiben)
+                    const fileInfoUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${GITHUB_CONFIG.FILE_PATH}`;
+                    const fileInfoResponse = await fetch(fileInfoUrl, {
+                        headers: {
+                            'Authorization': `token ${this.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    if (fileInfoResponse.ok) {
+                        const fileInfo = await fileInfoResponse.json();
+                        this.lastSHA = fileInfo.sha;
+                        localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, fileInfo.sha);
+                        
+                        console.log('Neuer SHA erhalten:', this.lastSHA);
+                        
+                        // Update body mit neuem SHA
+                        body.sha = this.lastSHA;
+                        
+                        // Retry mit korrektem SHA
+                        const retryResponse = await fetch(url, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `token ${this.token}`,
+                                'Accept': 'application/vnd.github.v3+json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(body)
+                        });
+                        
+                        if (!retryResponse.ok) {
+                            const retryError = await retryResponse.json();
+                            throw new Error(`Retry fehlgeschlagen: ${retryError.message || 'Unbekannter Fehler'}`);
+                        }
+                        
+                        const retryResult = await retryResponse.json();
+                        this.lastSHA = retryResult.content.sha;
+                        localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, retryResult.content.sha);
+                        localStorage.setItem(GITHUB_CONFIG.LAST_SYNC_KEY, new Date().toISOString());
+                        
+                        console.log('SHA-Mismatch behoben! Neuer SHA:', this.lastSHA);
+                        return retryResult;
+                    }
+                    
+                } catch (retryError) {
+                    console.error('Retry nach SHA-Refresh fehlgeschlagen:', retryError);
+                    
+                    // Letzter Versuch: Lösche SHA komplett und versuche als neue Datei
+                    console.log('Versuche ohne SHA (neue Datei)...');
+                    this.lastSHA = null;
+                    localStorage.removeItem(GITHUB_CONFIG.LAST_SHA_KEY);
+                    
+                    throw new Error(`SHA-Konflikt konnte nicht behoben werden. Bitte 🔄 Button nochmal klicken oder Setup neu machen.`);
+                }
+            }
+            
+            // Kein SHA-Mismatch, anderer Fehler
+            throw new Error(`GitHub API Fehler: ${error.message || JSON.stringify(error)}`);
         }
 
         const result = await response.json();
@@ -827,6 +897,9 @@ class InventoryApp {
         this.updateSyncStatus();
         
         if (this.github.isConfigured()) {
+            // Hole aktuellen SHA von GitHub (silent)
+            this.refreshGitHubSHA();
+            
             // Starte Auto-Sync
             this.github.startAutoSync(() => this.autoSync());
             this.showToast('GitHub Auto-Sync aktiviert (alle 5 Min)', 'success');
@@ -847,6 +920,30 @@ class InventoryApp {
                     this.showGitHubSetup();
                 }
             }, 5000);
+        }
+    }
+
+    async refreshGitHubSHA() {
+        try {
+            // Hole nur SHA, ohne zu syncen
+            const response = await fetch(
+                `https://api.github.com/repos/${this.github.owner}/${this.github.repo}/contents/${GITHUB_CONFIG.FILE_PATH}`,
+                {
+                    headers: {
+                        'Authorization': `token ${this.github.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                }
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.github.lastSHA = data.sha;
+                localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, data.sha);
+                console.log('GitHub SHA aktualisiert:', data.sha.substring(0, 7));
+            }
+        } catch (error) {
+            console.log('SHA Refresh Fehler (ignoriert):', error.message);
         }
     }
 
