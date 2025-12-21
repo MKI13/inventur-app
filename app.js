@@ -31,6 +31,35 @@ const GITHUB_CONFIG = {
 };
 
 // ===================================
+// UTF-8 Safe Base64 Helper Functions
+// ===================================
+function base64EncodeUTF8(str) {
+    // Konvertiere UTF-8 String zu Base64
+    // Unterstützt deutsche Umlaute (ä, ö, ü, ß) und alle UTF-8 Zeichen
+    try {
+        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+            return String.fromCharCode(parseInt(p1, 16));
+        }));
+    } catch (error) {
+        console.error('❌ base64EncodeUTF8 Fehler:', error);
+        throw new Error('UTF-8 Encoding fehlgeschlagen');
+    }
+}
+
+function base64DecodeUTF8(str) {
+    // Konvertiere Base64 zu UTF-8 String
+    // Unterstützt deutsche Umlaute (ä, ö, ü, ß) und alle UTF-8 Zeichen
+    try {
+        return decodeURIComponent(atob(str).split('').map((c) => {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    } catch (error) {
+        console.error('❌ base64DecodeUTF8 Fehler:', error);
+        throw new Error('UTF-8 Decoding fehlgeschlagen');
+    }
+}
+
+// ===================================
 // Database Manager
 // ===================================
 class DatabaseManager {
@@ -136,24 +165,7 @@ class DatabaseManager {
 }
 
 // ===================================
-// UTF-8 Base64 Helper Functions
-// ===================================
-function base64EncodeUTF8(str) {
-    // Konvertiere String zu UTF-8 Bytes, dann zu Base64
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
-        return String.fromCharCode(parseInt(p1, 16));
-    }));
-}
-
-function base64DecodeUTF8(str) {
-    // Konvertiere Base64 zu UTF-8 String
-    return decodeURIComponent(atob(str).split('').map((c) => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-}
-
-// ===================================
-// GitHub Sync Manager
+// GitHub Sync Manager v2.0 - Robust & Zuverlässig
 // ===================================
 class GitHubManager {
     constructor() {
@@ -163,6 +175,8 @@ class GitHubManager {
         this.lastSHA = localStorage.getItem(GITHUB_CONFIG.LAST_SHA_KEY);
         this.syncInterval = null;
         this.isSyncing = false;
+        this.retryCount = 0;
+        this.maxRetries = 3;
     }
 
     isConfigured() {
@@ -179,162 +193,322 @@ class GitHubManager {
         localStorage.setItem(GITHUB_CONFIG.REPO_KEY, repo);
     }
 
+    // Validiere JSON vor Upload/Download
+    validateData(data) {
+        if (!data || typeof data !== 'object') {
+            throw new Error('Ungültige Daten: Kein Objekt');
+        }
+        
+        if (!data.version) {
+            throw new Error('Ungültige Daten: Keine Version');
+        }
+        
+        if (!Array.isArray(data.items)) {
+            throw new Error('Ungültige Daten: Items ist kein Array');
+        }
+        
+        if (!Array.isArray(data.categories)) {
+            throw new Error('Ungültige Daten: Categories ist kein Array');
+        }
+        
+        return true;
+    }
+
+    // Erstelle Backup vor Sync
+    createBackup(data) {
+        try {
+            const backup = {
+                timestamp: new Date().toISOString(),
+                data: JSON.parse(JSON.stringify(data))
+            };
+            localStorage.setItem('efsin_last_backup', JSON.stringify(backup));
+            console.log('✅ Backup erstellt');
+        } catch (error) {
+            console.error('⚠️ Backup-Fehler:', error);
+        }
+    }
+
+    // Stelle Backup wieder her
+    restoreBackup() {
+        try {
+            const backup = localStorage.getItem('efsin_last_backup');
+            if (backup) {
+                const parsed = JSON.parse(backup);
+                console.log('✅ Backup wiederhergestellt:', parsed.timestamp);
+                return parsed.data;
+            }
+        } catch (error) {
+            console.error('⚠️ Backup-Wiederherstellung fehlgeschlagen:', error);
+        }
+        return null;
+    }
+
     async getFile() {
         if (!this.isConfigured()) throw new Error('GitHub nicht konfiguriert');
 
         const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${GITHUB_CONFIG.FILE_PATH}`;
         
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `token ${this.token}`,
-                'Accept': 'application/vnd.github.v3+json'
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${this.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (response.status === 404) {
+                console.log('📄 Datei existiert noch nicht auf GitHub');
+                return null;
             }
-        });
 
-        if (response.status === 404) {
-            return null; // Datei existiert noch nicht
+            if (!response.ok) {
+                throw new Error(`GitHub API Fehler: ${response.status}`);
+            }
+
+            const fileData = await response.json();
+            
+            // WICHTIG: Decode Base64 MIT UTF-8 Support
+            let content;
+            try {
+                // Entferne Whitespace
+                const base64Content = fileData.content.replace(/\s/g, '');
+                
+                // Validierung
+                if (!base64Content || base64Content.length === 0) {
+                    throw new Error('GitHub Content ist leer');
+                }
+                
+                // Decode mit UTF-8 Support (für deutsche Umlaute!)
+                const decoded = base64DecodeUTF8(base64Content);
+                
+                // Validierung
+                if (!decoded || decoded.trim().length === 0) {
+                    throw new Error('Decoded Content ist leer');
+                }
+                
+                // Parse JSON
+                content = JSON.parse(decoded);
+                
+            } catch (decodeError) {
+                console.error('❌ JSON Decode Fehler:', decodeError);
+                console.error('Base64 Preview:', fileData.content.substring(0, 100));
+                
+                // Detaillierter Fehler für User
+                if (decodeError.message.includes('JSON')) {
+                    throw new Error('GitHub Datei ist korrupt! Lösung: Menü → Daten exportieren → GitHub Datei löschen → Neu syncen');
+                } else {
+                    throw new Error('Decode-Fehler: ' + decodeError.message);
+                }
+            }
+            
+            // Validiere heruntergeladene Daten
+            this.validateData(content);
+            
+            this.lastSHA = fileData.sha;
+            localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, fileData.sha);
+            
+            console.log('✅ Datei erfolgreich von GitHub geladen');
+            return content;
+            
+        } catch (error) {
+            console.error('❌ getFile Fehler:', error);
+            throw error;
         }
-
-        if (!response.ok) {
-            throw new Error(`GitHub API Fehler: ${response.status}`);
-        }
-
-        const data = await response.json();
-        // GitHub fügt Zeilenumbrüche in base64 ein - entfernen
-        const base64Content = data.content.replace(/\s/g, '');
-        const content = JSON.parse(base64DecodeUTF8(base64Content));
-        
-        this.lastSHA = data.sha;
-        localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, data.sha);
-        
-        return content;
     }
 
     async putFile(data, message = 'Auto-Sync') {
         if (!this.isConfigured()) throw new Error('GitHub nicht konfiguriert');
 
+        // Validiere Daten VOR Upload
+        try {
+            this.validateData(data);
+        } catch (validationError) {
+            console.error('❌ Daten-Validierung fehlgeschlagen:', validationError);
+            throw new Error(`Ungültige Daten: ${validationError.message}`);
+        }
+
+        // Erstelle Backup
+        this.createBackup(data);
+
         const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${GITHUB_CONFIG.FILE_PATH}`;
         
-        const content = base64EncodeUTF8(JSON.stringify(data, null, 2));
-        
-        const body = {
-            message: message,
-            content: content,
-            branch: GITHUB_CONFIG.BRANCH
-        };
-
-        // Wenn Datei existiert, SHA mitschicken
-        if (this.lastSHA) {
-            body.sha = this.lastSHA;
-        }
-
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${this.token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            const errorMsg = (error.message || JSON.stringify(error)).toLowerCase();
+        try {
+            // Konvertiere zu JSON String
+            const jsonString = JSON.stringify(data, null, 2);
             
-            // SHA-Mismatch: Hole aktuellen SHA und versuche nochmal
-            // Verschiedene Error-Formate: "does not match", "sha", "409 conflict"
-            if (response.status === 409 || 
-                errorMsg.includes('does not match') || 
-                errorMsg.includes('sha') ||
-                errorMsg.includes('conflict')) {
+            // Encode zu Base64 MIT UTF-8 Support (konsistent mit getFile!)
+            const content = base64EncodeUTF8(jsonString);
+            
+            const body = {
+                message: message,
+                content: content,
+                branch: GITHUB_CONFIG.BRANCH
+            };
+
+            // SHA mitschicken wenn vorhanden
+            if (this.lastSHA) {
+                body.sha = this.lastSHA;
+            }
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${this.token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                const errorMsg = (error.message || JSON.stringify(error)).toLowerCase();
                 
-                console.log('SHA-Mismatch erkannt, hole aktuellen SHA...');
-                console.log('Original Error:', error.message || error);
-                
-                try {
-                    // Hole NUR den SHA (ohne Datei-Inhalt zu laden/überschreiben)
-                    const fileInfoUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${GITHUB_CONFIG.FILE_PATH}`;
-                    const fileInfoResponse = await fetch(fileInfoUrl, {
-                        headers: {
-                            'Authorization': `token ${this.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
-                    });
+                // SHA-Mismatch: Auto-Recovery
+                if (response.status === 409 || 
+                    errorMsg.includes('does not match') || 
+                    errorMsg.includes('sha') ||
+                    errorMsg.includes('conflict')) {
                     
-                    if (fileInfoResponse.ok) {
-                        const fileInfo = await fileInfoResponse.json();
-                        this.lastSHA = fileInfo.sha;
-                        localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, fileInfo.sha);
-                        
-                        console.log('Neuer SHA erhalten:', this.lastSHA);
-                        
-                        // Update body mit neuem SHA
-                        body.sha = this.lastSHA;
-                        
-                        // Retry mit korrektem SHA
-                        const retryResponse = await fetch(url, {
-                            method: 'PUT',
-                            headers: {
-                                'Authorization': `token ${this.token}`,
-                                'Accept': 'application/vnd.github.v3+json',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(body)
-                        });
-                        
-                        if (!retryResponse.ok) {
-                            const retryError = await retryResponse.json();
-                            throw new Error(`Retry fehlgeschlagen: ${retryError.message || 'Unbekannter Fehler'}`);
-                        }
-                        
-                        const retryResult = await retryResponse.json();
-                        this.lastSHA = retryResult.content.sha;
-                        localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, retryResult.content.sha);
-                        localStorage.setItem(GITHUB_CONFIG.LAST_SYNC_KEY, new Date().toISOString());
-                        
-                        console.log('SHA-Mismatch behoben! Neuer SHA:', this.lastSHA);
-                        return retryResult;
-                    }
-                    
-                } catch (retryError) {
-                    console.error('Retry nach SHA-Refresh fehlgeschlagen:', retryError);
-                    
-                    // Letzter Versuch: Lösche SHA komplett und versuche als neue Datei
-                    console.log('Versuche ohne SHA (neue Datei)...');
-                    this.lastSHA = null;
-                    localStorage.removeItem(GITHUB_CONFIG.LAST_SHA_KEY);
-                    
-                    throw new Error(`SHA-Konflikt konnte nicht behoben werden. Bitte 🔄 Button nochmal klicken oder Setup neu machen.`);
+                    console.log('⚠️ SHA-Mismatch erkannt - versuche Recovery...');
+                    return await this.recoverSHAAndRetry(data, message);
                 }
+                
+                throw new Error(`GitHub API Fehler: ${error.message || JSON.stringify(error)}`);
+            }
+
+            const result = await response.json();
+            this.lastSHA = result.content.sha;
+            localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, result.content.sha);
+            localStorage.setItem(GITHUB_CONFIG.LAST_SYNC_KEY, new Date().toISOString());
+            
+            this.retryCount = 0; // Reset retry counter
+            console.log('✅ Daten erfolgreich auf GitHub gespeichert');
+            return result;
+            
+        } catch (error) {
+            console.error('❌ putFile Fehler:', error);
+            
+            // Retry bei Netzwerk-Fehlern
+            if (this.retryCount < this.maxRetries && 
+                (error.message.includes('network') || error.message.includes('fetch'))) {
+                this.retryCount++;
+                console.log(`🔄 Retry ${this.retryCount}/${this.maxRetries}...`);
+                await this.sleep(1000 * this.retryCount); // Exponentielles Backoff
+                return await this.putFile(data, message);
             }
             
-            // Kein SHA-Mismatch, anderer Fehler
-            throw new Error(`GitHub API Fehler: ${error.message || JSON.stringify(error)}`);
+            throw error;
         }
+    }
 
-        const result = await response.json();
-        this.lastSHA = result.content.sha;
-        localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, result.content.sha);
-        localStorage.setItem(GITHUB_CONFIG.LAST_SYNC_KEY, new Date().toISOString());
-        
-        return result;
+    async recoverSHAAndRetry(data, message) {
+        try {
+            console.log('🔧 Hole aktuellen SHA von GitHub...');
+            
+            const fileInfoUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${GITHUB_CONFIG.FILE_PATH}`;
+            const fileInfoResponse = await fetch(fileInfoUrl, {
+                headers: {
+                    'Authorization': `token ${this.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (fileInfoResponse.ok) {
+                const fileInfo = await fileInfoResponse.json();
+                this.lastSHA = fileInfo.sha;
+                localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, fileInfo.sha);
+                
+                console.log('✅ Neuer SHA erhalten, versuche erneut...');
+                
+                // Retry mit korrektem SHA
+                const jsonString = JSON.stringify(data, null, 2);
+                const content = btoa(unescape(encodeURIComponent(jsonString)));
+                
+                const body = {
+                    message: message,
+                    content: content,
+                    branch: GITHUB_CONFIG.BRANCH,
+                    sha: this.lastSHA
+                };
+                
+                const retryResponse = await fetch(fileInfoUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${this.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                if (!retryResponse.ok) {
+                    const retryError = await retryResponse.json();
+                    throw new Error(`Retry fehlgeschlagen: ${retryError.message}`);
+                }
+                
+                const retryResult = await retryResponse.json();
+                this.lastSHA = retryResult.content.sha;
+                localStorage.setItem(GITHUB_CONFIG.LAST_SHA_KEY, retryResult.content.sha);
+                localStorage.setItem(GITHUB_CONFIG.LAST_SYNC_KEY, new Date().toISOString());
+                
+                console.log('✅ SHA-Mismatch behoben!');
+                return retryResult;
+            }
+            
+        } catch (retryError) {
+            console.error('❌ SHA-Recovery fehlgeschlagen:', retryError);
+            
+            // Letzter Versuch: SHA komplett löschen
+            console.log('🔄 Versuche ohne SHA (als neue Datei)...');
+            this.lastSHA = null;
+            localStorage.removeItem(GITHUB_CONFIG.LAST_SHA_KEY);
+            
+            throw new Error('SHA-Konflikt konnte nicht behoben werden. Bitte GitHub Setup erneut durchführen.');
+        }
+    }
+
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     async sync(localData, onConflict) {
         if (this.isSyncing) {
-            console.log('Sync läuft bereits');
-            return;
+            console.log('⏸️ Sync läuft bereits');
+            return { action: 'skip', message: 'Sync läuft bereits' };
         }
 
         this.isSyncing = true;
 
         try {
+            console.log('🔄 Sync gestartet...');
+            
+            // Validiere lokale Daten
+            this.validateData(localData);
+            
             // Hole aktuelle Version von GitHub
-            const remoteData = await this.getFile();
+            let remoteData;
+            try {
+                remoteData = await this.getFile();
+            } catch (getError) {
+                console.error('❌ Fehler beim Laden von GitHub:', getError);
+                
+                // Wenn JSON beschädigt ist
+                if (getError.message.includes('beschädigt')) {
+                    console.log('🔧 Repariere beschädigte Datei...');
+                    // Überschreibe mit lokalen Daten
+                    this.lastSHA = null;
+                    localStorage.removeItem(GITHUB_CONFIG.LAST_SHA_KEY);
+                    await this.putFile(localData, 'Reparatur: Beschädigte Datei überschrieben');
+                    return { action: 'repaired', message: 'Beschädigte Datei repariert' };
+                }
+                
+                throw getError;
+            }
 
             if (!remoteData) {
-                // Datei existiert noch nicht - erste Upload
+                // Datei existiert noch nicht - erster Upload
+                console.log('📤 Erster Upload zu GitHub...');
                 await this.putFile(localData, 'Initialer Sync');
                 return { action: 'uploaded', message: 'Erste Synchronisation erfolgreich' };
             }
@@ -343,12 +517,20 @@ class GitHubManager {
             const localTimestamp = this.getLatestTimestamp(localData);
             const remoteTimestamp = this.getLatestTimestamp(remoteData);
 
+            console.log('📊 Timestamp-Vergleich:');
+            console.log('  Lokal:', localTimestamp);
+            console.log('  Remote:', remoteTimestamp);
+
             if (localTimestamp > remoteTimestamp) {
                 // Lokale Version ist neuer
+                console.log('⬆️ Upload: Lokale Version ist neuer');
                 await this.putFile(localData, 'Auto-Sync: Lokale Änderungen');
                 return { action: 'uploaded', message: 'Lokale Änderungen hochgeladen' };
+                
             } else if (remoteTimestamp > localTimestamp) {
                 // Remote Version ist neuer
+                console.log('⬇️ Download: Remote Version ist neuer');
+                
                 if (onConflict) {
                     const result = await onConflict(remoteData, localData);
                     if (result === 'remote') {
@@ -360,10 +542,23 @@ class GitHubManager {
                 } else {
                     return { action: 'downloaded', data: remoteData, message: 'Remote-Version heruntergeladen' };
                 }
+                
             } else {
                 // Keine Änderungen
+                console.log('✅ Bereits synchronisiert');
                 return { action: 'none', message: 'Bereits synchronisiert' };
             }
+            
+        } catch (error) {
+            console.error('❌ Sync-Fehler:', error);
+            
+            // Bei kritischen Fehlern: Lokale Daten sichern
+            if (error.message.includes('JSON')) {
+                this.createBackup(localData);
+            }
+            
+            throw error;
+            
         } finally {
             this.isSyncing = false;
         }
@@ -1032,7 +1227,7 @@ class InventoryApp {
 
         try {
             const localData = {
-                version: '1.4.0',
+                version: '2.0.0',
                 exportDate: new Date().toISOString(),
                 categories: this.categories,
                 items: this.items
@@ -1045,15 +1240,75 @@ class InventoryApp {
             if (result.action === 'downloaded' && result.data) {
                 // Remote Daten übernehmen
                 await this.importFromGitHub(result.data);
+            } else if (result.action === 'repaired') {
+                // Datei wurde repariert
+                console.log('✅ GitHub-Datei wurde repariert');
             }
 
-            this.showToast(result.message, 'success');
+            // Zeige Erfolg-Message
+            let icon = '✅';
+            if (result.action === 'uploaded') icon = '⬆️';
+            if (result.action === 'downloaded') icon = '⬇️';
+            if (result.action === 'repaired') icon = '🔧';
+            
+            this.showToast(`${icon} ${result.message}`, 'success');
             this.updateSyncStatus();
 
         } catch (error) {
-            console.error('Sync Fehler:', error);
-            this.showToast(`Sync Fehler: ${error.message}`, 'error');
+            console.error('❌ Sync Fehler:', error);
+            
+            // Spezielle Error-Behandlung
+            let errorMessage = error.message;
+            
+            if (error.message.includes('JSON')) {
+                errorMessage = 'Daten-Fehler! Backup wurde erstellt. Versuche Setup neu oder kontaktiere Support.';
+            } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                errorMessage = 'Keine Internet-Verbindung! Versuche es später nochmal.';
+            } else if (error.message.includes('beschädigt')) {
+                errorMessage = 'GitHub-Datei beschädigt! Klicke nochmal auf 🔄 zum Reparieren.';
+            }
+            
+            this.showToast(`Sync Fehler: ${errorMessage}`, 'error');
             this.updateSyncStatus();
+        }
+    }
+
+    async repairGitHubData() {
+        if (!this.github.isConfigured()) {
+            this.showToast('GitHub nicht konfiguriert!', 'error');
+            return;
+        }
+
+        const confirm = window.confirm(
+            '🔧 GITHUB-DATEI REPARIEREN\n\n' +
+            'Dies überschreibt die Datei auf GitHub\n' +
+            'mit deinen lokalen Daten.\n\n' +
+            'Fortfahren?'
+        );
+
+        if (!confirm) return;
+
+        try {
+            this.showToast('🔧 Repariere GitHub-Datei...', 'info');
+            
+            // Lösche SHA um Datei zu überschreiben
+            this.github.lastSHA = null;
+            localStorage.removeItem(GITHUB_CONFIG.LAST_SHA_KEY);
+            
+            const localData = {
+                version: '2.0.0',
+                exportDate: new Date().toISOString(),
+                categories: this.categories,
+                items: this.items
+            };
+            
+            await this.github.putFile(localData, 'Manuelle Reparatur: Datei überschrieben');
+            
+            this.showToast('✅ GitHub-Datei erfolgreich repariert!', 'success');
+            
+        } catch (error) {
+            console.error('❌ Reparatur fehlgeschlagen:', error);
+            this.showToast(`Reparatur fehlgeschlagen: ${error.message}`, 'error');
         }
     }
 
@@ -1062,8 +1317,17 @@ class InventoryApp {
             return;
         }
 
-        console.log('Auto-Sync wird ausgeführt...');
-        await this.syncWithGitHub();
+        console.log('🔄 Auto-Sync wird ausgeführt...');
+        
+        // Stiller Sync - keine Toasts bei Auto-Sync
+        const originalShowToast = this.showToast;
+        this.showToast = () => {}; // Deaktiviere Toasts temporär
+        
+        try {
+            await this.syncWithGitHub();
+        } finally {
+            this.showToast = originalShowToast; // Aktiviere Toasts wieder
+        }
     }
 
     async handleSyncConflict(remoteData, localData) {
@@ -1252,7 +1516,15 @@ class InventoryApp {
     }
 
     showAbout() {
-        alert('ef-sin Inventur v1.3.0\n\nInventur-App für ef-sin Schreinerei\nMünchen / Unterhaching\n\n© 2024 ef-sin.de');
+        alert('ef-sin Inventur v2.0.0\n\n' +
+              'Inventur-App für ef-sin Schreinerei\n' +
+              'München / Unterhaching\n\n' +
+              '✨ NEU in v2.0:\n' +
+              '• Robustes GitHub Auto-Sync\n' +
+              '• Automatische Fehler-Reparatur\n' +
+              '• Backup-System\n' +
+              '• Verbesserte Stabilität\n\n' +
+              '© 2024 ef-sin.de');
     }
 
     async showNotes(itemId) {
