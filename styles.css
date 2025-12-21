@@ -1280,6 +1280,33 @@ body {
 }
 
 /* ===================================
+   Notizen Counter & Hints
+   =================================== */
+.notes-counter {
+    float: right;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+.notes-counter.warning {
+    color: var(--warning);
+    font-weight: 600;
+}
+
+.notes-counter.error {
+    color: var(--error);
+    font-weight: 600;
+}
+
+.notes-hint {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* ===================================
    Print Styles
    =================================== */
 @media print {
