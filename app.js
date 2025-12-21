@@ -9,6 +9,10 @@ const APP_CONFIG = {
     LAST_BACKUP_KEY: 'efsin_last_backup',
     BACKUP_REMINDER_DAYS: 7,
     MAX_NOTES_LENGTH: 10000, // Max 10.000 Zeichen für Notizen
+    // Foto-Kompression (reduziert JSON-Größe um ~90%)
+    PHOTO_MAX_WIDTH: 800,     // Max Breite in Pixel
+    PHOTO_MAX_HEIGHT: 600,    // Max Höhe in Pixel
+    PHOTO_QUALITY: 0.7,       // JPEG Qualität (0.7 = 70%)
     DEFAULT_CATEGORIES: [
         'Holz',
         'Platten',
@@ -1057,20 +1061,86 @@ class InventoryApp {
         }
     }
 
-    handlePhotoUpload(event) {
+    async compressPhoto(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Canvas für Kompression erstellen
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Max-Dimensionen aus Config
+                    const maxWidth = APP_CONFIG.PHOTO_MAX_WIDTH;
+                    const maxHeight = APP_CONFIG.PHOTO_MAX_HEIGHT;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Aspect Ratio beibehalten
+                    if (width > maxWidth || height > maxHeight) {
+                        if (width > height) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        } else {
+                            width *= maxHeight / height;
+                            height = maxHeight;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Foto zeichnen (mit smoothing für bessere Qualität)
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Zu JPEG konvertieren mit konfigurierter Qualität
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', APP_CONFIG.PHOTO_QUALITY);
+                    
+                    // Logging
+                    const originalSize = event.target.result.length;
+                    const compressedSize = compressedDataUrl.length;
+                    const savings = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+                    console.log(`📸 Foto komprimiert: ${(originalSize / 1024).toFixed(0)}KB → ${(compressedSize / 1024).toFixed(0)}KB (${savings}% gespart)`);
+                    
+                    resolve(compressedDataUrl);
+                };
+                img.onerror = reject;
+                img.src = event.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async handlePhotoUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const photoData = e.target.result;
-            if (this.editingItem) {
-                this.editingItem.photo = photoData;
-            }
+        try {
+            // Zeige Loading
             document.getElementById('photoPreview').innerHTML = 
-                `<img src="${photoData}" alt="Artikelfoto">`;
-        };
-        reader.readAsDataURL(file);
+                '<div style="padding: 2rem; text-align: center;">📸 Komprimiere Foto...</div>';
+            
+            // Komprimiere Foto
+            const compressedPhoto = await this.compressPhoto(file);
+            
+            // Speichere komprimiertes Foto
+            if (this.editingItem) {
+                this.editingItem.photo = compressedPhoto;
+            }
+            
+            // Zeige Preview
+            document.getElementById('photoPreview').innerHTML = 
+                `<img src="${compressedPhoto}" alt="Artikelfoto">`;
+                
+        } catch (error) {
+            console.error('Foto-Kompression fehlgeschlagen:', error);
+            this.showToast('Fehler beim Foto-Upload', 'error');
+            document.getElementById('photoPreview').innerHTML = '';
+        }
     }
 
     async exportData() {
@@ -1331,6 +1401,98 @@ class InventoryApp {
             
             this.showToast(`Sync Fehler: ${errorMessage}`, 'error');
             this.updateSyncStatus();
+        }
+    }
+
+    async compressAllPhotos() {
+        const confirm = window.confirm(
+            '📸 ALLE FOTOS KOMPRIMIEREN\n\n' +
+            'Dieser Vorgang komprimiert alle Artikel-Fotos:\n' +
+            '• Reduziert Größe um ~90%\n' +
+            '• Ändert Auflösung zu max 800x600px\n' +
+            '• JPEG 70% Qualität\n\n' +
+            'RESULTAT:\n' +
+            '• Kleinere JSON-Datei\n' +
+            '• Schnellerer GitHub-Sync\n' +
+            '• Etwas Qualitätsverlust\n\n' +
+            'WICHTIG: Mache vorher ein Backup!\n' +
+            '(Menü → Daten exportieren)\n\n' +
+            'Fortfahren?'
+        );
+        
+        if (!confirm) return;
+        
+        try {
+            let compressedCount = 0;
+            let totalSavings = 0;
+            let skippedCount = 0;
+            
+            // Zeige Progress Toast
+            this.showToast('📸 Komprimiere Fotos...', 'info');
+            
+            // Durchlaufe alle Artikel mit Fotos
+            for (const item of this.items) {
+                if (item.photo && item.photo.startsWith('data:image/')) {
+                    const originalSize = item.photo.length;
+                    
+                    // Prüfe ob schon komprimiert (JPEG mit geringer Größe)
+                    if (item.photo.startsWith('data:image/jpeg') && originalSize < 200000) {
+                        console.log(`⏭️ "${item.name}": Bereits komprimiert, überspringe`);
+                        skippedCount++;
+                        continue;
+                    }
+                    
+                    try {
+                        // Konvertiere Base64 zu Blob zu File
+                        const response = await fetch(item.photo);
+                        const blob = await response.blob();
+                        const file = new File([blob], 'photo.jpg', { type: blob.type });
+                        
+                        // Komprimiere
+                        const compressedPhoto = await this.compressPhoto(file);
+                        
+                        // Update Artikel
+                        item.photo = compressedPhoto;
+                        await this.db.update(item);
+                        
+                        const newSize = compressedPhoto.length;
+                        const savings = originalSize - newSize;
+                        totalSavings += savings;
+                        compressedCount++;
+                        
+                        console.log(`✅ "${item.name}": ${(originalSize/1024).toFixed(0)}KB → ${(newSize/1024).toFixed(0)}KB`);
+                        
+                    } catch (error) {
+                        console.error(`❌ Fehler bei "${item.name}":`, error);
+                    }
+                }
+            }
+            
+            if (compressedCount > 0 || skippedCount > 0) {
+                // Reload Items
+                await this.loadItems();
+                this.updateUI();
+                
+                // Sync mit GitHub
+                if (this.github.isConfigured()) {
+                    await this.syncWithGitHub();
+                }
+                
+                this.showToast(
+                    `✅ Fotos komprimiert!\n` +
+                    `${compressedCount} komprimiert, ${skippedCount} übersprungen\n` +
+                    `${(totalSavings / 1024 / 1024).toFixed(1)}MB gespart!`,
+                    'success'
+                );
+                
+                this.closeMenu();
+            } else {
+                this.showToast('ℹ️ Keine Fotos zum Komprimieren gefunden', 'info');
+            }
+            
+        } catch (error) {
+            console.error('Fehler beim Komprimieren:', error);
+            this.showToast('Fehler beim Komprimieren der Fotos', 'error');
         }
     }
 
