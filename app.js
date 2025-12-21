@@ -7,7 +7,8 @@ const APP_CONFIG = {
     STORE_NAME: 'inventory',
     CATEGORIES_KEY: 'efsin_categories',
     LAST_BACKUP_KEY: 'efsin_last_backup',
-    BACKUP_REMINDER_DAYS: 7, // Erinnere alle 7 Tage
+    BACKUP_REMINDER_DAYS: 7,
+    MAX_NOTES_LENGTH: 10000, // Max 10.000 Zeichen für Notizen
     DEFAULT_CATEGORIES: [
         'Holz',
         'Platten',
@@ -209,6 +210,24 @@ class GitHubManager {
         
         if (!Array.isArray(data.categories)) {
             throw new Error('Ungültige Daten: Categories ist kein Array');
+        }
+        
+        // WICHTIG: Validiere und trimme Notizen
+        let trimmedCount = 0;
+        data.items.forEach((item, index) => {
+            if (item.notes && item.notes.length > APP_CONFIG.MAX_NOTES_LENGTH) {
+                const originalLength = item.notes.length;
+                // Trimme auf Max-Länge
+                item.notes = item.notes.substring(0, APP_CONFIG.MAX_NOTES_LENGTH);
+                // Füge Hinweis hinzu
+                item.notes += '\n\n[Notiz wurde automatisch gekürzt]';
+                trimmedCount++;
+                console.warn(`⚠️ Notizen von Artikel "${item.name}" gekürzt: ${originalLength} → ${APP_CONFIG.MAX_NOTES_LENGTH} Zeichen`);
+            }
+        });
+        
+        if (trimmedCount > 0) {
+            console.warn(`⚠️ ${trimmedCount} Artikel-Notizen wurden automatisch gekürzt (max ${APP_CONFIG.MAX_NOTES_LENGTH} Zeichen)`);
         }
         
         return true;
@@ -696,6 +715,27 @@ class InventoryApp {
             this.handlePhotoUpload(e);
         });
 
+        // Notizen Character Counter
+        const notesTextarea = document.getElementById('itemNotes');
+        const notesCounter = document.getElementById('notesCounter');
+        
+        if (notesTextarea && notesCounter) {
+            notesTextarea.addEventListener('input', (e) => {
+                const length = e.target.value.length;
+                const maxLength = APP_CONFIG.MAX_NOTES_LENGTH;
+                
+                notesCounter.textContent = `${length.toLocaleString()} / ${maxLength.toLocaleString()}`;
+                
+                // Farbe ändern basierend auf Länge
+                notesCounter.classList.remove('warning', 'error');
+                if (length > maxLength * 0.9) {
+                    notesCounter.classList.add('error');
+                } else if (length > maxLength * 0.7) {
+                    notesCounter.classList.add('warning');
+                }
+            });
+        }
+
         // Online/Offline Status
         window.addEventListener('online', () => this.checkOnlineStatus());
         window.addEventListener('offline', () => this.checkOnlineStatus());
@@ -907,6 +947,14 @@ class InventoryApp {
         document.getElementById('itemForm').reset();
         document.getElementById('itemId').value = '';
         document.getElementById('photoPreview').innerHTML = '';
+        
+        // Reset Notizen-Counter
+        const notesCounter = document.getElementById('notesCounter');
+        if (notesCounter) {
+            notesCounter.textContent = `0 / ${APP_CONFIG.MAX_NOTES_LENGTH.toLocaleString()}`;
+            notesCounter.classList.remove('warning', 'error');
+        }
+        
         this.updateCategorySelects();
         document.getElementById('itemModal').classList.add('active');
     }
@@ -933,6 +981,19 @@ class InventoryApp {
             document.getElementById('itemPrice').value = this.editingItem.price || '';
             document.getElementById('itemLocation').value = this.editingItem.location || '';
             document.getElementById('itemNotes').value = this.editingItem.notes || '';
+            
+            // Update Notizen-Counter
+            const notesLength = (this.editingItem.notes || '').length;
+            const notesCounter = document.getElementById('notesCounter');
+            if (notesCounter) {
+                notesCounter.textContent = `${notesLength.toLocaleString()} / ${APP_CONFIG.MAX_NOTES_LENGTH.toLocaleString()}`;
+                notesCounter.classList.remove('warning', 'error');
+                if (notesLength > APP_CONFIG.MAX_NOTES_LENGTH * 0.9) {
+                    notesCounter.classList.add('error');
+                } else if (notesLength > APP_CONFIG.MAX_NOTES_LENGTH * 0.7) {
+                    notesCounter.classList.add('warning');
+                }
+            }
 
             if (this.editingItem.photo) {
                 document.getElementById('photoPreview').innerHTML = 
@@ -1270,6 +1331,67 @@ class InventoryApp {
             
             this.showToast(`Sync Fehler: ${errorMessage}`, 'error');
             this.updateSyncStatus();
+        }
+    }
+
+    async trimLongNotes() {
+        const confirm = window.confirm(
+            '✂️ LANGE NOTIZEN KÜRZEN\n\n' +
+            `Dieser Vorgang kürzt alle Notizen auf max. ${APP_CONFIG.MAX_NOTES_LENGTH.toLocaleString()} Zeichen.\n\n` +
+            'Grund: Sehr lange Notizen (>10.000 Zeichen) können\n' +
+            'GitHub-Sync Probleme verursachen.\n\n' +
+            'Fortfahren?'
+        );
+        
+        if (!confirm) return;
+        
+        try {
+            let trimmedCount = 0;
+            let totalSaved = 0;
+            
+            // Durchlaufe alle Artikel
+            for (const item of this.items) {
+                if (item.notes && item.notes.length > APP_CONFIG.MAX_NOTES_LENGTH) {
+                    const originalLength = item.notes.length;
+                    
+                    // Trimme auf Max-Länge
+                    item.notes = item.notes.substring(0, APP_CONFIG.MAX_NOTES_LENGTH);
+                    item.notes += '\n\n[Automatisch gekürzt am ' + new Date().toLocaleDateString() + ']';
+                    
+                    // Update in Datenbank
+                    await this.db.update(item);
+                    
+                    trimmedCount++;
+                    totalSaved += (originalLength - item.notes.length);
+                    
+                    console.log(`✂️ "${item.name}": ${originalLength} → ${item.notes.length} Zeichen`);
+                }
+            }
+            
+            if (trimmedCount > 0) {
+                // Reload Items
+                await this.loadItems();
+                this.updateUI();
+                
+                // Sync mit GitHub
+                if (this.github.isConfigured()) {
+                    await this.syncWithGitHub();
+                }
+                
+                this.showToast(
+                    `✅ ${trimmedCount} Notizen gekürzt!\n` +
+                    `${(totalSaved / 1000).toFixed(1)}KB gespart`,
+                    'success'
+                );
+                
+                this.closeMenu();
+            } else {
+                this.showToast('✅ Alle Notizen sind OK!', 'success');
+            }
+            
+        } catch (error) {
+            console.error('Fehler beim Kürzen:', error);
+            this.showToast('Fehler beim Kürzen der Notizen', 'error');
         }
     }
 
