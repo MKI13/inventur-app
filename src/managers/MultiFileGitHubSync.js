@@ -1,248 +1,411 @@
 // =============================================================================
-// CategoryManager v2.0.0 - VOLLSTÄNDIG mit Export/Import
+// MultiFileGitHubSync v2.0.0 - VOLLSTÄNDIG mit GitHub API
 // =============================================================================
 
-class CategoryManager {
-    constructor(db) {
-        this.db = db;
-        this.categories = [];
-        this.categoryData = new Map(); // Map<categoryId, items[]>
-        this.metadata = null;
+// UTF-8 Helper Funktionen
+function base64EncodeUTF8(str) {
+    return btoa(encodeURIComponent(str).replace(
+        /%([0-9A-F]{2})/g,
+        (match, p1) => String.fromCharCode(parseInt(p1, 16))
+    ));
+}
+
+function base64DecodeUTF8(str) {
+    return decodeURIComponent(
+        atob(str).split('').map(c =>
+            '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        ).join('')
+    );
+}
+
+class MultiFileGitHubSync {
+    constructor(categoryManager, imageManager) {
+        this.categoryManager = categoryManager;
+        this.imageManager = imageManager;
+        this.token = localStorage.getItem('efsin_github_token');
+        this.owner = localStorage.getItem('efsin_github_owner');
+        this.repo = localStorage.getItem('efsin_github_repo');
+        this.branch = 'main';
+        this.syncInterval = null;
+        this.isSyncing = false;
+        this.fileSHAs = new Map();
+    }
+
+    isConfigured() {
+        return !!(this.token && this.owner && this.repo);
     }
 
     // -------------------------------------------------------------------------
-    // Initialisierung
+    // Smart Sync - Nur geänderte Kategorien
     // -------------------------------------------------------------------------
 
-    async init() {
-        this.categories = await this.loadCategories();
-        console.log(`✅ CategoryManager: ${this.categories.length} Kategorien geladen`);
-    }
-
-    async loadCategories() {
-        const stored = localStorage.getItem('efsin_categories_v2');
-        if (stored) {
-            return JSON.parse(stored);
+    async smartSync() {
+        if (this.isSyncing) {
+            console.log('⏸️ Sync läuft bereits');
+            return { status: 'busy' };
         }
         
-        // Default Kategorien
-        return [
-            { id: 'holz', name: 'Holz', icon: '🪵' },
-            { id: 'platten', name: 'Platten', icon: '📋' },
-            { id: 'beschlaege', name: 'Beschläge', icon: '🔩' },
-            { id: 'werkzeuge', name: 'Werkzeuge', icon: '🔨' },
-            { id: 'lacke', name: 'Lacke', icon: '🎨' },
-            { id: 'schrauben', name: 'Schrauben', icon: '⚙️' },
-            { id: 'sonstiges', name: 'Sonstiges', icon: '📦' }
-        ];
-    }
-
-    saveCategories() {
-        localStorage.setItem('efsin_categories_v2', JSON.stringify(this.categories));
-    }
-
-    // -------------------------------------------------------------------------
-    // Kategorie CRUD
-    // -------------------------------------------------------------------------
-
-    addCategory(name, icon = '📦') {
-        const id = this.generateCategoryId(name);
-        const category = { id, name, icon };
-        this.categories.push(category);
-        this.saveCategories();
-        return category;
-    }
-
-    updateCategory(id, updates) {
-        const index = this.categories.findIndex(c => c.id === id);
-        if (index !== -1) {
-            this.categories[index] = { ...this.categories[index], ...updates };
-            this.saveCategories();
-            return this.categories[index];
-        }
-        return null;
-    }
-
-    deleteCategory(id) {
-        this.categories = this.categories.filter(c => c.id !== id);
-        this.saveCategories();
-    }
-
-    getCategoryById(id) {
-        return this.categories.find(c => c.id === id);
-    }
-
-    generateCategoryId(name) {
-        return name.toLowerCase()
-            .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
-            .replace(/[^a-z0-9]/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '');
-    }
-
-    // -------------------------------------------------------------------------
-    // Items pro Kategorie laden
-    // -------------------------------------------------------------------------
-
-    async loadCategoryItems(categoryId) {
-        if (this.categoryData.has(categoryId)) {
-            return this.categoryData.get(categoryId);
-        }
-
-        const allItems = await this.db.getAll();
-        const items = allItems.filter(item => item.category === categoryId);
-        this.categoryData.set(categoryId, items);
+        this.isSyncing = true;
+        const startTime = Date.now();
         
-        console.log(`📂 Kategorie "${categoryId}": ${items.length} Artikel`);
-        return items;
+        try {
+            console.log('🔄 Smart Sync gestartet...');
+            
+            // 1. Index syncen
+            const indexResult = await this.syncIndex();
+            
+            // 2. Geänderte Kategorien ermitteln
+            const remoteIndex = indexResult.action === 'downloaded' 
+                ? indexResult.data 
+                : await this.getFile('index.json');
+            
+            const changedCategories = await this.detectChangedCategories(remoteIndex);
+            
+            console.log(`📊 ${changedCategories.length} Kategorien zu syncen`);
+            
+            // 3. Nur geänderte Kategorien syncen
+            const results = [];
+            for (const categoryId of changedCategories) {
+                const result = await this.syncCategory(categoryId);
+                results.push(result);
+            }
+            
+            const duration = Date.now() - startTime;
+            console.log(`✅ Smart Sync abgeschlossen in ${duration}ms`);
+            
+            return {
+                status: 'success',
+                duration,
+                index: indexResult,
+                categories: results
+            };
+            
+        } catch (error) {
+            console.error('❌ Smart Sync Fehler:', error);
+            return { status: 'error', error: error.message };
+        } finally {
+            this.isSyncing = false;
+        }
     }
 
-    async getAllItemsByCategory() {
-        const result = {};
-        for (const category of this.categories) {
-            result[category.id] = await this.loadCategoryItems(category.id);
+    // -------------------------------------------------------------------------
+    // Index Sync
+    // -------------------------------------------------------------------------
+
+    async syncIndex() {
+        console.log('📄 Syncing index.json...');
+        
+        const localIndex = await this.categoryManager.exportIndexJSON();
+        const remoteIndex = await this.getFile('index.json');
+        
+        if (!remoteIndex) {
+            // Erste Sync
+            await this.putFile('index.json', localIndex, 'Initial sync: index.json');
+            return { action: 'uploaded', file: 'index.json' };
         }
+        
+        // Vergleiche Timestamps
+        const localTime = new Date(localIndex.lastUpdated).getTime();
+        const remoteTime = new Date(remoteIndex.lastUpdated).getTime();
+        
+        if (localTime > remoteTime) {
+            await this.putFile('index.json', localIndex, 'Update index.json');
+            return { action: 'uploaded', file: 'index.json' };
+        } else if (remoteTime > localTime) {
+            return { action: 'downloaded', file: 'index.json', data: remoteIndex };
+        }
+        
+        return { action: 'none', file: 'index.json' };
+    }
+
+    // -------------------------------------------------------------------------
+    // Kategorie Sync
+    // -------------------------------------------------------------------------
+
+    async syncCategory(categoryId) {
+        console.log(`📂 Syncing category: ${categoryId}...`);
+        
+        const localData = await this.categoryManager.exportCategoryJSON(categoryId);
+        const remoteData = await this.getFile(`categories/${categoryId}.json`);
+        
+        if (!remoteData) {
+            // Kategorie existiert nicht remote
+            await this.putFile(
+                `categories/${categoryId}.json`,
+                localData,
+                `Add category: ${categoryId}`
+            );
+            return { action: 'uploaded', category: categoryId };
+        }
+        
+        // Vergleiche lastModified
+        const localTime = new Date(localData.lastModified).getTime();
+        const remoteTime = new Date(remoteData.lastModified).getTime();
+        
+        if (localTime > remoteTime) {
+            await this.putFile(
+                `categories/${categoryId}.json`,
+                localData,
+                `Update category: ${categoryId}`
+            );
+            return { action: 'uploaded', category: categoryId };
+        } else if (remoteTime > localTime) {
+            await this.categoryManager.importCategoryJSON(categoryId, remoteData);
+            return { action: 'downloaded', category: categoryId };
+        }
+        
+        return { action: 'none', category: categoryId };
+    }
+
+    async syncAllCategories() {
+        const results = [];
+        
+        for (const category of this.categoryManager.categories) {
+            try {
+                const result = await this.syncCategory(category.id);
+                results.push(result);
+            } catch (error) {
+                console.error(`❌ Fehler bei Kategorie ${category.id}:`, error);
+                results.push({ action: 'error', category: category.id, error: error.message });
+            }
+        }
+        
+        return results;
+    }
+
+    async detectChangedCategories(remoteIndex) {
+        const changed = [];
+        
+        for (const category of this.categoryManager.categories) {
+            const localStats = await this.categoryManager.getCategoryStats(category.id);
+            const remoteCat = remoteIndex?.categories?.find(c => c.id === category.id);
+            
+            if (!remoteCat) {
+                // Neue Kategorie
+                changed.push(category.id);
+                continue;
+            }
+            
+            // Vergleiche Timestamps
+            const localTime = localStats.lastModified;
+            const remoteTime = new Date(remoteCat.lastModified).getTime();
+            
+            if (Math.abs(localTime - remoteTime) > 1000) { // 1 Sekunde Toleranz
+                changed.push(category.id);
+            }
+        }
+        
+        return changed;
+    }
+
+    // -------------------------------------------------------------------------
+    // GitHub API - JSON Dateien
+    // -------------------------------------------------------------------------
+
+    async getFile(path) {
+        const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`;
+        
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${this.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (response.status === 404) {
+                return null;
+            }
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(`GitHub API Error: ${response.status} - ${error.message || ''}`);
+            }
+            
+            const data = await response.json();
+            
+            // SHA speichern für Updates
+            this.fileSHAs.set(path, data.sha);
+            
+            // Content decodieren
+            const base64Content = data.content.replace(/\s/g, '');
+            const jsonString = base64DecodeUTF8(base64Content);
+            return JSON.parse(jsonString);
+            
+        } catch (error) {
+            console.error(`❌ getFile(${path}) Fehler:`, error);
+            if (error.message.includes('404')) {
+                return null;
+            }
+            throw error;
+        }
+    }
+
+    async putFile(path, data, message) {
+        const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`;
+        
+        const jsonString = JSON.stringify(data, null, 2);
+        const content = base64EncodeUTF8(jsonString);
+        
+        const body = {
+            message,
+            content,
+            branch: this.branch
+        };
+        
+        // SHA hinzufügen wenn vorhanden (für Updates)
+        if (this.fileSHAs.has(path)) {
+            body.sha = this.fileSHAs.get(path);
+        }
+        
+        try {
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${this.token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(`GitHub API Error: ${response.status} - ${error.message || ''}`);
+            }
+            
+            const result = await response.json();
+            
+            // SHA aktualisieren für zukünftige Updates
+            this.fileSHAs.set(path, result.content.sha);
+            
+            console.log(`✅ ${path} hochgeladen`);
+            return result;
+            
+        } catch (error) {
+            console.error(`❌ putFile(${path}) Fehler:`, error);
+            throw error;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Bild-Sync (optional für später)
+    // -------------------------------------------------------------------------
+
+    async syncImage(itemId, categoryId) {
+        const imageId = `${categoryId}/${itemId}`;
+        
+        // Prüfe ob Bild lokal existiert
+        const localBlob = await this.imageManager.loadImage(imageId);
+        
+        if (localBlob) {
+            // Upload zu GitHub
+            await this.imageManager.uploadToGitHub(imageId, localBlob, this);
+            return { action: 'uploaded', image: imageId };
+        } else {
+            // Download von GitHub
+            const blob = await this.imageManager.downloadFromGitHub(imageId, this);
+            return { action: 'downloaded', image: imageId, blob };
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // GitHub API - Binärdateien (für Bilder)
+    // -------------------------------------------------------------------------
+
+    async uploadFile(path, base64Content) {
+        const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`;
+        
+        const body = {
+            message: `Upload image: ${path}`,
+            content: base64Content,
+            branch: this.branch
+        };
+        
+        // SHA wenn vorhanden
+        if (this.fileSHAs.has(path)) {
+            body.sha = this.fileSHAs.get(path);
+        }
+        
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${this.token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`Upload failed: ${response.status} - ${error.message || ''}`);
+        }
+        
+        const result = await response.json();
+        this.fileSHAs.set(path, result.content.sha);
         return result;
     }
 
-    // -------------------------------------------------------------------------
-    // Kategorie-Statistiken
-    // -------------------------------------------------------------------------
-
-    async getCategoryStats(categoryId) {
-        const items = await this.loadCategoryItems(categoryId);
+    async downloadFile(path) {
+        const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`;
         
-        return {
-            itemCount: items.length,
-            totalValue: items.reduce((sum, item) => sum + (item.price * item.stock || 0), 0),
-            lowStock: items.filter(item => item.stock <= item.min).length,
-            totalStock: items.reduce((sum, item) => sum + item.stock, 0),
-            lastModified: items.length > 0 
-                ? Math.max(...items.map(i => new Date(i.updatedAt).getTime()))
-                : Date.now()
-        };
-    }
-
-    async getAllStats() {
-        const stats = {
-            categories: [],
-            totals: {
-                items: 0,
-                value: 0,
-                lowStock: 0
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `token ${this.token}`,
+                'Accept': 'application/vnd.github.v3+json'
             }
-        };
-
-        for (const category of this.categories) {
-            const catStats = await this.getCategoryStats(category.id);
-            stats.categories.push({
-                id: category.id,
-                name: category.name,
-                ...catStats
-            });
-            
-            stats.totals.items += catStats.itemCount;
-            stats.totals.value += catStats.totalValue;
-            stats.totals.lowStock += catStats.lowStock;
-        }
-
-        return stats;
-    }
-
-    // -------------------------------------------------------------------------
-    // Export für GitHub (pro Kategorie)
-    // -------------------------------------------------------------------------
-
-    async exportCategoryJSON(categoryId) {
-        const items = await this.loadCategoryItems(categoryId);
-        const category = this.getCategoryById(categoryId);
+        });
         
-        return {
-            category: categoryId,
-            categoryName: category?.name || categoryId,
-            lastModified: new Date().toISOString(),
-            itemCount: items.length,
-            items: items.map(item => ({
-                id: item.id,
-                name: item.name,
-                sku: item.sku || '',
-                stock: item.stock,
-                unit: item.unit,
-                min: item.min || 0,
-                max: item.max || 0,
-                price: item.price || 0,
-                location: item.location || '',
-                notes: item.notes || '',
-                photo: item.photo ? `images/${categoryId}/${item.id}.jpg` : '',
-                createdAt: item.createdAt,
-                updatedAt: item.updatedAt
-            }))
-        };
-    }
-
-    async exportIndexJSON() {
-        const stats = await this.getAllStats();
+        if (!response.ok) {
+            throw new Error(`Download failed: ${response.status}`);
+        }
         
-        return {
-            version: '2.0.0',
-            lastUpdated: new Date().toISOString(),
-            categories: stats.categories.map(cat => ({
-                id: cat.id,
-                name: cat.name,
-                file: `categories/${cat.id}.json`,
-                itemCount: cat.itemCount,
-                totalValue: cat.totalValue,
-                lowStock: cat.lowStock,
-                lastModified: new Date(cat.lastModified).toISOString()
-            })),
-            statistics: {
-                totalItems: stats.totals.items,
-                totalValue: stats.totals.value,
-                lowStock: stats.totals.lowStock,
-                categories: this.categories.length
-            }
-        };
-    }
-
-    // -------------------------------------------------------------------------
-    // Import von GitHub (pro Kategorie)
-    // -------------------------------------------------------------------------
-
-    async importCategoryJSON(categoryId, data) {
-        if (data.category !== categoryId) {
-            throw new Error(`Category mismatch: expected ${categoryId}, got ${data.category}`);
-        }
-
-        // Items in DB schreiben
-        for (const item of data.items) {
-            await this.db.update(item);
-        }
-
-        // Cache aktualisieren
-        this.categoryData.set(categoryId, data.items);
+        const data = await response.json();
+        this.fileSHAs.set(path, data.sha);
         
-        console.log(`✅ Kategorie "${categoryId}" importiert: ${data.items.length} Artikel`);
+        return data.content.replace(/\s/g, '');
     }
 
     // -------------------------------------------------------------------------
-    // Cache Management
+    // Auto-Sync
     // -------------------------------------------------------------------------
 
-    invalidateCache(categoryId = null) {
-        if (categoryId) {
-            this.categoryData.delete(categoryId);
-        } else {
-            this.categoryData.clear();
+    startAutoSync(intervalMinutes = 5) {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+        }
+        
+        this.syncInterval = setInterval(
+            () => this.smartSync(),
+            intervalMinutes * 60 * 1000
+        );
+        
+        console.log(`⏰ Auto-Sync gestartet: alle ${intervalMinutes} Minuten`);
+    }
+
+    stopAutoSync() {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+            this.syncInterval = null;
+            console.log('⏸️ Auto-Sync gestoppt');
         }
     }
 
-    async refreshCategory(categoryId) {
-        this.invalidateCache(categoryId);
-        return await this.loadCategoryItems(categoryId);
+    // -------------------------------------------------------------------------
+    // Manueller Sync (für UI Button)
+    // -------------------------------------------------------------------------
+
+    async manualSync() {
+        if (!this.isConfigured()) {
+            throw new Error('GitHub nicht konfiguriert! Bitte Token, Owner und Repo in Einstellungen eintragen.');
+        }
+        
+        return await this.smartSync();
     }
 }
 
 // Export
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = CategoryManager;
+    module.exports = MultiFileGitHubSync;
 }
