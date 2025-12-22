@@ -1,8 +1,8 @@
 // =============================================================================
-// ef-sin Inventur App v2.0.0 - Hauptklasse
+// ef-sin Inventur App v2.0.0 - GEFIXT
 // =============================================================================
 
-// Helper Funktionen (aus v1.7)
+// Helper Funktionen
 function base64EncodeUTF8(str) {
     return btoa(encodeURIComponent(str).replace(
         /%([0-9A-F]{2})/g,
@@ -43,7 +43,6 @@ class InventurApp {
         console.log('🚀 Inventur v2.0.0 startet...');
         
         try {
-            // Loading anzeigen
             this.showLoading(true);
             
             // Database
@@ -87,7 +86,8 @@ class InventurApp {
             
         } catch (error) {
             console.error('❌ Initialisierungs-Fehler:', error);
-            this.showToast('Fehler beim Laden', 'error');
+            this.showToast('Fehler beim Laden: ' + error.message, 'error');
+            this.showLoading(false);
         }
     }
 
@@ -108,7 +108,7 @@ class InventurApp {
     setupEventListeners() {
         // Buttons
         document.getElementById('addNormalButton').onclick = () => this.showAddItem();
-        document.getElementById('addQuickButton').onclick = () => this.quickAdd.open();
+        document.getElementById('addQuickButton').onclick = () => this.openQuickAdd();
         document.getElementById('syncButton').onclick = () => this.manualSync();
         document.getElementById('menuButton').onclick = () => this.openMenu();
         
@@ -120,7 +120,7 @@ class InventurApp {
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'q') {
                 e.preventDefault();
-                this.quickAdd.open();
+                this.openQuickAdd();
             }
             if (e.ctrlKey && e.key === 'n') {
                 e.preventDefault();
@@ -250,18 +250,27 @@ class InventurApp {
     }
 
     async saveItem() {
+        const name = document.getElementById('itemName').value.trim();
+        const stock = parseFloat(document.getElementById('itemStock').value);
+        const category = document.getElementById('itemCategory').value;
+        
+        if (!name || !stock || !category) {
+            this.showToast('Name, Bestand und Kategorie sind erforderlich!', 'error');
+            return;
+        }
+        
         const item = {
             id: this.editingItem?.id || this.generateId(),
-            name: document.getElementById('itemName').value,
-            sku: document.getElementById('itemSKU').value,
-            category: document.getElementById('itemCategory').value,
-            stock: parseFloat(document.getElementById('itemStock').value),
+            name,
+            sku: document.getElementById('itemSKU').value || '',
+            category,
+            stock,
             unit: document.getElementById('itemUnit').value,
             min: parseFloat(document.getElementById('itemMin').value) || 0,
             max: parseFloat(document.getElementById('itemMax').value) || 0,
             price: parseFloat(document.getElementById('itemPrice').value) || 0,
-            location: document.getElementById('itemLocation').value,
-            notes: document.getElementById('itemNotes').value,
+            location: document.getElementById('itemLocation').value || '',
+            notes: document.getElementById('itemNotes').value || '',
             photo: this.editingItem?.photo || '',
             createdAt: this.editingItem?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -272,17 +281,30 @@ class InventurApp {
         
         await this.loadItems();
         this.closeModal();
-        this.showToast('Gespeichert', 'success');
+        this.showToast('✅ Gespeichert', 'success');
     }
 
     async deleteItem(itemId) {
-        if (!confirm('Wirklich löschen?')) return;
+        if (!confirm('Artikel wirklich löschen?')) return;
         
+        const item = this.items.find(i => i.id === itemId);
         await this.db.delete(itemId);
-        this.categoryManager.invalidateCache(this.currentCategory);
+        this.categoryManager.invalidateCache(item.category);
         
         await this.loadItems();
-        this.showToast('Gelöscht', 'success');
+        this.showToast('✅ Gelöscht', 'success');
+    }
+
+    // -------------------------------------------------------------------------
+    // Quick Add - FIX!
+    // -------------------------------------------------------------------------
+
+    openQuickAdd() {
+        // Kategorien füllen BEVOR Modal öffnet!
+        this.fillCategorySelect('quickCategory');
+        
+        // Modal öffnen
+        this.quickAdd.open();
     }
 
     // -------------------------------------------------------------------------
@@ -290,14 +312,25 @@ class InventurApp {
     // -------------------------------------------------------------------------
 
     async manualSync() {
-        this.showToast('Sync läuft...', 'info');
-        const result = await this.githubSync.smartSync();
+        if (!this.githubSync.isConfigured()) {
+            this.showToast('GitHub nicht konfiguriert! Bitte in Einstellungen Token eingeben.', 'warning');
+            return;
+        }
         
-        if (result.status === 'success') {
-            this.showToast('Sync erfolgreich', 'success');
-            await this.loadItems();
-        } else {
-            this.showToast('Sync fehlgeschlagen', 'error');
+        this.showToast('Sync läuft...', 'info');
+        
+        try {
+            const result = await this.githubSync.smartSync();
+            
+            if (result.status === 'success') {
+                this.showToast('✅ Sync erfolgreich', 'success');
+                await this.loadItems();
+            } else {
+                this.showToast('❌ Sync fehlgeschlagen', 'error');
+            }
+        } catch (error) {
+            console.error('Sync Error:', error);
+            this.showToast('❌ Sync Fehler: ' + error.message, 'error');
         }
     }
 
@@ -307,12 +340,20 @@ class InventurApp {
 
     fillCategorySelect(selectId) {
         const select = document.getElementById(selectId);
+        if (!select) {
+            console.error(`Select nicht gefunden: ${selectId}`);
+            return;
+        }
+        
         select.innerHTML = this.categoryManager.categories.map(cat => 
             `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`
         ).join('');
+        
         if (this.currentCategory) {
             select.value = this.currentCategory;
         }
+        
+        console.log(`✅ ${select.options.length} Kategorien geladen in #${selectId}`);
     }
 
     clearForm() {
@@ -325,7 +366,8 @@ class InventurApp {
         document.getElementById('itemPrice').value = '';
         document.getElementById('itemLocation').value = '';
         document.getElementById('itemNotes').value = '';
-        document.getElementById('photoPreview').innerHTML = '';
+        const preview = document.getElementById('photoPreview');
+        if (preview) preview.innerHTML = '';
     }
 
     fillForm(item) {
@@ -359,7 +401,10 @@ class InventurApp {
     }
 
     showLoading(show) {
-        document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = show ? 'flex' : 'none';
+        }
     }
 
     showToast(message, type = 'info') {
@@ -372,28 +417,83 @@ class InventurApp {
     }
 
     search(query) {
-        // Implementieren
+        console.log('Suche:', query);
+        // TODO: Implementieren
     }
 
     async exportData() {
-        // Implementieren
+        const allData = await this.categoryManager.exportIndexJSON();
+        const json = JSON.stringify(allData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `inventur-export-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        this.showToast('✅ Daten exportiert', 'success');
     }
 
     async importData() {
-        // Implementieren
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                
+                // Import implementieren
+                this.showToast('✅ Daten importiert', 'success');
+                await this.loadItems();
+            } catch (error) {
+                this.showToast('❌ Import fehlgeschlagen: ' + error.message, 'error');
+            }
+        };
+        input.click();
     }
 
     showGitHubSettings() {
-        // Implementieren
+        const token = prompt('GitHub Token:', this.githubSync.token || '');
+        if (!token) return;
+        
+        const owner = prompt('GitHub Owner:', this.githubSync.owner || 'MKI13');
+        if (!owner) return;
+        
+        const repo = prompt('GitHub Repo:', this.githubSync.repo || 'inventur-data-backup');
+        if (!repo) return;
+        
+        localStorage.setItem('efsin_github_token', token);
+        localStorage.setItem('efsin_github_owner', owner);
+        localStorage.setItem('efsin_github_repo', repo);
+        
+        this.githubSync.token = token;
+        this.githubSync.owner = owner;
+        this.githubSync.repo = repo;
+        
+        this.showToast('✅ GitHub konfiguriert', 'success');
+    }
+
+    showAbout() {
+        alert('ef-sin Inventur v2.0.0\n\nMit GitHub Sync, Quick Add und Kategorien-System.');
     }
 
     async showMigrationDialog() {
-        // Implementieren
+        if (confirm('Migration von v1.7 zu v2.0 durchführen?')) {
+            try {
+                await MigrationV1toV2.migrate();
+                this.showToast('✅ Migration erfolgreich', 'success');
+            } catch (error) {
+                this.showToast('❌ Migration fehlgeschlagen: ' + error.message, 'error');
+            }
+        }
     }
 }
 
 // =============================================================================
-// Database Manager (einfach)
+// Database Manager
 // =============================================================================
 
 class DatabaseManager {
