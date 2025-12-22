@@ -5,6 +5,7 @@ class ImageManager {
         this.indexedDB = null;
         this.compression = { maxWidth: 800, maxHeight: 600, quality: 0.7 };
     }
+
     async init() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open('efsinImagesDB', 1);
@@ -21,6 +22,7 @@ class ImageManager {
             };
         });
     }
+
     async compressImage(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -54,6 +56,7 @@ class ImageManager {
             reader.readAsDataURL(file);
         });
     }
+
     async saveImage(itemId, categoryId, file) {
         const blob = await this.compressImage(file);
         const imageId = `${categoryId}/${itemId}`;
@@ -61,6 +64,7 @@ class ImageManager {
         this.imageCache.set(imageId, blob);
         return imageId;
     }
+
     async storeInDB(imageId, blob) {
         return new Promise((resolve, reject) => {
             const transaction = this.indexedDB.transaction(['images'], 'readwrite');
@@ -70,12 +74,14 @@ class ImageManager {
             request.onerror = () => reject(request.error);
         });
     }
+
     async loadImage(imageId) {
         if (this.imageCache.has(imageId)) return this.imageCache.get(imageId);
         const blob = await this.loadFromDB(imageId);
         if (blob) this.imageCache.set(imageId, blob);
         return blob;
     }
+
     async loadFromDB(imageId) {
         return new Promise((resolve, reject) => {
             const transaction = this.indexedDB.transaction(['images'], 'readonly');
@@ -85,6 +91,7 @@ class ImageManager {
             request.onerror = () => reject(request.error);
         });
     }
+
     async getImageDataURL(imageId) {
         const blob = await this.loadImage(imageId);
         if (!blob) return null;
