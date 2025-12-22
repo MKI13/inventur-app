@@ -2,480 +2,210 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Inventur-App für ef-sin Schreinerei">
-    <meta name="theme-color" content="#ff6b00">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Inventur">
-    
-    <title>ef-sin Inventur</title>
-    
-    <link rel="manifest" href="./manifest.json">
-    <link rel="stylesheet" href="./styles.css">
-    <link rel="icon" type="image/png" href="./icon-192.png">
-    <link rel="apple-touch-icon" href="./icon-192.png">
-    
-    <!-- Preconnect für Performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- Industrielle Schriftarten -->
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="version" content="2.0.0">
+    <meta name="description" content="ef-sin Inventur v2.0 - Werkstatt Verwaltung">
+    <title>ef-sin Inventur v2.0</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Header -->
     <header class="app-header">
-        <div class="header-content">
-            <h1 class="logo">
-                <span class="logo-icon">📦</span>
-                <span class="logo-text">INVENTUR</span>
-            </h1>
-            <div class="header-actions">
-                <button class="btn-icon" id="syncBtn" onclick="app.syncWithGitHub()" title="Mit GitHub synchronisieren">
-                    <span class="sync-icon">🔄</span>
-                </button>
-                <button class="btn-icon" id="menuBtn" title="Menü">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
-                    </svg>
-                </button>
-            </div>
+        <div class="header-left">
+            <h1>📦 ef-sin Inventur <span class="version">v2.0</span></h1>
         </div>
-        
-        <!-- Tab Navigation -->
-        <nav class="tabs">
-            <button class="tab active" data-view="overview">Übersicht</button>
-            <button class="tab" data-view="inventory">Bestand</button>
-            <button class="tab" data-view="scan">Scanner</button>
-            <button class="tab" data-view="stats">Statistik</button>
-        </nav>
+        <div class="header-right">
+            <button id="syncButton" class="btn-icon" title="GitHub Sync">
+                🔄
+            </button>
+            <button id="menuButton" class="btn-icon" title="Menü">
+                ☰
+            </button>
+        </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="app-main">
-        <!-- Übersicht View -->
-        <section class="view active" id="overview-view">
-            <div class="stats-grid">
-                <div class="stat-card clickable" onclick="app.switchView('inventory')">
-                    <div class="stat-icon">📦</div>
-                    <div class="stat-value" id="totalItems">0</div>
-                    <div class="stat-label">Artikel</div>
-                </div>
-                <div class="stat-card warn clickable" onclick="app.showLowStock()">
-                    <div class="stat-icon">⚠️</div>
-                    <div class="stat-value" id="lowStock">0</div>
-                    <div class="stat-label">Niedrig</div>
-                </div>
-                <div class="stat-card clickable" onclick="app.showCategories()">
-                    <div class="stat-icon">📁</div>
-                    <div class="stat-value" id="categories">0</div>
-                    <div class="stat-label">Kategorien</div>
-                </div>
-                <div class="stat-card clickable" onclick="app.switchView('stats')">
-                    <div class="stat-icon">💶</div>
-                    <div class="stat-value" id="totalValue">0€</div>
-                    <div class="stat-label">Gesamtwert</div>
-                </div>
-            </div>
+    <!-- Kategorie Tabs -->
+    <nav class="category-tabs" id="categoryTabs">
+        <!-- Dynamisch gefüllt -->
+    </nav>
 
-            <div class="quick-actions">
-                <h2>Schnellzugriff</h2>
-                <div class="action-grid">
-                    <button class="action-btn" onclick="app.showAddItem()">
-                        <span class="action-icon">➕</span>
-                        <span>Artikel hinzufügen</span>
-                    </button>
-                    <button class="action-btn" onclick="app.showScanner()">
-                        <span class="action-icon">📷</span>
-                        <span>QR scannen</span>
-                    </button>
-                    <button class="action-btn" onclick="app.exportData()">
-                        <span class="action-icon">💾</span>
-                        <span>Export JSON</span>
-                    </button>
-                    <button class="action-btn" onclick="app.showImport()">
-                        <span class="action-icon">📥</span>
-                        <span>Import</span>
-                    </button>
-                </div>
-            </div>
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button id="addNormalButton" class="btn-primary">
+            <span class="btn-icon">+</span>
+            <span class="btn-text">Artikel</span>
+        </button>
+        <button id="addQuickButton" class="btn-success">
+            <span class="btn-icon">⚡</span>
+            <span class="btn-text">Quick Add</span>
+        </button>
+    </div>
 
-            <div class="recent-section">
-                <h2>Zuletzt geändert</h2>
-                <div id="recentItems" class="item-list"></div>
-            </div>
-        </section>
+    <!-- Suche -->
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="🔍 Suchen...">
+    </div>
 
-        <!-- Bestand View -->
-        <section class="view" id="inventory-view">
-            <div class="inventory-header">
-                <div class="search-bar">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                    </svg>
-                    <input type="text" id="searchInput" placeholder="Suchen nach Artikel, SKU, Kategorie...">
-                </div>
-                <div class="filter-bar">
-                    <select id="categoryFilter" class="filter-select">
-                        <option value="">Alle Kategorien</option>
-                    </select>
-                    <select id="sortFilter" class="filter-select">
-                        <option value="name">Name A-Z</option>
-                        <option value="name-desc">Name Z-A</option>
-                        <option value="stock">Bestand ↑</option>
-                        <option value="stock-desc">Bestand ↓</option>
-                        <option value="date">Neueste</option>
-                    </select>
-                </div>
-            </div>
-            <div id="inventoryList" class="inventory-grid"></div>
-        </section>
-
-        <!-- Scanner View -->
-        <section class="view" id="scan-view">
-            <div class="scanner-container">
-                <div id="scanner" class="scanner-viewport">
-                    <div class="scanner-overlay">
-                        <div class="scanner-frame"></div>
-                        <p class="scanner-hint">QR-Code oder Barcode in den Rahmen positionieren</p>
-                    </div>
-                </div>
-                <div class="scanner-controls">
-                    <button class="btn-primary" id="startScanBtn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/>
-                            <path d="M9 9h.01M15 9h.01M9 15h6"/>
-                        </svg>
-                        Scanner starten
-                    </button>
-                    <button class="btn-secondary" id="stopScanBtn" style="display:none;">Scanner stoppen</button>
-                </div>
-                <div id="scanResult" class="scan-result"></div>
-            </div>
-        </section>
-
-        <!-- Statistik View -->
-        <section class="view" id="stats-view">
-            <div class="stats-container">
-                <h2>Bestandsverteilung</h2>
-                <canvas id="categoryChart" width="400" height="300"></canvas>
-                
-                <h2>Top 10 Artikel nach Wert</h2>
-                <div id="topItems" class="top-items-list"></div>
-                
-                <h2>Warnstufen</h2>
-                <div class="warning-levels">
-                    <div class="warning-item critical">
-                        <span class="warning-label">Kritisch (0%)</span>
-                        <span class="warning-count" id="criticalCount">0</span>
-                    </div>
-                    <div class="warning-item low">
-                        <span class="warning-label">Niedrig (< 20%)</span>
-                        <span class="warning-count" id="lowCount">0</span>
-                    </div>
-                    <div class="warning-item ok">
-                        <span class="warning-label">OK (≥ 20%)</span>
-                        <span class="warning-count" id="okCount">0</span>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <!-- Artikel Liste -->
+    <main class="items-container" id="itemsContainer">
+        <!-- Dynamisch gefüllt -->
     </main>
 
-    <!-- Floating Action Button -->
-    <button class="fab" id="addBtn" title="Artikel hinzufügen">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-    </button>
+    <!-- Loading -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Lade...</p>
+    </div>
 
-    <!-- Modal für Artikel hinzufügen/bearbeiten -->
-    <div class="modal" id="itemModal">
+    <!-- Normal Add Modal -->
+    <div class="modal" id="addModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalTitle">Artikel hinzufügen</h2>
+                <h2 id="modalTitle">Artikel</h2>
                 <button class="btn-close" onclick="app.closeModal()">×</button>
             </div>
-            <form id="itemForm" class="modal-body">
-                <input type="hidden" id="itemId">
-                
+            <div class="modal-body">
                 <div class="form-group">
-                    <label for="itemName">Artikelname *</label>
+                    <label for="itemCategory">Kategorie *</label>
+                    <select id="itemCategory" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="itemName">Name *</label>
                     <input type="text" id="itemName" required>
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="itemSKU">SKU / Artikelnr.</label>
-                        <input type="text" id="itemSKU">
-                    </div>
-                    <div class="form-group">
-                        <label for="itemCategory">Kategorie *</label>
-                        <select id="itemCategory" required>
-                            <option value="Holz">Holz</option>
-                            <option value="Platten">Platten</option>
-                            <option value="Beschläge">Beschläge</option>
-                            <option value="Werkzeuge">Werkzeuge</option>
-                            <option value="Lacke">Lacke & Öle</option>
-                            <option value="Schrauben">Schrauben & Dübel</option>
-                            <option value="Sonstiges">Sonstiges</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label for="itemSKU">SKU</label>
+                    <input type="text" id="itemSKU">
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="itemStock">Bestand *</label>
-                        <input type="number" id="itemStock" min="0" step="0.01" required>
+                        <input type="number" id="itemStock" required>
                     </div>
                     <div class="form-group">
                         <label for="itemUnit">Einheit</label>
                         <select id="itemUnit">
-                            <option value="Stück">Stück</option>
-                            <option value="m">Meter</option>
-                            <option value="m²">m²</option>
-                            <option value="m³">m³</option>
-                            <option value="kg">kg</option>
-                            <option value="l">Liter</option>
-                            <option value="Pkg">Paket</option>
+                            <option>Stück</option>
+                            <option>Meter</option>
+                            <option>Kilogramm</option>
+                            <option>Liter</option>
+                            <option>Paket</option>
                         </select>
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="itemMin">Mindestbestand</label>
-                        <input type="number" id="itemMin" min="0" step="0.01">
+                        <label for="itemMin">Min</label>
+                        <input type="number" id="itemMin">
                     </div>
                     <div class="form-group">
-                        <label for="itemMax">Maximalbestand</label>
-                        <input type="number" id="itemMax" min="0" step="0.01">
+                        <label for="itemMax">Max</label>
+                        <input type="number" id="itemMax">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemPrice">Preis (€)</label>
+                        <input type="number" step="0.01" id="itemPrice">
                     </div>
                 </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="itemPrice">Stückpreis (€)</label>
-                        <input type="number" id="itemPrice" min="0" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="itemLocation">Lagerort</label>
-                        <input type="text" id="itemLocation" placeholder="z.B. Regal A3">
-                    </div>
-                </div>
-
                 <div class="form-group">
-                    <label for="itemNotes">
-                        Notizen
-                        <span id="notesCounter" class="notes-counter">0 / 10.000</span>
-                    </label>
-                    <textarea id="itemNotes" rows="3" maxlength="10000" placeholder="Max. 10.000 Zeichen"></textarea>
-                    <small class="notes-hint">⚠️ Lange Texte können Performance-Probleme verursachen</small>
+                    <label for="itemLocation">Standort</label>
+                    <input type="text" id="itemLocation">
                 </div>
-
+                <div class="form-group">
+                    <label for="itemNotes">Notizen</label>
+                    <textarea id="itemNotes" rows="3" maxlength="10000"></textarea>
+                </div>
                 <div class="form-group">
                     <label for="itemPhoto">Foto</label>
                     <input type="file" id="itemPhoto" accept="image/*">
-                    <div id="photoPreview" class="photo-preview"></div>
+                    <div id="photoPreview"></div>
                 </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" onclick="app.closeModal()">Abbrechen</button>
-                    <button type="submit" class="btn-primary">Speichern</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Menu Modal -->
-    <div class="modal" id="menuModal">
-        <div class="modal-content modal-menu">
-            <div class="modal-header">
-                <h2>Menü</h2>
-                <button class="btn-close" onclick="app.closeMenu()">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="menu-list">
-                    <button class="menu-item" onclick="app.manageCategories()">
-                        <span class="menu-icon">📁</span>
-                        <span class="menu-text">Kategorien verwalten</span>
-                    </button>
-                    <button class="menu-item" onclick="app.exportData()">
-                        <span class="menu-icon">💾</span>
-                        <span class="menu-text">Daten exportieren (JSON)</span>
-                    </button>
-                    <button class="menu-item" onclick="app.showImport()">
-                        <span class="menu-icon">📥</span>
-                        <span class="menu-text">Daten importieren</span>
-                    </button>
-                    <button class="menu-item" onclick="app.trimLongNotes()" style="border-left: 3px solid #2196F3;">
-                        <span class="menu-icon">✂️</span>
-                        <span class="menu-text">Lange Notizen kürzen</span>
-                    </button>
-                    <button class="menu-item" onclick="app.compressAllPhotos()" style="border-left: 3px solid #4CAF50;">
-                        <span class="menu-icon">📸</span>
-                        <span class="menu-text">Alle Fotos komprimieren</span>
-                    </button>
-                    <button class="menu-item" onclick="app.repairGitHubData()" style="border-left: 3px solid #ff9800;">
-                        <span class="menu-icon">🔧</span>
-                        <span class="menu-text">GitHub-Datei reparieren</span>
-                    </button>
-                    <button class="menu-item" onclick="app.showAbout()">
-                        <span class="menu-icon">ℹ️</span>
-                        <span class="menu-text">Über die App</span>
-                    </button>
-                </div>
-                
-                <div class="app-info">
-                    <p><strong>ef-sin Inventur</strong></p>
-                    <p>Version 2.0.0</p>
-                    <p id="offlineStatus" class="status-online">● Online</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Import Modal -->
-    <div class="modal" id="importModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Daten importieren</h2>
-                <button class="btn-close" onclick="app.closeImport()">×</button>
-            </div>
-            <div class="modal-body">
-                <input type="file" id="importFile" accept=".json">
-                <p class="hint">JSON-Datei mit Inventardaten auswählen</p>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="app.closeImport()">Abbrechen</button>
-                <button class="btn-primary" onclick="app.importData()">Importieren</button>
+                <button class="btn-secondary" onclick="app.closeModal()">Abbrechen</button>
+                <button class="btn-primary" onclick="app.saveItem()">Speichern</button>
             </div>
         </div>
     </div>
 
-    <!-- Kategorie-Verwaltungs Modal -->
-    <div class="modal" id="categoryModal">
-        <div class="modal-content">
+    <!-- Quick Add Modal -->
+    <div class="modal" id="quickAddModal">
+        <div class="modal-content quick-add">
             <div class="modal-header">
-                <h2>Kategorien verwalten</h2>
-                <button class="btn-close" onclick="app.closeCategoryManager()">×</button>
+                <h2>⚡ Schnelleingabe</h2>
+                <button class="btn-close" onclick="quickAdd.close()">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="newCategory">Neue Kategorie hinzufügen</label>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <input type="text" id="newCategory" placeholder="z.B. Kanten, Leim, etc.">
-                        <button class="btn-primary" onclick="app.addCategory()" style="white-space: nowrap;">+ Hinzufügen</button>
+                    <label for="quickCategory">Kategorie</label>
+                    <select id="quickCategory"></select>
+                </div>
+                <div class="form-group">
+                    <label for="quickSKU">SKU</label>
+                    <input type="text" id="quickSKU">
+                </div>
+                <div class="form-group">
+                    <label for="quickName">Name *</label>
+                    <input type="text" id="quickName" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="quickStock">Anzahl *</label>
+                        <input type="number" id="quickStock" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="quickPrice">Preis</label>
+                        <input type="number" step="0.01" id="quickPrice">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Vorhandene Kategorien</label>
-                    <div id="categoryList" class="category-list"></div>
+                    <label for="quickLocation">Standort</label>
+                    <input type="text" id="quickLocation">
+                </div>
+                <div class="quick-stats">
+                    Heute: <span id="quickTodayCount">0</span>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="app.closeCategoryManager()">Schließen</button>
+                <small>ENTER = Speichern | ESC = Schließen</small>
+                <button class="btn-primary" onclick="quickAdd.save()">Speichern (ENTER)</button>
             </div>
         </div>
     </div>
 
-    <!-- Notizen-Anzeige Modal -->
-    <div class="modal" id="notesModal">
-        <div class="modal-content modal-large">
-            <div class="modal-header">
-                <h2 id="notesTitle">📝 Notizen</h2>
-                <button class="btn-close" onclick="app.closeNotes()">×</button>
-            </div>
-            <div class="modal-body">
-                <div id="notesContent" class="notes-display"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="app.closeNotes()">Schließen</button>
-            </div>
+    <!-- Menü -->
+    <div class="menu-overlay" id="menuOverlay" onclick="app.closeMenu()"></div>
+    <aside class="menu-sidebar" id="menuSidebar">
+        <div class="menu-header">
+            <h2>Menü</h2>
+            <button class="btn-close" onclick="app.closeMenu()">×</button>
         </div>
-    </div>
-
-    <!-- GitHub Setup Modal -->
-    <div class="modal" id="githubSetupModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🔄 GitHub Sync einrichten</h2>
-                <button class="btn-close" onclick="app.closeGitHubSetup()">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="github-setup-info">
-                    <h3>📌 Voraussetzungen:</h3>
-                    <ol>
-                        <li><strong>Private Repository erstellen:</strong><br>
-                            → GitHub.com → New Repository<br>
-                            → Name: <code>inventur-data-backup</code><br>
-                            → ⚠️ WICHTIG: <strong>Private</strong> wählen!
-                        </li>
-                        <li><strong>Personal Access Token (PAT) erstellen:</strong><br>
-                            → GitHub → Settings → Developer Settings<br>
-                            → Personal Access Tokens → Tokens (classic)<br>
-                            → Generate new token (classic)<br>
-                            → Berechtigungen: <code>repo</code> (voller Zugriff)<br>
-                            → Token kopieren (wird nur 1x angezeigt!)
-                        </li>
-                    </ol>
-                </div>
-
-                <div class="form-group">
-                    <label for="githubToken">Personal Access Token (PAT)</label>
-                    <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" required>
-                    <small>Token wird lokal verschlüsselt gespeichert</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="githubOwner">GitHub Username</label>
-                    <input type="text" id="githubOwner" placeholder="z.B. MKI13" required>
-                    <small>Dein GitHub Benutzername</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="githubRepo">Repository Name</label>
-                    <input type="text" id="githubRepo" value="inventur-data-backup" required>
-                    <small>Name des privaten Repositories</small>
-                </div>
-
-                <div class="github-setup-warning">
-                    ⚠️ <strong>WICHTIG:</strong> Das Repository muss <strong>PRIVAT</strong> sein!<br>
-                    Sonst sind deine Daten öffentlich sichtbar!
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="app.closeGitHubSetup()">Abbrechen</button>
-                <button class="btn-primary" onclick="app.saveGitHubConfig()">Verbinden</button>
-            </div>
+        <div class="menu-content">
+            <button class="menu-item" onclick="app.exportData()">
+                <span>💾</span> Export
+            </button>
+            <button class="menu-item" onclick="app.importData()">
+                <span>📥</span> Import
+            </button>
+            <hr>
+            <button class="menu-item" onclick="app.showGitHubSettings()">
+                <span>⚙️</span> GitHub
+            </button>
+            <button class="menu-item" onclick="app.manualSync()">
+                <span>🔄</span> Sync
+            </button>
         </div>
-    </div>
+    </aside>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast"></div>
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <!-- Scripts -->
-    <script src="./scanner.js"></script>
-    <script src="./app.js"></script>
-    
-    <script>
-        // Service Worker registrieren
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(reg => console.log('ServiceWorker registriert:', reg.scope))
-                    .catch(err => console.error('ServiceWorker Fehler:', err));
-            });
-        }
-
-        // Install Prompt Handler
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // Zeige Install-Button wenn gewünscht
-        });
-    </script>
+    <script src="src/managers/CategoryManager.js"></script>
+    <script src="src/managers/ImageManager.js"></script>
+    <script src="src/managers/MultiFileGitHubSync.js"></script>
+    <script src="src/components/QuickAdd.js"></script>
+    <script src="src/utils/MigrationV1toV2.js"></script>
+    <script src="app.js"></script>
 </body>
-                                  </html>
+</html>
