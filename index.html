@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.0.0">
-    <meta name="description" content="ef-sin Inventur v2.0 - Werkstatt Verwaltung">
+    <meta name="version" content="2.0.3">
+    <meta name="description" content="ef-sin Inventur v2.0.3 - Professional & Clean">
     <title>ef-sin Inventur v2.0</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -15,19 +15,13 @@
             <h1>📦 ef-sin Inventur <span class="version">v2.0</span></h1>
         </div>
         <div class="header-right">
-            <button id="syncButton" class="btn-icon" title="GitHub Sync">
-                🔄
-            </button>
-            <button id="menuButton" class="btn-icon" title="Menü">
-                ☰
-            </button>
+            <button id="syncButton" class="btn-icon" title="GitHub Sync">🔄</button>
+            <button id="menuButton" class="btn-icon" title="Menü">☰</button>
         </div>
     </header>
 
     <!-- Kategorie Tabs -->
-    <nav class="category-tabs" id="categoryTabs">
-        <!-- Dynamisch gefüllt -->
-    </nav>
+    <nav class="category-tabs" id="categoryTabs"></nav>
 
     <!-- Action Buttons -->
     <div class="action-buttons">
@@ -47,9 +41,7 @@
     </div>
 
     <!-- Artikel Liste -->
-    <main class="items-container" id="itemsContainer">
-        <!-- Dynamisch gefüllt -->
-    </main>
+    <main class="items-container" id="itemsContainer"></main>
 
     <!-- Loading -->
     <div class="loading-overlay" id="loadingOverlay">
@@ -57,7 +49,7 @@
         <p>Lade...</p>
     </div>
 
-    <!-- Normal Add Modal -->
+    <!-- Artikel Modal -->
     <div class="modal" id="addModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -173,6 +165,50 @@
         </div>
     </div>
 
+    <!-- Kategorie Management -->
+    <div class="modal" id="categoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="categoryModalTitle">Kategorien</h2>
+                <button class="btn-close" onclick="app.closeCategoryModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="categoryList" class="category-list"></div>
+                <button class="btn-success" style="width: 100%; margin-top: 1rem;" onclick="app.showAddCategory()">
+                    + Neue Kategorie
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="app.closeCategoryModal()">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kategorie Edit -->
+    <div class="modal" id="categoryEditModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Kategorie</h2>
+                <button class="btn-close" onclick="app.closeCategoryEditModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="catName">Name *</label>
+                    <input type="text" id="catName" required>
+                </div>
+                <div class="form-group">
+                    <label for="catIcon">Icon</label>
+                    <input type="text" id="catIcon" placeholder="📦" maxlength="2">
+                    <small>Emoji: Win+. | Mac: Cmd+Ctrl+Space</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="app.closeCategoryEditModal()">Abbrechen</button>
+                <button class="btn-primary" onclick="app.saveCategory()">Speichern</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Menü -->
     <div class="menu-overlay" id="menuOverlay" onclick="app.closeMenu()"></div>
     <aside class="menu-sidebar" id="menuSidebar">
@@ -181,18 +217,32 @@
             <button class="btn-close" onclick="app.closeMenu()">×</button>
         </div>
         <div class="menu-content">
-            <button class="menu-item" onclick="app.exportData()">
-                <span>💾</span> Export
-            </button>
-            <button class="menu-item" onclick="app.importData()">
-                <span>📥</span> Import
+            <button class="menu-item" onclick="app.showCategoryManagement(); app.closeMenu();">
+                <span class="menu-icon">📁</span>
+                <span class="menu-text">Kategorien</span>
             </button>
             <hr>
-            <button class="menu-item" onclick="app.showGitHubSettings()">
-                <span>⚙️</span> GitHub
+            <button class="menu-item" onclick="app.exportData(); app.closeMenu();">
+                <span class="menu-icon">💾</span>
+                <span class="menu-text">Export</span>
             </button>
-            <button class="menu-item" onclick="app.manualSync()">
-                <span>🔄</span> Sync
+            <button class="menu-item" onclick="app.importData(); app.closeMenu();">
+                <span class="menu-icon">📥</span>
+                <span class="menu-text">Import</span>
+            </button>
+            <hr>
+            <button class="menu-item" onclick="app.showGitHubSettings(); app.closeMenu();">
+                <span class="menu-icon">⚙️</span>
+                <span class="menu-text">GitHub</span>
+            </button>
+            <button class="menu-item" onclick="app.manualSync(); app.closeMenu();">
+                <span class="menu-icon">🔄</span>
+                <span class="menu-text">Sync</span>
+            </button>
+            <hr>
+            <button class="menu-item" onclick="app.showAbout(); app.closeMenu();">
+                <span class="menu-icon">ℹ️</span>
+                <span class="menu-text">Über</span>
             </button>
         </div>
     </aside>
@@ -200,12 +250,11 @@
     <!-- Toast -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Scripts -->
+    <!-- Scripts - OHNE Migration! -->
     <script src="src/managers/CategoryManager.js"></script>
     <script src="src/managers/ImageManager.js"></script>
     <script src="src/managers/MultiFileGitHubSync.js"></script>
     <script src="src/components/QuickAdd.js"></script>
-    <script src="src/utils/MigrationV1toV2.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
