@@ -1,0 +1,423 @@
+/* =============================================================================
+   DARK MODE THEME
+   Vollständiges Dark Mode Theme für Inventur App
+   ============================================================================= */
+
+/* Dark Mode Variablen */
+:root[data-theme="dark"] {
+    /* Hintergrund */
+    --background: #0a0a0a;
+    --surface: #1a1a1a;
+    --surface-elevated: #242424;
+    --surface-hover: #2a2a2a;
+    
+    /* Text */
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-disabled: #666666;
+    
+    /* Primärfarbe */
+    --primary: #ff6b00;
+    --primary-dark: #cc5500;
+    --primary-light: #ff8533;
+    --primary-bg: rgba(255, 107, 0, 0.1);
+    
+    /* Status */
+    --success: #4caf50;
+    --success-bg: rgba(76, 175, 80, 0.1);
+    --warning: #ff9800;
+    --warning-bg: rgba(255, 152, 0, 0.1);
+    --error: #f44336;
+    --error-bg: rgba(244, 67, 54, 0.1);
+    --info: #2196f3;
+    --info-bg: rgba(33, 150, 243, 0.1);
+    
+    /* Borders */
+    --border-color: #333333;
+    --border-light: #2a2a2a;
+    --divider: #2a2a2a;
+    
+    /* Schatten */
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.5);
+    --shadow-md: 0 4px 8px rgba(0,0,0,0.6);
+    --shadow-lg: 0 8px 16px rgba(0,0,0,0.7);
+    
+    /* Input */
+    --input-bg: #1a1a1a;
+    --input-border: #333333;
+    --input-focus: #ff6b00;
+    
+    /* Hover & Active */
+    --hover-bg: rgba(255, 107, 0, 0.1);
+    --active-bg: rgba(255, 107, 0, 0.2);
+}
+
+/* ============================================================================= 
+   BODY & GRUNDELEMENTE
+   ============================================================================= */
+
+[data-theme="dark"] body {
+    background: var(--background);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3 {
+    color: var(--text-primary);
+}
+
+/* ============================================================================= 
+   CARDS & CONTAINERS
+   ============================================================================= */
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .item-card {
+    background: var(--surface);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .card:hover,
+[data-theme="dark"] .item-card:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary);
+}
+
+/* ============================================================================= 
+   INPUTS & FORMS
+   ============================================================================= */
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: var(--text-disabled);
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+    border-color: var(--input-focus);
+    background: var(--surface-elevated);
+}
+
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] textarea:disabled {
+    background: var(--surface);
+    color: var(--text-disabled);
+    border-color: var(--border-light);
+}
+
+/* ============================================================================= 
+   BUTTONS
+   ============================================================================= */
+
+[data-theme="dark"] .btn-secondary {
+    background: var(--surface-elevated);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .btn-secondary:active {
+    background: var(--surface);
+}
+
+/* Primary Button bleibt Orange */
+[data-theme="dark"] .btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+/* ============================================================================= 
+   TABS
+   ============================================================================= */
+
+[data-theme="dark"] .tabs {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .tabs button {
+    color: var(--text-secondary);
+    background: transparent;
+}
+
+[data-theme="dark"] .tabs button:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .tabs button.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: transparent;
+}
+
+/* ============================================================================= 
+   MODALS
+   ============================================================================= */
+
+[data-theme="dark"] .modal {
+    background: rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="dark"] .modal-content {
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-footer {
+    border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .close-btn {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .close-btn:hover {
+    color: var(--text-primary);
+    background: var(--hover-bg);
+}
+
+/* ============================================================================= 
+   MENU
+   ============================================================================= */
+
+[data-theme="dark"] .menu {
+    background: var(--surface);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .menu button {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .menu button:hover {
+    background: var(--hover-bg);
+}
+
+[data-theme="dark"] .menu-divider {
+    background: var(--divider);
+}
+
+/* ============================================================================= 
+   TOAST NOTIFICATIONS
+   ============================================================================= */
+
+[data-theme="dark"] .toast {
+    background: var(--surface-elevated);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .toast.success {
+    background: var(--success-bg);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+[data-theme="dark"] .toast.error {
+    background: var(--error-bg);
+    border-color: var(--error);
+    color: var(--error);
+}
+
+[data-theme="dark"] .toast.warning {
+    background: var(--warning-bg);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+/* ============================================================================= 
+   ITEM STATS & BADGES
+   ============================================================================= */
+
+[data-theme="dark"] .item-stats {
+    background: var(--surface-elevated);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .stat-item {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .stat-value {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .category-badge {
+    background: var(--surface-elevated);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Stock Level Badges */
+[data-theme="dark"] .stock-ok { 
+    background: rgba(76, 175, 80, 0.15);
+    color: #81c784;
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+[data-theme="dark"] .stock-low { 
+    background: rgba(255, 152, 0, 0.15);
+    color: #ffb74d;
+    border-color: rgba(255, 152, 0, 0.3);
+}
+
+[data-theme="dark"] .stock-critical { 
+    background: rgba(244, 67, 54, 0.15);
+    color: #e57373;
+    border-color: rgba(244, 67, 54, 0.3);
+}
+
+/* ============================================================================= 
+   EMPTY STATES
+   ============================================================================= */
+
+[data-theme="dark"] .empty-state {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .empty-state-icon {
+    opacity: 0.5;
+}
+
+/* ============================================================================= 
+   SCROLLBARS
+   ============================================================================= */
+
+[data-theme="dark"] ::-webkit-scrollbar {
+    background: var(--surface);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: var(--surface);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: var(--surface-elevated);
+    border: 2px solid var(--surface);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* ============================================================================= 
+   HEADER & NAVIGATION
+   ============================================================================= */
+
+[data-theme="dark"] header {
+    background: var(--surface);
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .logo {
+    color: var(--primary);
+}
+
+/* ============================================================================= 
+   TABLES
+   ============================================================================= */
+
+[data-theme="dark"] table {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] thead {
+    background: var(--surface-elevated);
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] tbody tr {
+    border-bottom-color: var(--border-light);
+}
+
+[data-theme="dark"] tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+/* ============================================================================= 
+   TRANSITIONS
+   ============================================================================= */
+
+/* Smooth transitions für Theme-Wechsel */
+body,
+.card,
+.item-card,
+.modal-content,
+input,
+select,
+textarea,
+button,
+.tabs button {
+    transition: background-color 0.3s ease, 
+                color 0.3s ease, 
+                border-color 0.3s ease;
+}
+
+/* ============================================================================= 
+   THEME TOGGLE BUTTON
+   ============================================================================= */
+
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 80px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1) rotate(15deg);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-lg);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Mobile Anpassung */
+@media (max-width: 768px) {
+    .theme-toggle {
+        top: 15px;
+        right: 15px;
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+    }
+}
