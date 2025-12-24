@@ -6,9 +6,14 @@
     <meta name="version" content="2.0.3">
     <meta name="description" content="ef-sin Inventur v2.0.3 - Professional & Clean">
     <title>ef-sin Inventur v2.0</title>
+
+    <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dark-mode.css">
+    <link rel="stylesheet" href="icon-picker.css">
 </head>
 <body>
+
     <!-- Header -->
     <header class="app-header">
         <div class="header-left">
@@ -250,11 +255,50 @@
     <!-- Toast -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Scripts - OHNE Migration! -->
+    <!-- Icon Picker Modal -->
+    <div id="iconPickerModal" class="modal icon-picker-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎨 Icon auswählen</h2>
+                <button class="close-btn" onclick="window.iconPicker && window.iconPicker.close()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="icon-picker-search">
+                    <input type="text" id="iconSearchInput"
+                           placeholder="🔍 Icon suchen (z.B. 'hammer', 'holz', 'büro')..."
+                           autocomplete="off">
+                </div>
+                <div class="icon-picker-tabs" id="iconPickerTabs"></div>
+                <div class="icon-picker-grid" id="iconPickerGrid"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary"
+                        onclick="window.iconPicker && window.iconPicker.close()">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle"
+            title="Dark Mode umschalten" aria-label="Theme umschalten">
+        <span id="themeIcon">🌙</span>
+    </button>
+
+    <!-- Scripts -->
     <script src="src/managers/CategoryManager.js"></script>
     <script src="src/managers/ImageManager.js"></script>
     <script src="src/managers/MultiFileGitHubSync.js"></script>
     <script src="src/components/QuickAdd.js"></script>
+    <script src="src/components/IconPicker.js"></script>
     <script src="app.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof IconPicker !== 'undefined') {
+                window.iconPicker = new IconPicker();
+            }
+        });
+    </script>
+
 </body>
-</html>
+                    </html>
