@@ -396,3 +396,4 @@ Bei Fragen oder Problemen:
 **Version:** 1.0.0  
 **Erstellt:** Dezember 2024  
 **Plattform:** Progressive Web App (PWA)
+# Test from Termux
