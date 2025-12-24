@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+
+# Logs
+*.log
+
+# Temporary
+*.tmp
+.cache/
+
+# Environment
+.env
+
+# Backup
+*.bak
+*.zip
+*.tar.gz
