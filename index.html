@@ -20,6 +20,11 @@
             <h1>📦 ef-sin Inventur <span class="version">v2.0</span></h1>
         </div>
         <div class="header-right">
+            <!-- Dark Mode Button (JETZT IM HEADER) -->
+            <button id="themeToggle" class="btn-icon" title="Dark Mode umschalten">
+                <span id="themeIcon">🌙</span>
+            </button>
+
             <button id="syncButton" class="btn-icon" title="GitHub Sync">🔄</button>
             <button id="menuButton" class="btn-icon" title="Menü">☰</button>
         </div>
@@ -54,12 +59,6 @@
         <p>Lade...</p>
     </div>
 
-    <!-- (ALLE bestehenden Modals unverändert – gekürzt zur Übersicht) -->
-    <!-- … deine bestehenden Modals bleiben exakt gleich … -->
-
-    <!-- Toast -->
-    <div class="toast-container" id="toastContainer"></div>
-
     <!-- ================= ICON PICKER MODAL ================= -->
     <div id="iconPickerModal" class="modal icon-picker-modal">
         <div class="modal-content">
@@ -85,10 +84,8 @@
         </div>
     </div>
 
-    <!-- Theme Toggle Button -->
-    <button class="theme-toggle" id="themeToggle" title="Dark Mode umschalten">
-        <span id="themeIcon">🌙</span>
-    </button>
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <!-- ================= SCRIPTS ================= -->
     <script src="src/managers/CategoryManager.js"></script>
@@ -98,7 +95,7 @@
     <script src="src/components/IconPicker.js"></script>
     <script src="app.js"></script>
 
-    <!-- ================= ICON PICKER + DARK MODE LOGIC ================= -->
+    <!-- ================= DARK MODE + ICON PICKER LOGIC ================= -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
 
