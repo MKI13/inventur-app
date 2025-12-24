@@ -31,9 +31,56 @@
 <!-- ================= KATEGORIE TABS ================= -->
 <nav class="category-tabs" id="categoryTabs"></nav>
 
-<!-- ================= REST DER APP (UNVERÄNDERT) ================= -->
-<!-- … Artikel, Modals, Quick Add, Category Edit, etc. -->
-<!-- (identisch zu deiner letzten Version, bewusst nicht gekürzt) -->
+<!-- ================= ACTION BUTTONS ================= -->
+<div class="action-buttons">
+    <button id="addNormalButton" class="btn-primary">
+        <span class="btn-icon">+</span>
+        <span class="btn-text">Artikel</span>
+    </button>
+    <button id="addQuickButton" class="btn-success">
+        <span class="btn-icon">⚡</span>
+        <span class="btn-text">Quick Add</span>
+    </button>
+</div>
+
+<!-- ================= SUCHE ================= -->
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 Suchen...">
+</div>
+
+<!-- ================= ARTIKEL LISTE ================= -->
+<main class="items-container" id="itemsContainer"></main>
+
+<!-- ================= LOADING ================= -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <p>Lade...</p>
+</div>
+
+<!-- ================= KATEGORIE EDIT MODAL ================= -->
+<div class="modal" id="categoryEditModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Kategorie</h2>
+            <button class="btn-close" onclick="app.closeCategoryEditModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="catName">Name *</label>
+                <input type="text" id="catName" required>
+            </div>
+            <div class="form-group">
+                <label for="catIcon">Icon</label>
+                <input type="text" id="catIcon" placeholder="📦" maxlength="2" readonly>
+                <small>Icon anklicken zum Auswählen</small>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="app.closeCategoryEditModal()">Abbrechen</button>
+            <button class="btn-primary" onclick="app.saveCategory()">Speichern</button>
+        </div>
+    </div>
+</div>
 
 <!-- ================= MENÜ ================= -->
 <div class="menu-overlay" id="menuOverlay" onclick="app.closeMenu()"></div>
@@ -42,57 +89,58 @@
         <h2>Menü</h2>
         <button class="btn-close" onclick="app.closeMenu()">×</button>
     </div>
-
     <div class="menu-content">
-
-        <!-- 🔽 NEU: Kategorie-Sortierung -->
-        <div style="margin-bottom:1rem;">
-            <label style="font-size:0.9rem; color:#666;">📂 Kategorien sortieren</label>
-            <select id="categorySortSelect" style="width:100%; margin-top:0.25rem;">
-                <option value="az">A → Z</option>
-                <option value="za">Z → A</option>
-                <option value="newest">Neueste zuerst</option>
-                <option value="oldest">Älteste zuerst</option>
-            </select>
-        </div>
-
-        <hr>
-
         <button class="menu-item" onclick="app.showCategoryManagement(); app.closeMenu();">
             <span class="menu-icon">📁</span>
             <span class="menu-text">Kategorien</span>
         </button>
-
+        <hr>
         <button class="menu-item" onclick="app.exportData(); app.closeMenu();">
             <span class="menu-icon">💾</span>
             <span class="menu-text">Export</span>
         </button>
-
         <button class="menu-item" onclick="app.importData(); app.closeMenu();">
             <span class="menu-icon">📥</span>
             <span class="menu-text">Import</span>
         </button>
-
         <hr>
-
         <button class="menu-item" onclick="app.showGitHubSettings(); app.closeMenu();">
             <span class="menu-icon">⚙️</span>
             <span class="menu-text">GitHub</span>
         </button>
-
         <button class="menu-item" onclick="app.manualSync(); app.closeMenu();">
             <span class="menu-icon">🔄</span>
             <span class="menu-text">Sync</span>
         </button>
-
         <hr>
-
         <button class="menu-item" onclick="app.showAbout(); app.closeMenu();">
             <span class="menu-icon">ℹ️</span>
             <span class="menu-text">Über</span>
         </button>
     </div>
 </aside>
+
+<!-- ================= ICON PICKER MODAL ================= -->
+<div id="iconPickerModal" class="modal icon-picker-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🎨 Icon auswählen</h2>
+            <button class="close-btn" onclick="window.iconPicker.close()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="icon-picker-search">
+                <input type="text" id="iconSearchInput"
+                       placeholder="🔍 Icon suchen..."
+                       autocomplete="off">
+            </div>
+            <div class="icon-picker-tabs" id="iconPickerTabs"></div>
+            <div class="icon-picker-grid" id="iconPickerGrid"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="window.iconPicker.close()">Abbrechen</button>
+        </div>
+    </div>
+</div>
 
 <!-- ================= SCRIPTS ================= -->
 <script src="src/managers/CategoryManager.js"></script>
@@ -102,11 +150,11 @@
 <script src="src/components/IconPicker.js"></script>
 <script src="app.js"></script>
 
-<!-- ================= NEU: DARK MODE + KATEGORIE SORTIERUNG ================= -->
+<!-- ================= DARK MODE + ICON PICKER BINDING ================= -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-    /* ---------- Dark Mode (unverändert) ---------- */
+    /* ---------- Dark Mode ---------- */
     const html = document.documentElement;
     const toggle = document.getElementById('themeToggle');
     const icon = document.getElementById('themeIcon');
@@ -118,52 +166,29 @@ document.addEventListener('DOMContentLoaded', () => {
     html.setAttribute('data-theme', theme);
     icon.textContent = theme === 'dark' ? '☀️' : '🌙';
 
-    toggle.onclick = () => {
+    toggle.addEventListener('click', () => {
         const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         html.setAttribute('data-theme', next);
         localStorage.setItem('theme', next);
         icon.textContent = next === 'dark' ? '☀️' : '🌙';
-    };
-
-    /* ---------- NEU: Kategorie Sortierung ---------- */
-    const sortSelect = document.getElementById('categorySortSelect');
-    if (!sortSelect) return;
-
-    const savedSort = localStorage.getItem('categorySort') || 'az';
-    sortSelect.value = savedSort;
-
-    function applyCategorySort(mode) {
-        if (!window.app || !app.categoryManager) return;
-
-        const cats = app.categoryManager.categories;
-
-        switch (mode) {
-            case 'az':
-                cats.sort((a, b) => a.name.localeCompare(b.name));
-                break;
-            case 'za':
-                cats.sort((a, b) => b.name.localeCompare(a.name));
-                break;
-            case 'newest':
-                cats.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
-                break;
-            case 'oldest':
-                cats.sort((a, b) => new Date(a.updatedAt || a.createdAt || 0) - new Date(b.updatedAt || b.createdAt || 0));
-                break;
-        }
-
-        app.renderCategoryTabs();
-    }
-
-    sortSelect.addEventListener('change', () => {
-        localStorage.setItem('categorySort', sortSelect.value);
-        applyCategorySort(sortSelect.value);
     });
 
-    // Beim Start anwenden (kleiner Delay bis App bereit ist)
-    setTimeout(() => applyCategorySort(savedSort), 300);
+    /* ---------- Icon Picker ---------- */
+    window.iconPicker = new IconPicker();
+
+    const catIconInput = document.getElementById('catIcon');
+    if (catIconInput) {
+        catIconInput.addEventListener('click', () => {
+            window.iconPicker.open({
+                onSelect(icon) {
+                    catIconInput.value = icon;
+                    window.iconPicker.close();
+                }
+            });
+        });
+    }
 });
 </script>
 
 </body>
-</html>
+            </html>
