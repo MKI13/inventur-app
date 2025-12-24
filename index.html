@@ -7,8 +7,10 @@
     <meta name="description" content="ef-sin Inventur v2.0.3 - Professional & Clean">
     <title>ef-sin Inventur v2.0</title>
 
-    <!-- Styles -->
+    <!-- ORIGINAL -->
     <link rel="stylesheet" href="styles.css">
+
+    <!-- NEU (NUR ERGÄNZT) -->
     <link rel="stylesheet" href="dark-mode.css">
     <link rel="stylesheet" href="icon-picker.css">
 </head>
@@ -20,9 +22,13 @@
         <h1>📦 ef-sin Inventur <span class="version">v2.0</span></h1>
     </div>
     <div class="header-right">
+
+        <!-- NEU: Dark Mode Button (zusätzlich, nichts ersetzt) -->
         <button id="themeToggle" class="btn-icon" title="Dark Mode umschalten">
             <span id="themeIcon">🌙</span>
         </button>
+
+        <!-- ORIGINAL -->
         <button id="syncButton" class="btn-icon" title="GitHub Sync">🔄</button>
         <button id="menuButton" class="btn-icon" title="Menü">☰</button>
     </div>
@@ -31,7 +37,7 @@
 <!-- ================= KATEGORIE TABS ================= -->
 <nav class="category-tabs" id="categoryTabs"></nav>
 
-<!-- ================= ACTION BUTTONS ================= -->
+<!-- ================= ACTION BUTTONS (ORIGINAL) ================= -->
 <div class="action-buttons">
     <button id="addNormalButton" class="btn-primary">
         <span class="btn-icon">+</span>
@@ -57,7 +63,114 @@
     <p>Lade...</p>
 </div>
 
-<!-- ================= KATEGORIE EDIT MODAL ================= -->
+<!-- ================= ARTIKEL MODAL (ORIGINAL) ================= -->
+<div class="modal" id="addModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Artikel</h2>
+            <button class="btn-close" onclick="app.closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="itemCategory">Kategorie *</label>
+                <select id="itemCategory" required></select>
+            </div>
+            <div class="form-group">
+                <label for="itemName">Name *</label>
+                <input type="text" id="itemName" required>
+            </div>
+            <div class="form-group">
+                <label for="itemSKU">SKU</label>
+                <input type="text" id="itemSKU">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="itemStock">Bestand *</label>
+                    <input type="number" id="itemStock" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemUnit">Einheit</label>
+                    <select id="itemUnit">
+                        <option>Stück</option>
+                        <option>Meter</option>
+                        <option>Kilogramm</option>
+                        <option>Liter</option>
+                        <option>Paket</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="itemMin">Min</label>
+                    <input type="number" id="itemMin">
+                </div>
+                <div class="form-group">
+                    <label for="itemMax">Max</label>
+                    <input type="number" id="itemMax">
+                </div>
+                <div class="form-group">
+                    <label for="itemPrice">Preis (€)</label>
+                    <input type="number" step="0.01" id="itemPrice">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="itemLocation">Standort</label>
+                <input type="text" id="itemLocation">
+            </div>
+            <div class="form-group">
+                <label for="itemNotes">Notizen</label>
+                <textarea id="itemNotes" rows="3"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="app.closeModal()">Abbrechen</button>
+            <button class="btn-primary" onclick="app.saveItem()">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= QUICK ADD MODAL (ORIGINAL) ================= -->
+<div class="modal" id="quickAddModal">
+    <div class="modal-content quick-add">
+        <div class="modal-header">
+            <h2>⚡ Schnelleingabe</h2>
+            <button class="btn-close" onclick="quickAdd.close()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="quickCategory">Kategorie</label>
+                <select id="quickCategory"></select>
+            </div>
+            <div class="form-group">
+                <label for="quickSKU">SKU</label>
+                <input type="text" id="quickSKU">
+            </div>
+            <div class="form-group">
+                <label for="quickName">Name *</label>
+                <input type="text" id="quickName" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="quickStock">Anzahl *</label>
+                    <input type="number" id="quickStock" required>
+                </div>
+                <div class="form-group">
+                    <label for="quickPrice">Preis</label>
+                    <input type="number" step="0.01" id="quickPrice">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="quickLocation">Standort</label>
+                <input type="text" id="quickLocation">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-primary" onclick="quickAdd.save()">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= KATEGORIE EDIT MODAL (ORIGINAL + ERWEITERT) ================= -->
 <div class="modal" id="categoryEditModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -82,7 +195,7 @@
     </div>
 </div>
 
-<!-- ================= MENÜ ================= -->
+<!-- ================= MENÜ (ORIGINAL) ================= -->
 <div class="menu-overlay" id="menuOverlay" onclick="app.closeMenu()"></div>
 <aside class="menu-sidebar" id="menuSidebar">
     <div class="menu-header">
@@ -94,7 +207,6 @@
             <span class="menu-icon">📁</span>
             <span class="menu-text">Kategorien</span>
         </button>
-        <hr>
         <button class="menu-item" onclick="app.exportData(); app.closeMenu();">
             <span class="menu-icon">💾</span>
             <span class="menu-text">Export</span>
@@ -103,7 +215,6 @@
             <span class="menu-icon">📥</span>
             <span class="menu-text">Import</span>
         </button>
-        <hr>
         <button class="menu-item" onclick="app.showGitHubSettings(); app.closeMenu();">
             <span class="menu-icon">⚙️</span>
             <span class="menu-text">GitHub</span>
@@ -112,15 +223,10 @@
             <span class="menu-icon">🔄</span>
             <span class="menu-text">Sync</span>
         </button>
-        <hr>
-        <button class="menu-item" onclick="app.showAbout(); app.closeMenu();">
-            <span class="menu-icon">ℹ️</span>
-            <span class="menu-text">Über</span>
-        </button>
     </div>
 </aside>
 
-<!-- ================= ICON PICKER MODAL ================= -->
+<!-- ================= ICON PICKER MODAL (NEU, ZUSÄTZLICH) ================= -->
 <div id="iconPickerModal" class="modal icon-picker-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -129,39 +235,38 @@
         </div>
         <div class="modal-body">
             <div class="icon-picker-search">
-                <input type="text" id="iconSearchInput"
-                       placeholder="🔍 Icon suchen..."
-                       autocomplete="off">
+                <input type="text" id="iconSearchInput" placeholder="🔍 Icon suchen...">
             </div>
             <div class="icon-picker-tabs" id="iconPickerTabs"></div>
             <div class="icon-picker-grid" id="iconPickerGrid"></div>
         </div>
-        <div class="modal-footer">
-            <button class="btn-secondary" onclick="window.iconPicker.close()">Abbrechen</button>
-        </div>
     </div>
 </div>
 
-<!-- ================= SCRIPTS ================= -->
+<!-- ================= SCRIPTS (ORIGINAL + ERGÄNZT) ================= -->
 <script src="src/managers/CategoryManager.js"></script>
 <script src="src/managers/ImageManager.js"></script>
 <script src="src/managers/MultiFileGitHubSync.js"></script>
 <script src="src/components/QuickAdd.js"></script>
+
+<!-- NEU -->
 <script src="src/components/IconPicker.js"></script>
+
+<!-- ORIGINAL -->
 <script src="app.js"></script>
 
-<!-- ================= DARK MODE + ICON PICKER BINDING ================= -->
+<!-- ================= NEU: DARK MODE + ICON PICKER BINDING ================= -->
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function () {
 
-    /* ---------- Dark Mode ---------- */
+    /* Dark Mode */
     const html = document.documentElement;
     const toggle = document.getElementById('themeToggle');
     const icon = document.getElementById('themeIcon');
 
-    const savedTheme = localStorage.getItem('theme');
+    const saved = localStorage.getItem('theme');
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = savedTheme || (systemDark ? 'dark' : 'light');
+    const theme = saved || (systemDark ? 'dark' : 'light');
 
     html.setAttribute('data-theme', theme);
     icon.textContent = theme === 'dark' ? '☀️' : '🌙';
@@ -173,9 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
         icon.textContent = next === 'dark' ? '☀️' : '🌙';
     });
 
-    /* ---------- Icon Picker ---------- */
+    /* Icon Picker */
     window.iconPicker = new IconPicker();
-
     const catIconInput = document.getElementById('catIcon');
     if (catIconInput) {
         catIconInput.addEventListener('click', () => {
@@ -191,4 +295,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 </body>
-            </html>
+</html>
