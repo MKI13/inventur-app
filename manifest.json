@@ -1,12 +1,13 @@
 {
-  "name": "Inventur PWA",
+  "name": "ef-sin Inventur",
   "short_name": "Inventur",
-  "description": "Progressive Web App für Inventarverwaltung",
-  "start_url": "/",
+  "description": "ef-sin Inventur v2.0.4 - Icon-Picker, Dark Mode, Foto-Upload",
+  "version": "2.0.4",
+  "start_url": "/inventur-app/",
   "display": "standalone",
-  "background_color": "#1a1a1a",
+  "background_color": "#ffffff",
   "theme_color": "#ff6b00",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "icon.svg",
@@ -16,6 +17,5 @@
     }
   ],
   "categories": ["productivity", "business"],
-  "lang": "de-DE",
-  "dir": "ltr"
+  "screenshots": []
 }
