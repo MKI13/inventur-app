@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.0.4">
-    <meta name="description" content="ef-sin Inventur v2.0.4 - Icon-Picker + Dark Mode + Menü">
-    <title>ef-sin Inventur v2.0.4</title>
+    <meta name="version" content="2.0.5">
+    <meta name="description" content="ef-sin Inventur v2.0.5 - Kategorie-Management Fix">
+    <title>ef-sin Inventur v2.0.5</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -15,13 +15,90 @@
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
+    
+    <style>
+    /* Kategorie-Liste Styling */
+    .category-list-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px;
+        margin-bottom: 10px;
+        background: var(--surface, #242424);
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #333);
+    }
+    
+    .category-list-item-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+    }
+    
+    .category-list-item-icon {
+        font-size: 28px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface-elevated, #2a2a2a);
+        border-radius: 8px;
+    }
+    
+    .category-list-item-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary, #e0e0e0);
+    }
+    
+    .category-list-item-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .category-list-item-actions button {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .btn-edit {
+        background: var(--primary, #ff6b00);
+        color: white;
+    }
+    
+    .btn-edit:hover {
+        background: #ff8533;
+    }
+    
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #c82333;
+    }
+    
+    .category-list-empty {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-secondary, #999);
+    }
+    </style>
 </head>
 <body>
 
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version">v2.0.4</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version">v2.0.5</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode umschalten">
@@ -186,6 +263,7 @@
             <button class="btn-close" onclick="closeCategoryEditModal()">×</button>
         </div>
         <div class="modal-body">
+            <input type="hidden" id="catId">
             <div class="form-group">
                 <label for="catName">Name *</label>
                 <input type="text" id="catName" required>
@@ -324,20 +402,135 @@
 <script src="src/components/IconPicker.js"></script>
 <script src="app.js"></script>
 
-<!-- ================= INITIALIZATION & EVENT HANDLERS ================= -->
+<!-- ================= KATEGORIE-MANAGEMENT SYSTEM ================= -->
 <script>
-console.log('🚀 ef-sin Inventur v2.0.4 initializing...');
+console.log('🚀 ef-sin Inventur v2.0.5 initializing...');
 
 // =============================================================================
-// GLOBALE FUNKTIONEN FÜR MODALS (für onclick-Handler)
+// KATEGORIE-MANAGEMENT FUNKTIONEN
+// =============================================================================
+
+// Kategorien aus localStorage laden
+function loadCategories() {
+    const stored = localStorage.getItem('categories');
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch (e) {
+            console.error('Fehler beim Laden der Kategorien:', e);
+        }
+    }
+    
+    // Default-Kategorien
+    return [
+        { id: 'holz', name: 'Holz', icon: '🪵' },
+        { id: 'platten', name: 'Platten', icon: '📋' },
+        { id: 'beschlaege', name: 'Beschläge', icon: '🔩' },
+        { id: 'werkzeuge', name: 'Werkzeuge', icon: '🔨' },
+        { id: 'lacke', name: 'Lacke & Öle', icon: '🎨' },
+        { id: 'schrauben', name: 'Schrauben', icon: '⚙️' },
+        { id: 'sonstiges', name: 'Sonstiges', icon: '📦' }
+    ];
+}
+
+// Kategorien speichern
+function saveCategories(categories) {
+    localStorage.setItem('categories', JSON.stringify(categories));
+    console.log('✅ Kategorien gespeichert:', categories.length);
+}
+
+// Kategorie-Liste laden und anzeigen
+function loadCategoryList() {
+    console.log('📋 Kategorie-Liste laden');
+    const container = document.getElementById('categoryListContainer');
+    const categories = loadCategories();
+    
+    if (categories.length === 0) {
+        container.innerHTML = '<div class="category-list-empty">Keine Kategorien vorhanden</div>';
+        return;
+    }
+    
+    container.innerHTML = categories.map(cat => `
+        <div class="category-list-item">
+            <div class="category-list-item-info">
+                <div class="category-list-item-icon">${cat.icon || '📦'}</div>
+                <div class="category-list-item-name">${cat.name}</div>
+            </div>
+            <div class="category-list-item-actions">
+                <button class="btn-edit" onclick="editCategory('${cat.id}')">
+                    ✏️ Bearbeiten
+                </button>
+                <button class="btn-delete" onclick="deleteCategory('${cat.id}')">
+                    🗑️ Löschen
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Kategorie bearbeiten
+function editCategory(id) {
+    console.log('✏️ Kategorie bearbeiten:', id);
+    const categories = loadCategories();
+    const category = categories.find(c => c.id === id);
+    
+    if (!category) {
+        alert('Kategorie nicht gefunden!');
+        return;
+    }
+    
+    // Modal füllen
+    document.getElementById('categoryModalTitle').textContent = 'Kategorie bearbeiten';
+    document.getElementById('catId').value = id;
+    document.getElementById('catName').value = category.name;
+    document.getElementById('catIcon').value = category.icon || '📦';
+    document.getElementById('catIconPreview').textContent = category.icon || '📦';
+    
+    // Modal öffnen
+    document.getElementById('categoryEditModal').classList.add('active');
+}
+
+// Kategorie löschen
+function deleteCategory(id) {
+    console.log('🗑️ Kategorie löschen:', id);
+    const categories = loadCategories();
+    const category = categories.find(c => c.id === id);
+    
+    if (!category) {
+        alert('Kategorie nicht gefunden!');
+        return;
+    }
+    
+    if (!confirm(`Kategorie "${category.name}" wirklich löschen?`)) {
+        return;
+    }
+    
+    // Kategorie entfernen
+    const updated = categories.filter(c => c.id !== id);
+    saveCategories(updated);
+    
+    // Liste neu laden
+    loadCategoryList();
+    
+    // App neu laden (falls vorhanden)
+    if (window.app && window.app.loadCategories) {
+        window.app.loadCategories();
+    }
+    if (window.categoryManager && window.categoryManager.loadCategories) {
+        window.categoryManager.loadCategories();
+    }
+    
+    console.log('✅ Kategorie gelöscht');
+}
+
+// =============================================================================
+// GLOBALE MODAL-FUNKTIONEN
 // =============================================================================
 
 function showCategoryManagement() {
     console.log('📁 Kategorie-Management öffnen');
     document.getElementById('categoryManagementModal').classList.add('active');
-    if (window.app && window.app.loadCategoryList) {
-        window.app.loadCategoryList();
-    }
+    loadCategoryList();
 }
 
 function closeCategoryManagement() {
@@ -348,6 +541,7 @@ function closeCategoryManagement() {
 function openNewCategoryModal() {
     console.log('➕ Neue Kategorie Modal öffnen');
     document.getElementById('categoryModalTitle').textContent = 'Neue Kategorie';
+    document.getElementById('catId').value = '';
     document.getElementById('catName').value = '';
     document.getElementById('catIcon').value = '📦';
     document.getElementById('catIconPreview').textContent = '📦';
@@ -361,6 +555,7 @@ function closeCategoryEditModal() {
 
 function saveCategory() {
     console.log('💾 Kategorie speichern');
+    const id = document.getElementById('catId').value;
     const name = document.getElementById('catName').value.trim();
     const icon = document.getElementById('catIcon').value.trim();
     
@@ -369,17 +564,40 @@ function saveCategory() {
         return;
     }
     
-    if (window.categoryManager) {
-        const category = { name, icon: icon || '📦' };
-        window.categoryManager.addCategory(category);
-        closeCategoryEditModal();
-        if (window.app && window.app.loadCategoryList) {
-            window.app.loadCategoryList();
+    const categories = loadCategories();
+    
+    if (id) {
+        // Bestehende Kategorie bearbeiten
+        const index = categories.findIndex(c => c.id === id);
+        if (index !== -1) {
+            categories[index].name = name;
+            categories[index].icon = icon || '📦';
+            console.log('✅ Kategorie aktualisiert');
         }
-        if (window.app && window.app.showToast) {
-            window.app.showToast(`Kategorie "${name}" erstellt!`, 'success');
-        }
+    } else {
+        // Neue Kategorie erstellen
+        const newId = 'cat_' + Date.now();
+        categories.push({
+            id: newId,
+            name: name,
+            icon: icon || '📦'
+        });
+        console.log('✅ Neue Kategorie erstellt');
     }
+    
+    saveCategories(categories);
+    closeCategoryEditModal();
+    loadCategoryList();
+    
+    // App neu laden
+    if (window.app && window.app.loadCategories) {
+        window.app.loadCategories();
+    }
+    if (window.categoryManager && window.categoryManager.loadCategories) {
+        window.categoryManager.loadCategories();
+    }
+    
+    alert(`Kategorie "${name}" gespeichert!`);
 }
 
 function exportData() {
@@ -399,6 +617,25 @@ function importData() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
+        input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        if (data.categories) {
+                            saveCategories(data.categories);
+                            loadCategoryList();
+                            alert('Kategorien importiert!');
+                        }
+                    } catch (err) {
+                        alert('Fehler beim Importieren!');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        };
         input.click();
     }
 }
@@ -406,6 +643,12 @@ function importData() {
 function showGitHubSettings() {
     console.log('⚙️ GitHub Settings öffnen');
     document.getElementById('githubSettingsModal').classList.add('active');
+    
+    // Werte laden
+    document.getElementById('ghToken').value = localStorage.getItem('github_token') || '';
+    document.getElementById('ghUsername').value = localStorage.getItem('github_username') || '';
+    document.getElementById('ghRepo').value = localStorage.getItem('github_repo') || '';
+    document.getElementById('ghAutoSync').checked = localStorage.getItem('github_autosync') === 'true';
 }
 
 function closeGitHubSettings() {
@@ -593,12 +836,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
                     const query = e.target.value.trim();
-                    if (query.length > 0) {
+                    if (query.length > 0 && window.iconPicker) {
                         const results = window.iconPicker.search(query);
                         displaySearchResults(results);
                     } else {
                         const activeTab = document.querySelector('.icon-tab.active');
-                        if (activeTab) {
+                        if (activeTab && window.iconPicker) {
                             window.iconPicker.renderCategory(activeTab.dataset.category);
                         }
                     }
@@ -686,9 +929,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ ef-sin Inventur v2.0.4 - Initialization complete!');
+    console.log('✅ ef-sin Inventur v2.0.5 - Initialization complete!');
 });
 </script>
 
 </body>
-                    </html>
+</html>
