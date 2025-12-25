@@ -17,7 +17,6 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg">
 </head>
 <body>
-
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
@@ -31,10 +30,8 @@
         <button id="menuButton" class="btn-icon" title="Menü">☰</button>
     </div>
 </header>
-
 <!-- ================= KATEGORIE TABS ================= -->
 <nav class="category-tabs" id="categoryTabs"></nav>
-
 <!-- ================= ACTION BUTTONS ================= -->
 <div class="action-buttons">
     <button id="addNormalButton" class="btn-primary">
@@ -46,21 +43,17 @@
         <span class="btn-text">Quick Add</span>
     </button>
 </div>
-
 <!-- ================= SUCHE ================= -->
 <div class="search-container">
     <input type="text" id="searchInput" placeholder="🔍 Suchen...">
 </div>
-
 <!-- ================= ARTIKEL LISTE ================= -->
 <main class="items-container" id="itemsContainer"></main>
-
 <!-- ================= LOADING ================= -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
     <p>Lade...</p>
 </div>
-
 <!-- ================= ARTIKEL MODAL ================= -->
 <div class="modal" id="addModal">
     <div class="modal-content">
@@ -134,7 +127,6 @@
         </div>
     </div>
 </div>
-
 <!-- ================= QUICK ADD MODAL ================= -->
 <div class="modal" id="quickAddModal">
     <div class="modal-content quick-add">
@@ -182,7 +174,6 @@
         </div>
     </div>
 </div>
-
 <!-- ================= KATEGORIE EDIT MODAL ================= -->
 <div class="modal" id="categoryEditModal">
     <div class="modal-content">
@@ -217,7 +208,6 @@
         </div>
     </div>
 </div>
-
 <!-- ================= KATEGORIE MANAGEMENT MODAL ================= -->
 <div class="modal" id="categoryManagementModal">
     <div class="modal-content" style="max-width: 700px;">
@@ -236,7 +226,6 @@
         </div>
     </div>
 </div>
-
 <!-- ================= GITHUB SETTINGS MODAL ================= -->
 <div class="modal" id="githubSettingsModal">
     <div class="modal-content">
@@ -271,7 +260,6 @@
         </div>
     </div>
 </div>
-
 <!-- ================= ICON PICKER MODAL ================= -->
 <div id="iconPickerModal" class="modal icon-picker-modal">
     <div class="modal-content">
@@ -298,7 +286,6 @@
         </div>
     </div>
 </div>
-
 <!-- ================= MENÜ ================= -->
 <div class="menu-overlay" id="menuOverlay"></div>
 <aside class="menu-sidebar" id="menuSidebar">
@@ -329,7 +316,6 @@
         </button>
     </div>
 </aside>
-
 <!-- ================= SCRIPTS ================= -->
 <script src="src/managers/CategoryManager.js"></script>
 <script src="src/managers/ImageManager.js"></script>
@@ -337,11 +323,9 @@
 <script src="src/components/QuickAdd.js"></script>
 <script src="src/components/IconPicker.js"></script>
 <script src="app.js"></script>
-
 <!-- ================= INITIALIZATION SCRIPT ================= -->
 <script>
 console.log('🚀 ef-sin Inventur v2.0.4 initializing...');
-
 document.addEventListener('DOMContentLoaded', function() {
     
     // ==========================================================================
@@ -621,6 +605,5 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ ef-sin Inventur v2.0.4 - Initialization complete!');
 });
 </script>
-
 </body>
 </html>
