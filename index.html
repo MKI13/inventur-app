@@ -6,13 +6,15 @@
     <meta name="version" content="2.0.3">
     <meta name="description" content="ef-sin Inventur v2.0.3 - Professional & Clean">
     <title>ef-sin Inventur v2.0</title>
-
-    <!-- ORIGINAL -->
+    
+    <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
-
-    <!-- NEU (NUR ERGÄNZT) -->
     <link rel="stylesheet" href="dark-mode.css">
     <link rel="stylesheet" href="icon-picker.css">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
 </head>
 <body>
 
@@ -22,13 +24,9 @@
         <h1>📦 ef-sin Inventur <span class="version">v2.0</span></h1>
     </div>
     <div class="header-right">
-
-        <!-- NEU: Dark Mode Button (zusätzlich, nichts ersetzt) -->
         <button id="themeToggle" class="btn-icon" title="Dark Mode umschalten">
             <span id="themeIcon">🌙</span>
         </button>
-
-        <!-- ORIGINAL -->
         <button id="syncButton" class="btn-icon" title="GitHub Sync">🔄</button>
         <button id="menuButton" class="btn-icon" title="Menü">☰</button>
     </div>
@@ -37,7 +35,7 @@
 <!-- ================= KATEGORIE TABS ================= -->
 <nav class="category-tabs" id="categoryTabs"></nav>
 
-<!-- ================= ACTION BUTTONS (ORIGINAL) ================= -->
+<!-- ================= ACTION BUTTONS ================= -->
 <div class="action-buttons">
     <button id="addNormalButton" class="btn-primary">
         <span class="btn-icon">+</span>
@@ -63,7 +61,7 @@
     <p>Lade...</p>
 </div>
 
-<!-- ================= ARTIKEL MODAL (ORIGINAL) ================= -->
+<!-- ================= ARTIKEL MODAL ================= -->
 <div class="modal" id="addModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -117,6 +115,14 @@
                 <label for="itemLocation">Standort</label>
                 <input type="text" id="itemLocation">
             </div>
+            
+            <!-- FOTO UPLOAD -->
+            <div class="form-group">
+                <label for="itemPhoto">Foto</label>
+                <input type="file" id="itemPhoto" accept="image/*" capture="environment">
+                <div id="photoPreview" style="margin-top: 10px;"></div>
+            </div>
+            
             <div class="form-group">
                 <label for="itemNotes">Notizen</label>
                 <textarea id="itemNotes" rows="3"></textarea>
@@ -129,7 +135,7 @@
     </div>
 </div>
 
-<!-- ================= QUICK ADD MODAL (ORIGINAL) ================= -->
+<!-- ================= QUICK ADD MODAL ================= -->
 <div class="modal" id="quickAddModal">
     <div class="modal-content quick-add">
         <div class="modal-header">
@@ -163,6 +169,13 @@
                 <label for="quickLocation">Standort</label>
                 <input type="text" id="quickLocation">
             </div>
+            
+            <!-- FOTO UPLOAD FÜR QUICK ADD -->
+            <div class="form-group">
+                <label for="quickPhoto">Foto</label>
+                <input type="file" id="quickPhoto" accept="image/*" capture="environment">
+                <div id="quickPhotoPreview" style="margin-top: 10px;"></div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn-primary" onclick="quickAdd.save()">Speichern</button>
@@ -170,11 +183,11 @@
     </div>
 </div>
 
-<!-- ================= KATEGORIE EDIT MODAL (ORIGINAL + ERWEITERT) ================= -->
+<!-- ================= KATEGORIE EDIT MODAL ================= -->
 <div class="modal" id="categoryEditModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Kategorie</h2>
+            <h2 id="categoryModalTitle">Kategorie</h2>
             <button class="btn-close" onclick="app.closeCategoryEditModal()">×</button>
         </div>
         <div class="modal-body">
@@ -182,10 +195,20 @@
                 <label for="catName">Name *</label>
                 <input type="text" id="catName" required>
             </div>
+            
+            <!-- ICON INPUT MIT PREVIEW UND PICKER -->
             <div class="form-group">
-                <label for="catIcon">Icon</label>
-                <input type="text" id="catIcon" placeholder="📦" maxlength="2" readonly>
-                <small>Icon anklicken zum Auswählen</small>
+                <label>Icon *</label>
+                <div class="icon-input-wrapper">
+                    <div class="icon-preview" id="catIconPreview">📦</div>
+                    <div class="icon-input-field">
+                        <input type="text" id="catIcon" placeholder="📦" maxlength="4" value="📦">
+                        <small>Emoji direkt eingeben oder auswählen</small>
+                    </div>
+                    <button type="button" class="icon-select-btn" id="openIconPickerBtn">
+                        Icon auswählen
+                    </button>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -195,7 +218,88 @@
     </div>
 </div>
 
-<!-- ================= MENÜ (ORIGINAL) ================= -->
+<!-- ================= KATEGORIE MANAGEMENT MODAL ================= -->
+<div class="modal" id="categoryManagementModal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h2>📁 Kategorien verwalten</h2>
+            <button class="btn-close" onclick="app.closeCategoryManagement()">×</button>
+        </div>
+        <div class="modal-body">
+            <button class="btn-primary" style="width: 100%; margin-bottom: 20px;" onclick="app.openNewCategoryModal()">
+                + Neue Kategorie
+            </button>
+            <div id="categoryListContainer"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="app.closeCategoryManagement()">Schließen</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= GITHUB SETTINGS MODAL ================= -->
+<div class="modal" id="githubSettingsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>⚙️ GitHub Einstellungen</h2>
+            <button class="btn-close" onclick="app.closeGitHubSettings()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="ghToken">GitHub Token</label>
+                <input type="password" id="ghToken" placeholder="ghp_...">
+                <small>Personal Access Token mit repo-Rechten</small>
+            </div>
+            <div class="form-group">
+                <label for="ghUsername">Username</label>
+                <input type="text" id="ghUsername" placeholder="username">
+            </div>
+            <div class="form-group">
+                <label for="ghRepo">Repository</label>
+                <input type="text" id="ghRepo" placeholder="inventur-v2">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="ghAutoSync">
+                    Auto-Sync aktivieren
+                </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="app.closeGitHubSettings()">Abbrechen</button>
+            <button class="btn-primary" onclick="app.saveGitHubSettings()">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= ICON PICKER MODAL ================= -->
+<div id="iconPickerModal" class="modal icon-picker-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🎨 Icon auswählen</h2>
+            <button class="btn-close" onclick="window.iconPicker && window.iconPicker.close()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Search -->
+            <div class="icon-picker-search">
+                <input type="text" id="iconSearchInput" placeholder="🔍 Icon suchen (z.B. 'hammer', 'holz')..." autocomplete="off">
+            </div>
+            <!-- Tabs -->
+            <div class="icon-picker-tabs" id="iconPickerTabs">
+                <!-- Dynamisch eingefügt -->
+            </div>
+            <!-- Grid -->
+            <div class="icon-picker-grid" id="iconPickerGrid">
+                <!-- Dynamisch eingefügt -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="window.iconPicker && window.iconPicker.close()">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MENÜ ================= -->
 <div class="menu-overlay" id="menuOverlay" onclick="app.closeMenu()"></div>
 <aside class="menu-sidebar" id="menuSidebar">
     <div class="menu-header">
@@ -205,92 +309,231 @@
     <div class="menu-content">
         <button class="menu-item" onclick="app.showCategoryManagement(); app.closeMenu();">
             <span class="menu-icon">📁</span>
-            <span class="menu-text">Kategorien</span>
+            <span class="menu-text">Kategorien verwalten</span>
         </button>
         <button class="menu-item" onclick="app.exportData(); app.closeMenu();">
             <span class="menu-icon">💾</span>
-            <span class="menu-text">Export</span>
+            <span class="menu-text">Daten exportieren</span>
         </button>
         <button class="menu-item" onclick="app.importData(); app.closeMenu();">
             <span class="menu-icon">📥</span>
-            <span class="menu-text">Import</span>
+            <span class="menu-text">Daten importieren</span>
         </button>
         <button class="menu-item" onclick="app.showGitHubSettings(); app.closeMenu();">
             <span class="menu-icon">⚙️</span>
-            <span class="menu-text">GitHub</span>
+            <span class="menu-text">GitHub Einstellungen</span>
         </button>
         <button class="menu-item" onclick="app.manualSync(); app.closeMenu();">
             <span class="menu-icon">🔄</span>
-            <span class="menu-text">Sync</span>
+            <span class="menu-text">Jetzt synchronisieren</span>
         </button>
     </div>
 </aside>
 
-<!-- ================= ICON PICKER MODAL (NEU, ZUSÄTZLICH) ================= -->
-<div id="iconPickerModal" class="modal icon-picker-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>🎨 Icon auswählen</h2>
-            <button class="close-btn" onclick="window.iconPicker.close()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="icon-picker-search">
-                <input type="text" id="iconSearchInput" placeholder="🔍 Icon suchen...">
-            </div>
-            <div class="icon-picker-tabs" id="iconPickerTabs"></div>
-            <div class="icon-picker-grid" id="iconPickerGrid"></div>
-        </div>
-    </div>
-</div>
-
-<!-- ================= SCRIPTS (ORIGINAL + ERGÄNZT) ================= -->
+<!-- ================= SCRIPTS ================= -->
 <script src="src/managers/CategoryManager.js"></script>
 <script src="src/managers/ImageManager.js"></script>
 <script src="src/managers/MultiFileGitHubSync.js"></script>
 <script src="src/components/QuickAdd.js"></script>
-
-<!-- NEU -->
 <script src="src/components/IconPicker.js"></script>
-
-<!-- ORIGINAL -->
 <script src="app.js"></script>
 
-<!-- ================= NEU: DARK MODE + ICON PICKER BINDING ================= -->
+<!-- ================= INITIALIZATION SCRIPT ================= -->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    /* Dark Mode */
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Initializing ef-sin Inventur v2.0.3');
+    
+    // ==========================================================================
+    // DARK MODE
+    // ==========================================================================
     const html = document.documentElement;
-    const toggle = document.getElementById('themeToggle');
-    const icon = document.getElementById('themeIcon');
-
-    const saved = localStorage.getItem('theme');
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = saved || (systemDark ? 'dark' : 'light');
-
-    html.setAttribute('data-theme', theme);
-    icon.textContent = theme === 'dark' ? '☀️' : '🌙';
-
-    toggle.addEventListener('click', () => {
-        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        html.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-        icon.textContent = next === 'dark' ? '☀️' : '🌙';
-    });
-
-    /* Icon Picker */
-    window.iconPicker = new IconPicker();
-    const catIconInput = document.getElementById('catIcon');
-    if (catIconInput) {
-        catIconInput.addEventListener('click', () => {
-            window.iconPicker.open({
-                onSelect(icon) {
-                    catIconInput.value = icon;
-                    window.iconPicker.close();
-                }
-            });
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    
+    if (themeToggle && themeIcon) {
+        // Theme laden
+        const savedTheme = localStorage.getItem('theme');
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const initialTheme = savedTheme || (systemDark ? 'dark' : 'light');
+        
+        html.setAttribute('data-theme', initialTheme);
+        themeIcon.textContent = initialTheme === 'dark' ? '☀️' : '🌙';
+        
+        // Toggle
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            
+            console.log(`🎨 Theme: ${newTheme}`);
+            
+            if (window.app && window.app.showToast) {
+                window.app.showToast(
+                    `${newTheme === 'dark' ? '🌙 Dark' : '☀️ Light'} Mode aktiviert`,
+                    'success'
+                );
+            }
+        });
+        
+        // System Theme Changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            if (!localStorage.getItem('theme')) {
+                const newTheme = e.matches ? 'dark' : 'light';
+                html.setAttribute('data-theme', newTheme);
+                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            }
         });
     }
+    
+    // ==========================================================================
+    // ICON PICKER
+    // ==========================================================================
+    if (typeof IconPicker !== 'undefined') {
+        window.iconPicker = new IconPicker();
+        console.log('✅ Icon Picker initialized');
+        
+        // Icon Input Event
+        const catIconInput = document.getElementById('catIcon');
+        const catIconPreview = document.getElementById('catIconPreview');
+        const openPickerBtn = document.getElementById('openIconPickerBtn');
+        
+        // Preview bei Text-Eingabe
+        if (catIconInput && catIconPreview) {
+            catIconInput.addEventListener('input', function() {
+                const icon = this.value.trim();
+                if (icon) {
+                    catIconPreview.textContent = icon;
+                }
+            });
+            
+            // Initial Preview
+            if (catIconInput.value) {
+                catIconPreview.textContent = catIconInput.value;
+            }
+        }
+        
+        // Picker Button
+        if (openPickerBtn) {
+            openPickerBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const currentIcon = catIconInput.value || '📦';
+                
+                window.iconPicker.open(currentIcon, function(selectedIcon) {
+                    catIconInput.value = selectedIcon;
+                    catIconPreview.textContent = selectedIcon;
+                    console.log('✅ Icon selected:', selectedIcon);
+                });
+            });
+        }
+        
+        // Icon Search
+        const searchInput = document.getElementById('iconSearchInput');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const query = e.target.value.trim();
+                    if (query.length > 0) {
+                        const results = window.iconPicker.search(query);
+                        displaySearchResults(results);
+                    } else {
+                        const activeTab = document.querySelector('.icon-tab.active');
+                        if (activeTab) {
+                            window.iconPicker.renderCategory(activeTab.dataset.category);
+                        }
+                    }
+                }, 300);
+            });
+        }
+        
+        function displaySearchResults(results) {
+            const container = document.getElementById('iconPickerGrid');
+            if (!container) return;
+            
+            if (results.length === 0) {
+                container.innerHTML = `
+                    <div class="icon-picker-empty">
+                        <div class="icon-picker-empty-icon">🔍</div>
+                        <div class="icon-picker-empty-text">Keine Icons gefunden</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = results.map(item => `
+                <div class="icon-item ${window.iconPicker.selectedIcon === item.icon ? 'selected' : ''}" 
+                     data-icon="${item.icon}"
+                     title="${item.name}${item.category ? ' (' + item.category + ')' : ''}">
+                    <span class="icon-display">${item.icon}</span>
+                    <span class="icon-name">${item.name}</span>
+                </div>
+            `).join('');
+            
+            container.querySelectorAll('.icon-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    window.iconPicker.select(item.dataset.icon);
+                });
+            });
+        }
+    } else {
+        console.warn('⚠️ IconPicker not loaded');
+    }
+    
+    // ==========================================================================
+    // FOTO UPLOAD PREVIEW
+    // ==========================================================================
+    const itemPhoto = document.getElementById('itemPhoto');
+    const photoPreview = document.getElementById('photoPreview');
+    
+    if (itemPhoto && photoPreview) {
+        itemPhoto.addEventListener('change', function(e) {
+            photoPreview.innerHTML = '';
+            const file = e.target.files[0];
+            
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '200px';
+                    img.style.borderRadius = '8px';
+                    photoPreview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Quick Add Foto
+    const quickPhoto = document.getElementById('quickPhoto');
+    const quickPhotoPreview = document.getElementById('quickPhotoPreview');
+    
+    if (quickPhoto && quickPhotoPreview) {
+        quickPhoto.addEventListener('change', function(e) {
+            quickPhotoPreview.innerHTML = '';
+            const file = e.target.files[0];
+            
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '200px';
+                    img.style.borderRadius = '8px';
+                    quickPhotoPreview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    console.log('✅ Initialization complete');
 });
 </script>
 
