@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="version" content="2.0.4">
-    <meta name="description" content="ef-sin Inventur v2.0.4 - Icon-Picker + Dark Mode + Menü Fix">
+    <meta name="description" content="ef-sin Inventur v2.0.4 - Icon-Picker + Dark Mode + Menü">
     <title>ef-sin Inventur v2.0.4</title>
     
     <!-- CSS -->
@@ -17,6 +17,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg">
 </head>
 <body>
+
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
@@ -30,8 +31,10 @@
         <button id="menuButton" class="btn-icon" title="Menü">☰</button>
     </div>
 </header>
+
 <!-- ================= KATEGORIE TABS ================= -->
 <nav class="category-tabs" id="categoryTabs"></nav>
+
 <!-- ================= ACTION BUTTONS ================= -->
 <div class="action-buttons">
     <button id="addNormalButton" class="btn-primary">
@@ -43,17 +46,21 @@
         <span class="btn-text">Quick Add</span>
     </button>
 </div>
+
 <!-- ================= SUCHE ================= -->
 <div class="search-container">
     <input type="text" id="searchInput" placeholder="🔍 Suchen...">
 </div>
+
 <!-- ================= ARTIKEL LISTE ================= -->
 <main class="items-container" id="itemsContainer"></main>
+
 <!-- ================= LOADING ================= -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
     <p>Lade...</p>
 </div>
+
 <!-- ================= ARTIKEL MODAL ================= -->
 <div class="modal" id="addModal">
     <div class="modal-content">
@@ -108,14 +115,11 @@
                 <label for="itemLocation">Standort</label>
                 <input type="text" id="itemLocation">
             </div>
-            
-            <!-- FOTO UPLOAD -->
             <div class="form-group">
                 <label for="itemPhoto">Foto</label>
                 <input type="file" id="itemPhoto" accept="image/*" capture="environment">
                 <div id="photoPreview" style="margin-top: 10px;"></div>
             </div>
-            
             <div class="form-group">
                 <label for="itemNotes">Notizen</label>
                 <textarea id="itemNotes" rows="3"></textarea>
@@ -127,6 +131,7 @@
         </div>
     </div>
 </div>
+
 <!-- ================= QUICK ADD MODAL ================= -->
 <div class="modal" id="quickAddModal">
     <div class="modal-content quick-add">
@@ -161,8 +166,6 @@
                 <label for="quickLocation">Standort</label>
                 <input type="text" id="quickLocation">
             </div>
-            
-            <!-- FOTO UPLOAD FÜR QUICK ADD -->
             <div class="form-group">
                 <label for="quickPhoto">Foto</label>
                 <input type="file" id="quickPhoto" accept="image/*" capture="environment">
@@ -174,20 +177,19 @@
         </div>
     </div>
 </div>
+
 <!-- ================= KATEGORIE EDIT MODAL ================= -->
 <div class="modal" id="categoryEditModal">
     <div class="modal-content">
         <div class="modal-header">
             <h2 id="categoryModalTitle">Kategorie</h2>
-            <button class="btn-close" onclick="app.closeCategoryEditModal()">×</button>
+            <button class="btn-close" onclick="closeCategoryEditModal()">×</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
                 <label for="catName">Name *</label>
                 <input type="text" id="catName" required>
             </div>
-            
-            <!-- ICON INPUT MIT PREVIEW UND PICKER -->
             <div class="form-group">
                 <label>Icon *</label>
                 <div class="icon-input-wrapper">
@@ -203,35 +205,37 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn-secondary" onclick="app.closeCategoryEditModal()">Abbrechen</button>
-            <button class="btn-primary" onclick="app.saveCategory()">Speichern</button>
+            <button class="btn-secondary" onclick="closeCategoryEditModal()">Abbrechen</button>
+            <button class="btn-primary" onclick="saveCategory()">Speichern</button>
         </div>
     </div>
 </div>
+
 <!-- ================= KATEGORIE MANAGEMENT MODAL ================= -->
 <div class="modal" id="categoryManagementModal">
     <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
             <h2>📁 Kategorien verwalten</h2>
-            <button class="btn-close" onclick="app.closeCategoryManagement()">×</button>
+            <button class="btn-close" onclick="closeCategoryManagement()">×</button>
         </div>
         <div class="modal-body">
-            <button class="btn-primary" style="width: 100%; margin-bottom: 20px;" onclick="app.openNewCategoryModal()">
+            <button class="btn-primary" style="width: 100%; margin-bottom: 20px;" onclick="openNewCategoryModal()">
                 + Neue Kategorie
             </button>
             <div id="categoryListContainer"></div>
         </div>
         <div class="modal-footer">
-            <button class="btn-secondary" onclick="app.closeCategoryManagement()">Schließen</button>
+            <button class="btn-secondary" onclick="closeCategoryManagement()">Schließen</button>
         </div>
     </div>
 </div>
+
 <!-- ================= GITHUB SETTINGS MODAL ================= -->
 <div class="modal" id="githubSettingsModal">
     <div class="modal-content">
         <div class="modal-header">
             <h2>⚙️ GitHub Einstellungen</h2>
-            <button class="btn-close" onclick="app.closeGitHubSettings()">×</button>
+            <button class="btn-close" onclick="closeGitHubSettings()">×</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
@@ -255,11 +259,12 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn-secondary" onclick="app.closeGitHubSettings()">Abbrechen</button>
-            <button class="btn-primary" onclick="app.saveGitHubSettings()">Speichern</button>
+            <button class="btn-secondary" onclick="closeGitHubSettings()">Abbrechen</button>
+            <button class="btn-primary" onclick="saveGitHubSettings()">Speichern</button>
         </div>
     </div>
 </div>
+
 <!-- ================= ICON PICKER MODAL ================= -->
 <div id="iconPickerModal" class="modal icon-picker-modal">
     <div class="modal-content">
@@ -268,24 +273,18 @@
             <button class="btn-close" onclick="window.iconPicker && window.iconPicker.close()">&times;</button>
         </div>
         <div class="modal-body">
-            <!-- Search -->
             <div class="icon-picker-search">
-                <input type="text" id="iconSearchInput" placeholder="🔍 Icon suchen (z.B. 'hammer', 'holz')..." autocomplete="off">
+                <input type="text" id="iconSearchInput" placeholder="🔍 Icon suchen..." autocomplete="off">
             </div>
-            <!-- Tabs -->
-            <div class="icon-picker-tabs" id="iconPickerTabs">
-                <!-- Dynamisch eingefügt -->
-            </div>
-            <!-- Grid -->
-            <div class="icon-picker-grid" id="iconPickerGrid">
-                <!-- Dynamisch eingefügt -->
-            </div>
+            <div class="icon-picker-tabs" id="iconPickerTabs"></div>
+            <div class="icon-picker-grid" id="iconPickerGrid"></div>
         </div>
         <div class="modal-footer">
             <button class="btn-secondary" onclick="window.iconPicker && window.iconPicker.close()">Abbrechen</button>
         </div>
     </div>
 </div>
+
 <!-- ================= MENÜ ================= -->
 <div class="menu-overlay" id="menuOverlay"></div>
 <aside class="menu-sidebar" id="menuSidebar">
@@ -316,6 +315,7 @@
         </button>
     </div>
 </aside>
+
 <!-- ================= SCRIPTS ================= -->
 <script src="src/managers/CategoryManager.js"></script>
 <script src="src/managers/ImageManager.js"></script>
@@ -323,107 +323,206 @@
 <script src="src/components/QuickAdd.js"></script>
 <script src="src/components/IconPicker.js"></script>
 <script src="app.js"></script>
-<!-- ================= INITIALIZATION SCRIPT ================= -->
+
+<!-- ================= INITIALIZATION & EVENT HANDLERS ================= -->
 <script>
 console.log('🚀 ef-sin Inventur v2.0.4 initializing...');
-document.addEventListener('DOMContentLoaded', function() {
+
+// =============================================================================
+// GLOBALE FUNKTIONEN FÜR MODALS (für onclick-Handler)
+// =============================================================================
+
+function showCategoryManagement() {
+    console.log('📁 Kategorie-Management öffnen');
+    document.getElementById('categoryManagementModal').classList.add('active');
+    if (window.app && window.app.loadCategoryList) {
+        window.app.loadCategoryList();
+    }
+}
+
+function closeCategoryManagement() {
+    console.log('✖️ Kategorie-Management schließen');
+    document.getElementById('categoryManagementModal').classList.remove('active');
+}
+
+function openNewCategoryModal() {
+    console.log('➕ Neue Kategorie Modal öffnen');
+    document.getElementById('categoryModalTitle').textContent = 'Neue Kategorie';
+    document.getElementById('catName').value = '';
+    document.getElementById('catIcon').value = '📦';
+    document.getElementById('catIconPreview').textContent = '📦';
+    document.getElementById('categoryEditModal').classList.add('active');
+}
+
+function closeCategoryEditModal() {
+    console.log('✖️ Kategorie-Edit Modal schließen');
+    document.getElementById('categoryEditModal').classList.remove('active');
+}
+
+function saveCategory() {
+    console.log('💾 Kategorie speichern');
+    const name = document.getElementById('catName').value.trim();
+    const icon = document.getElementById('catIcon').value.trim();
     
-    // ==========================================================================
-    // MENÜ EVENT HANDLERS (KRITISCH - GEFIXT!)
-    // ==========================================================================
+    if (!name) {
+        alert('Bitte gebe einen Namen ein!');
+        return;
+    }
+    
+    if (window.categoryManager) {
+        const category = { name, icon: icon || '📦' };
+        window.categoryManager.addCategory(category);
+        closeCategoryEditModal();
+        if (window.app && window.app.loadCategoryList) {
+            window.app.loadCategoryList();
+        }
+        if (window.app && window.app.showToast) {
+            window.app.showToast(`Kategorie "${name}" erstellt!`, 'success');
+        }
+    }
+}
+
+function exportData() {
+    console.log('💾 Daten exportieren');
+    if (window.app && window.app.exportData) {
+        window.app.exportData();
+    } else {
+        alert('Export-Funktion wird geladen...');
+    }
+}
+
+function importData() {
+    console.log('📥 Daten importieren');
+    if (window.app && window.app.importData) {
+        window.app.importData();
+    } else {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.click();
+    }
+}
+
+function showGitHubSettings() {
+    console.log('⚙️ GitHub Settings öffnen');
+    document.getElementById('githubSettingsModal').classList.add('active');
+}
+
+function closeGitHubSettings() {
+    console.log('✖️ GitHub Settings schließen');
+    document.getElementById('githubSettingsModal').classList.remove('active');
+}
+
+function saveGitHubSettings() {
+    console.log('💾 GitHub Settings speichern');
+    const token = document.getElementById('ghToken').value;
+    const username = document.getElementById('ghUsername').value;
+    const repo = document.getElementById('ghRepo').value;
+    const autoSync = document.getElementById('ghAutoSync').checked;
+    
+    localStorage.setItem('github_token', token);
+    localStorage.setItem('github_username', username);
+    localStorage.setItem('github_repo', repo);
+    localStorage.setItem('github_autosync', autoSync);
+    
+    closeGitHubSettings();
+    alert('GitHub Einstellungen gespeichert!');
+}
+
+function manualSync() {
+    console.log('🔄 Manueller Sync');
+    if (window.githubSync && window.githubSync.sync) {
+        window.githubSync.sync();
+    } else {
+        alert('Sync wird noch initialisiert...');
+    }
+}
+
+// =============================================================================
+// DOM CONTENT LOADED
+// =============================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOM loaded');
+    
+    // =========================================================================
+    // MENÜ EVENT HANDLERS
+    // =========================================================================
     const menuButton = document.getElementById('menuButton');
     const menuSidebar = document.getElementById('menuSidebar');
     const menuOverlay = document.getElementById('menuOverlay');
     const menuCloseBtn = document.getElementById('menuCloseBtn');
     
-    // Menü öffnen
+    function closeMenu() {
+        console.log('✖️ Menü schließen');
+        if (menuSidebar) menuSidebar.classList.remove('active');
+        if (menuOverlay) menuOverlay.classList.remove('active');
+    }
+    
     if (menuButton) {
         menuButton.addEventListener('click', function(e) {
             e.preventDefault();
-            e.stopPropagation();
-            console.log('📂 Menü öffnen...');
+            console.log('📂 Menü öffnen');
             if (menuSidebar) menuSidebar.classList.add('active');
             if (menuOverlay) menuOverlay.classList.add('active');
         });
     }
     
-    // Menü schließen - Close Button
     if (menuCloseBtn) {
-        menuCloseBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('✖️ Menü schließen (Close Button)');
-            if (menuSidebar) menuSidebar.classList.remove('active');
-            if (menuOverlay) menuOverlay.classList.remove('active');
-        });
+        menuCloseBtn.addEventListener('click', closeMenu);
     }
     
-    // Menü schließen - Overlay
     if (menuOverlay) {
-        menuOverlay.addEventListener('click', function(e) {
-            console.log('✖️ Menü schließen (Overlay)');
-            menuSidebar.classList.remove('active');
-            menuOverlay.classList.remove('active');
-        });
+        menuOverlay.addEventListener('click', closeMenu);
     }
     
-    // Menü-Items Event Handlers
+    // Menü-Items
     const menuCategoriesBtn = document.getElementById('menuCategoriesBtn');
     const menuExportBtn = document.getElementById('menuExportBtn');
     const menuImportBtn = document.getElementById('menuImportBtn');
     const menuGitHubBtn = document.getElementById('menuGitHubBtn');
     const menuSyncBtn = document.getElementById('menuSyncBtn');
     
-    function closeMenu() {
-        if (menuSidebar) menuSidebar.classList.remove('active');
-        if (menuOverlay) menuOverlay.classList.remove('active');
-    }
-    
     if (menuCategoriesBtn) {
         menuCategoriesBtn.addEventListener('click', function() {
-            console.log('📁 Kategorien verwalten');
-            if (window.app) window.app.showCategoryManagement();
+            showCategoryManagement();
             closeMenu();
         });
     }
     
     if (menuExportBtn) {
         menuExportBtn.addEventListener('click', function() {
-            console.log('💾 Export');
-            if (window.app) window.app.exportData();
+            exportData();
             closeMenu();
         });
     }
     
     if (menuImportBtn) {
         menuImportBtn.addEventListener('click', function() {
-            console.log('📥 Import');
-            if (window.app) window.app.importData();
+            importData();
             closeMenu();
         });
     }
     
     if (menuGitHubBtn) {
         menuGitHubBtn.addEventListener('click', function() {
-            console.log('⚙️ GitHub Settings');
-            if (window.app) window.app.showGitHubSettings();
+            showGitHubSettings();
             closeMenu();
         });
     }
     
     if (menuSyncBtn) {
         menuSyncBtn.addEventListener('click', function() {
-            console.log('🔄 Sync');
-            if (window.app) window.app.manualSync();
+            manualSync();
             closeMenu();
         });
     }
     
     console.log('✅ Menü Event Handlers installiert');
     
-    // ==========================================================================
+    // =========================================================================
     // DARK MODE
-    // ==========================================================================
+    // =========================================================================
     const html = document.documentElement;
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
@@ -445,29 +544,14 @@ document.addEventListener('DOMContentLoaded', function() {
             themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
             
             console.log(`🎨 Theme: ${newTheme}`);
-            
-            if (window.app && window.app.showToast) {
-                window.app.showToast(
-                    `${newTheme === 'dark' ? '🌙 Dark' : '☀️ Light'} Mode aktiviert`,
-                    'success'
-                );
-            }
-        });
-        
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-            if (!localStorage.getItem('theme')) {
-                const newTheme = e.matches ? 'dark' : 'light';
-                html.setAttribute('data-theme', newTheme);
-                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-            }
         });
         
         console.log('✅ Dark Mode installiert');
     }
     
-    // ==========================================================================
+    // =========================================================================
     // ICON PICKER
-    // ==========================================================================
+    // =========================================================================
     if (typeof IconPicker !== 'undefined') {
         window.iconPicker = new IconPicker();
         console.log('✅ Icon Picker initialized');
@@ -553,9 +637,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // ==========================================================================
+    // =========================================================================
     // FOTO UPLOAD PREVIEW
-    // ==========================================================================
+    // =========================================================================
     const itemPhoto = document.getElementById('itemPhoto');
     const photoPreview = document.getElementById('photoPreview');
     
@@ -605,5 +689,6 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ ef-sin Inventur v2.0.4 - Initialization complete!');
 });
 </script>
+
 </body>
-</html>
+                    </html>
