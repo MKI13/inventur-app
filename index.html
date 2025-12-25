@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.1.3">
-    <meta name="description" content="ef-sin Inventur v2.1.3 - Modal Fix + Foto Galerie">
-    <title>ef-sin Inventur v2.1.3</title>
+    <meta name="version" content="2.1.4">
+    <meta name="description" content="ef-sin Inventur v2.1.4 - Dashboard/Statistik Auto-Update">
+    <title>ef-sin Inventur v2.1.4</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -483,7 +483,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version">v2.1.3</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version">v2.1.4</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -866,7 +866,7 @@
 
 <!-- KATEGORIE-SYSTEM & APP-INTEGRATION -->
 <script>
-console.log('🚀 ef-sin Inventur v2.1.3 initializing...');
+console.log('🚀 ef-sin Inventur v2.1.4 initializing...');
 
 // =============================================================================
 // KATEGORIE-VERWALTUNG (localStorage-basiert)
@@ -1462,7 +1462,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ ef-sin Inventur v2.1.3 - Initialization complete!');
+    console.log('✅ ef-sin Inventur v2.1.4 - Initialization complete!');
 });
 </script>
 
@@ -1530,12 +1530,13 @@ window.addEventListener('load', function() {
             console.log('✅ Kategorien geladen:', categories.length);
         };
         
-        // Override renderItems um Dashboard zu aktualisieren
+        // Override renderItems um Dashboard UND Statistik zu aktualisieren
         const originalRenderItems = window.app.renderItems.bind(window.app);
         
         window.app.renderItems = function() {
             originalRenderItems();
             updateDashboard();
+            updateStatistics(); // ← Statistik auch updaten!
         };
         
         // Initial laden
