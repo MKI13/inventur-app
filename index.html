@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.1.0">
-    <meta name="description" content="ef-sin Inventur v2.1.0 - Dashboard + Statistiken">
-    <title>ef-sin Inventur v2.1.0</title>
+    <meta name="version" content="2.1.1">
+    <meta name="description" content="ef-sin Inventur v2.1.1 - Dashboard mit Kategorien verbunden">
+    <title>ef-sin Inventur v2.1.1</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -343,6 +343,47 @@
         color: var(--text-secondary, #999);
         margin-bottom: 20px;
     }
+    
+    /* Kategorie-Karten im Dashboard */
+    .category-card {
+        background: var(--surface, #242424);
+        border: 1px solid var(--border-color, #333);
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(255, 107, 0, 0.2);
+        border-color: var(--primary, #ff6b00);
+    }
+    
+    .category-card-icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+    
+    .category-card-name {
+        color: var(--text-primary, #e0e0e0);
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+    
+    .category-card-count {
+        color: var(--primary, #ff6b00);
+        font-weight: bold;
+        font-size: 24px;
+        margin-bottom: 4px;
+    }
+    
+    .category-card-value {
+        color: var(--text-secondary, #999);
+        font-size: 12px;
+    }
     </style>
 </head>
 <body>
@@ -350,7 +391,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version">v2.1.0</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version">v2.1.1</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -395,6 +436,11 @@
             <div class="dashboard-card-value" id="dashTotalValue">0€</div>
             <div class="dashboard-card-label">Gesamtwert</div>
         </div>
+    </div>
+    
+    <div class="stats-section">
+        <h3 class="stats-title">Kategorien Übersicht</h3>
+        <div id="categoryCards" class="dashboard-grid"></div>
     </div>
     
     <div class="stats-section">
@@ -728,7 +774,7 @@
 
 <!-- KATEGORIE-SYSTEM & APP-INTEGRATION -->
 <script>
-console.log('🚀 ef-sin Inventur v2.1.0 initializing...');
+console.log('🚀 ef-sin Inventur v2.1.1 initializing...');
 
 // =============================================================================
 // KATEGORIE-VERWALTUNG (localStorage-basiert)
@@ -772,6 +818,43 @@ function saveCategories(categories) {
     updateDashboard();
     updateStatistics();
 }
+
+// Zu Kategorie-Ansicht wechseln
+function switchToCategoryView(categoryName) {
+    console.log('🔄 Wechsle zu Kategorie:', categoryName);
+    
+    // Zum Bestand-Tab wechseln
+    document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    const inventoryTab = document.querySelector('[data-tab="inventory"]');
+    if (inventoryTab) {
+        inventoryTab.classList.add('active');
+    }
+    
+    const inventoryContent = document.getElementById('inventory');
+    if (inventoryContent) {
+        inventoryContent.classList.add('active');
+    }
+    
+    // Kategorie-Tab aktivieren
+    setTimeout(() => {
+        const categoryTabs = document.querySelectorAll('.category-tab');
+        categoryTabs.forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.category === categoryName) {
+                tab.classList.add('active');
+            }
+        });
+        
+        // App-Filter setzen
+        if (window.app) {
+            window.app.currentCategory = categoryName;
+            window.app.renderItems();
+        }
+    }, 100);
+}
+
 
 function loadCategoryList() {
     const container = document.getElementById('categoryListContainer');
@@ -941,6 +1024,33 @@ function updateDashboard() {
                 <div class="activity-stock">${item.stock} ${item.unit || 'Stk'}</div>
             </div>
         `).join('');
+    }
+    
+    // Kategorie-Karten rendern
+    const categoryCardsContainer = document.getElementById('categoryCards');
+    
+    if (categoryCardsContainer) {
+        const categoryStats = categories.map(cat => {
+            const catItems = items.filter(item => item.category === cat.name);
+            const count = catItems.length;
+            const value = catItems.reduce((sum, item) => {
+                return sum + ((parseFloat(item.price) || 0) * (parseFloat(item.stock) || 0));
+            }, 0);
+            return { ...cat, count, value };
+        });
+        
+        if (categoryStats.length === 0) {
+            categoryCardsContainer.innerHTML = '<div class="empty-state-text">Keine Kategorien vorhanden</div>';
+        } else {
+            categoryCardsContainer.innerHTML = categoryStats.map(cat => `
+                <div class="category-card" onclick="switchToCategoryView('${cat.name}')">
+                    <div class="category-card-icon">${cat.icon}</div>
+                    <div class="category-card-name">${cat.name}</div>
+                    <div class="category-card-count">${cat.count}</div>
+                    <div class="category-card-value">${cat.value.toFixed(2)}€</div>
+                </div>
+            `).join('');
+        }
     }
 }
 
@@ -1260,7 +1370,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ ef-sin Inventur v2.1.0 - Initialization complete!');
+    console.log('✅ ef-sin Inventur v2.1.1 - Initialization complete!');
 });
 </script>
 
