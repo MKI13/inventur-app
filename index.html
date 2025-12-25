@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.1.7">
-    <meta name="description" content="ef-sin Inventur v2.1.7 - Button Event-Listener Fix">
-    <title>ef-sin Inventur v2.1.7</title>
+    <meta name="version" content="2.1.8">
+    <meta name="description" content="ef-sin Inventur v2.1.8 - Modals komplett gefixt">
+    <title>ef-sin Inventur v2.1.8</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -483,7 +483,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version">v2.1.7</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version">v2.1.8</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -602,13 +602,14 @@
 
 <!-- ================= MODALS (wie vorher) ================= -->
 <!-- Artikel Modal -->
-<div class="modal" id="addModal">
+<div class="modal" id="itemModal">
     <div class="modal-content">
         <div class="modal-header">
             <h2 id="modalTitle">Artikel</h2>
-            <button class="btn-close" onclick="app.closeModal()">×</button>
+            <button class="btn-close" onclick="app.closeModal('itemModal')">×</button>
         </div>
         <div class="modal-body">
+            <input type="hidden" id="itemId">
             <div class="form-group">
                 <label for="itemCategory">Kategorie *</label>
                 <select id="itemCategory" required></select>
@@ -666,7 +667,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn-secondary" onclick="app.closeModal()">Abbrechen</button>
+            <button class="btn-secondary" onclick="app.closeModal('itemModal')">Abbrechen</button>
             <button class="btn-primary" onclick="app.saveItem()">Speichern</button>
         </div>
     </div>
@@ -677,7 +678,7 @@
     <div class="modal-content quick-add">
         <div class="modal-header">
             <h2>⚡ Schnelleingabe</h2>
-            <button class="btn-close" onclick="quickAdd.close()">×</button>
+            <button class="btn-close" id="quickAddCloseBtn">×</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
@@ -713,7 +714,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn-primary" onclick="quickAdd.save()">Speichern</button>
+            <button class="btn-primary" id="quickAddSaveBtn">Speichern</button>
         </div>
     </div>
 </div>
@@ -866,7 +867,7 @@
 
 <!-- KATEGORIE-SYSTEM & APP-INTEGRATION -->
 <script>
-console.log('🚀 ef-sin Inventur v2.1.7 initializing...');
+console.log('🚀 ef-sin Inventur v2.1.8 initializing...');
 
 // =============================================================================
 // KATEGORIE-VERWALTUNG (localStorage-basiert)
@@ -1410,6 +1411,60 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // ⭐ QUICK ADD MODAL BUTTONS
+    const quickAddCloseBtn = document.getElementById('quickAddCloseBtn');
+    const quickAddSaveBtn = document.getElementById('quickAddSaveBtn');
+    
+    if (quickAddCloseBtn) {
+        quickAddCloseBtn.addEventListener('click', function() {
+            console.log('🟢 Quick Add Close clicked');
+            if (window.app && window.app.closeModal) {
+                window.app.closeModal('quickAddModal');
+            }
+        });
+    }
+    
+    if (quickAddSaveBtn) {
+        quickAddSaveBtn.addEventListener('click', function() {
+            console.log('🟢 Quick Add Save clicked');
+            // Quick Add Funktion - direkt speichern
+            const name = document.getElementById('quickName').value;
+            const stock = document.getElementById('quickStock').value;
+            const category = document.getElementById('quickCategory').value;
+            const sku = document.getElementById('quickSKU').value;
+            const price = document.getElementById('quickPrice').value;
+            const location = document.getElementById('quickLocation').value;
+            
+            if (!name || !stock) {
+                alert('Bitte Name und Anzahl ausfüllen!');
+                return;
+            }
+            
+            // Nutze app.saveItem Logik
+            document.getElementById('itemId').value = '';
+            document.getElementById('itemCategory').value = category;
+            document.getElementById('itemName').value = name;
+            document.getElementById('itemSKU').value = sku;
+            document.getElementById('itemStock').value = stock;
+            document.getElementById('itemPrice').value = price;
+            document.getElementById('itemLocation').value = location;
+            
+            if (window.app && window.app.saveItem) {
+                window.app.saveItem();
+                
+                // Quick Add Modal schließen
+                window.app.closeModal('quickAddModal');
+                
+                // Quick Add Felder leeren
+                document.getElementById('quickName').value = '';
+                document.getElementById('quickStock').value = '';
+                document.getElementById('quickSKU').value = '';
+                document.getElementById('quickPrice').value = '';
+                document.getElementById('quickLocation').value = '';
+            }
+        });
+    }
+    
     // Modal Close Buttons
     const modalCloseButtons = document.querySelectorAll('[onclick*="closeModal"]');
     modalCloseButtons.forEach(btn => {
@@ -1496,7 +1551,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ ef-sin Inventur v2.1.7 - Initialization complete!');
+    console.log('✅ ef-sin Inventur v2.1.8 - Initialization complete!');
 });
 </script>
 
