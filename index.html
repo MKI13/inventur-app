@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.1.8">
-    <meta name="description" content="ef-sin Inventur v2.1.8 - Modals komplett gefixt">
-    <title>ef-sin Inventur v2.1.8</title>
+    <meta name="version" content="2.1.9">
+    <meta name="description" content="ef-sin Inventur v2.1.9 - Low Stock Modal">
+    <title>ef-sin Inventur v2.1.9</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -483,7 +483,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version">v2.1.8</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version">v2.1.9</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -511,7 +511,7 @@
             <div class="dashboard-card-label">Artikel</div>
         </div>
         
-        <div class="dashboard-card warning">
+        <div class="dashboard-card warning" onclick="showLowStockItems()" style="cursor: pointer;">
             <div class="dashboard-card-icon">⚠️</div>
             <div class="dashboard-card-value" id="dashLowStock">0</div>
             <div class="dashboard-card-label">Niedrig</div>
@@ -827,6 +827,22 @@
     </div>
 </div>
 
+<!-- Low Stock Items Modal -->
+<div class="modal" id="lowStockModal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h2>⚠️ Artikel mit niedrigem Bestand</h2>
+            <button class="btn-close" onclick="closeLowStockModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="lowStockItemsList"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeLowStockModal()">Schließen</button>
+        </div>
+    </div>
+</div>
+
 <!-- Menü -->
 <div class="menu-overlay" id="menuOverlay"></div>
 <aside class="menu-sidebar" id="menuSidebar">
@@ -867,7 +883,7 @@
 
 <!-- KATEGORIE-SYSTEM & APP-INTEGRATION -->
 <script>
-console.log('🚀 ef-sin Inventur v2.1.8 initializing...');
+console.log('🚀 ef-sin Inventur v2.1.9 initializing...');
 
 // =============================================================================
 // KATEGORIE-VERWALTUNG (localStorage-basiert)
@@ -1227,6 +1243,90 @@ function updateStatistics() {
 }
 
 // =============================================================================
+// LOW STOCK ITEMS MODAL
+// =============================================================================
+
+function showLowStockItems() {
+    console.log('⚠️ Zeige Artikel mit niedrigem Bestand...');
+    
+    const items = window.app ? window.app.items : [];
+    
+    // Filtern: stock <= min
+    const lowStockItems = items.filter(item => {
+        const stock = parseFloat(item.stock) || 0;
+        const min = parseFloat(item.min) || 0;
+        return min > 0 && stock <= min;
+    });
+    
+    const modal = document.getElementById('lowStockModal');
+    const listContainer = document.getElementById('lowStockItemsList');
+    
+    if (lowStockItems.length === 0) {
+        listContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">✅</div>
+                <div class="empty-state-text">Alle Artikel haben ausreichend Bestand!</div>
+            </div>
+        `;
+    } else {
+        listContainer.innerHTML = `
+            <div class="low-stock-info" style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
+                <strong>⚠️ ${lowStockItems.length} Artikel benötigen Nachbestellung!</strong>
+            </div>
+            ${lowStockItems.map(item => `
+                <div class="low-stock-item" style="background: var(--surface); border: 1px solid var(--border-color); border-left: 4px solid #dc3545; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <div>
+                            <div style="font-weight: 600; font-size: 16px; color: var(--text-primary);">${item.name}</div>
+                            <div style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">
+                                ${item.category} ${item.location ? `• ${item.location}` : ''}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 20px; font-weight: bold; color: #dc3545;">
+                                ${item.stock} ${item.unit || 'Stk'}
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">
+                                Min: ${item.min} ${item.unit || 'Stk'}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px; font-size: 14px; color: var(--text-secondary);">
+                        ${item.sku ? `<span>📋 SKU: ${item.sku}</span>` : ''}
+                        ${item.price ? `<span>💰 ${item.price}€</span>` : ''}
+                        ${item.max ? `<span>📊 Max: ${item.max}</span>` : ''}
+                    </div>
+                    <button onclick="editItemFromLowStock(${item.id})" class="btn-secondary" style="margin-top: 10px; width: 100%;">
+                        ✏️ Bearbeiten
+                    </button>
+                </div>
+            `).join('')}
+        `;
+    }
+    
+    if (modal) {
+        modal.classList.add('active');
+    }
+}
+
+function closeLowStockModal() {
+    const modal = document.getElementById('lowStockModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function editItemFromLowStock(itemId) {
+    // Schließe Low Stock Modal
+    closeLowStockModal();
+    
+    // Öffne Edit Modal
+    if (window.app && window.app.editItem) {
+        window.app.editItem(itemId);
+    }
+}
+
+// =============================================================================
 // GLOBALE FUNKTIONEN
 // =============================================================================
 
@@ -1551,7 +1651,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ ef-sin Inventur v2.1.8 - Initialization complete!');
+    console.log('✅ ef-sin Inventur v2.1.9 - Initialization complete!');
 });
 </script>
 

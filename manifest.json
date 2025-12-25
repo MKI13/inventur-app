@@ -1,8 +1,8 @@
 {
   "name": "ef-sin Inventur",
   "short_name": "Inventur",
-  "description": "ef-sin Inventur v2.1.8 - Modals komplett gefixt",
-  "version": "2.1.8",
+  "description": "ef-sin Inventur v2.1.9 - Low Stock Modal",
+  "version": "2.1.9",
   "start_url": "/inventur-app/",
   "display": "standalone",
   "background_color": "#ffffff",
