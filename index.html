@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.1.1">
-    <meta name="description" content="ef-sin Inventur v2.1.1 - Dashboard mit Kategorien verbunden">
-    <title>ef-sin Inventur v2.1.1</title>
+    <meta name="version" content="2.1.3">
+    <meta name="description" content="ef-sin Inventur v2.1.3 - Modal Fix + Foto Galerie">
+    <title>ef-sin Inventur v2.1.3</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -17,6 +17,98 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     
     <style>
+    /* ========================================
+       MODAL FIX - HEADER & FOOTER IMMER SICHTBAR
+       ======================================== */
+    
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+        overflow-y: auto;
+    }
+    
+    .modal.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: var(--modal-bg, #ffffff);
+        border-radius: 12px;
+        width: 100%;
+        max-width: 600px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        margin: auto;
+    }
+    
+    .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color, #dee2e6);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    .modal-header h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+    }
+    
+    .modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid var(--border-color, #dee2e6);
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        flex-shrink: 0;
+    }
+    
+    @media (max-width: 600px) {
+        .modal {
+            padding: 10px;
+        }
+        
+        .modal-content {
+            max-height: 95vh;
+            border-radius: 8px;
+        }
+        
+        .modal-header {
+            padding: 15px;
+        }
+        
+        .modal-body {
+            padding: 15px;
+        }
+        
+        .modal-footer {
+            padding: 12px 15px;
+            flex-direction: column;
+        }
+        
+        .modal-footer button {
+            width: 100%;
+        }
+    }
+    
     /* ========================================
        DASHBOARD & STATISTICS STYLING
        ======================================== */
@@ -391,7 +483,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version">v2.1.1</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version">v2.1.3</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -565,7 +657,7 @@
             </div>
             <div class="form-group">
                 <label for="itemPhoto">Foto</label>
-                <input type="file" id="itemPhoto" accept="image/*" capture="environment">
+                <input type="file" id="itemPhoto" accept="image/*">
                 <div id="photoPreview" style="margin-top: 10px;"></div>
             </div>
             <div class="form-group">
@@ -616,7 +708,7 @@
             </div>
             <div class="form-group">
                 <label for="quickPhoto">Foto</label>
-                <input type="file" id="quickPhoto" accept="image/*" capture="environment">
+                <input type="file" id="quickPhoto" accept="image/*">
                 <div id="quickPhotoPreview" style="margin-top: 10px;"></div>
             </div>
         </div>
@@ -774,7 +866,7 @@
 
 <!-- KATEGORIE-SYSTEM & APP-INTEGRATION -->
 <script>
-console.log('🚀 ef-sin Inventur v2.1.1 initializing...');
+console.log('🚀 ef-sin Inventur v2.1.3 initializing...');
 
 // =============================================================================
 // KATEGORIE-VERWALTUNG (localStorage-basiert)
@@ -1370,7 +1462,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ ef-sin Inventur v2.1.1 - Initialization complete!');
+    console.log('✅ ef-sin Inventur v2.1.3 - Initialization complete!');
 });
 </script>
 
