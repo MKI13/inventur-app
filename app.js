@@ -1,12 +1,12 @@
 // ============================================================================
 // ef-sin INVENTUR APP - CORE JAVASCRIPT
-// Version: 2.1.5
+// Version: 2.1.6 - Mit Dashboard/Statistik Integration
 // ============================================================================
 
 (function() {
     'use strict';
     
-    console.log('📦 app.js loading...');
+    console.log('📦 app.js v2.1.6 loading...');
     
     // ========================================================================
     // DATENBANK (IndexedDB)
@@ -48,6 +48,27 @@
     }
     
     // ========================================================================
+    // DASHBOARD/STATISTIK UPDATE TRIGGER
+    // ========================================================================
+    
+    function triggerUpdates() {
+        console.log('🔄 Triggering Dashboard & Statistics update...');
+        
+        // Warte kurz bis DOM bereit ist
+        setTimeout(() => {
+            if (typeof updateDashboard === 'function') {
+                updateDashboard();
+                console.log('✅ Dashboard updated');
+            }
+            
+            if (typeof updateStatistics === 'function') {
+                updateStatistics();
+                console.log('✅ Statistics updated');
+            }
+        }, 300);
+    }
+    
+    // ========================================================================
     // APP OBJEKT
     // ========================================================================
     
@@ -68,6 +89,9 @@
                 await this.loadItems();
                 this.loadCategories();
                 this.renderItems();
+                
+                // Initial Dashboard/Statistik Update
+                triggerUpdates();
                 
                 console.log('✅ App initialized successfully');
             } catch (error) {
@@ -134,6 +158,9 @@
             container.innerHTML = filtered.map(item => this.renderItemCard(item)).join('');
             
             console.log(`✅ Rendered ${filtered.length} items`);
+            
+            // ⭐ UPDATE DASHBOARD/STATISTIK NACH RENDER
+            triggerUpdates();
         },
         
         renderItemCard(item) {
@@ -219,6 +246,8 @@
         },
         
         saveItemToDB(item, id) {
+            console.log('💾 Saving item to database...');
+            
             const transaction = db.transaction([STORE_NAME], 'readwrite');
             const objectStore = transaction.objectStore(STORE_NAME);
             
@@ -236,6 +265,9 @@
                 this.renderItems();
                 this.closeModal('itemModal');
                 this.clearForm();
+                
+                // ⭐ UPDATE DASHBOARD/STATISTIK NACH SPEICHERN
+                triggerUpdates();
             };
             
             request.onerror = () => {
@@ -279,6 +311,8 @@
         deleteItem(id) {
             if (!confirm('Artikel wirklich löschen?')) return;
             
+            console.log('🗑️ Deleting item...');
+            
             const transaction = db.transaction([STORE_NAME], 'readwrite');
             const objectStore = transaction.objectStore(STORE_NAME);
             const request = objectStore.delete(id);
@@ -287,6 +321,9 @@
                 console.log('✅ Item deleted successfully');
                 await this.loadItems();
                 this.renderItems();
+                
+                // ⭐ UPDATE DASHBOARD/STATISTIK NACH LÖSCHEN
+                triggerUpdates();
             };
             
             request.onerror = () => {
@@ -338,6 +375,6 @@
         window.app.init();
     }
     
-    console.log('✅ app.js loaded');
+    console.log('✅ app.js v2.1.6 loaded');
     
 })();
