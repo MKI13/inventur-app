@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.0.3">
-    <meta name="description" content="ef-sin Inventur v2.0.3 - Professional & Clean">
-    <title>ef-sin Inventur v2.0</title>
+    <meta name="version" content="2.0.4">
+    <meta name="description" content="ef-sin Inventur v2.0.4 - Icon-Picker + Dark Mode + Menü Fix">
+    <title>ef-sin Inventur v2.0.4</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -21,7 +21,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version">v2.0</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version">v2.0.4</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode umschalten">
@@ -300,30 +300,30 @@
 </div>
 
 <!-- ================= MENÜ ================= -->
-<div class="menu-overlay" id="menuOverlay" onclick="app.closeMenu()"></div>
+<div class="menu-overlay" id="menuOverlay"></div>
 <aside class="menu-sidebar" id="menuSidebar">
     <div class="menu-header">
         <h2>Menü</h2>
-        <button class="btn-close" onclick="app.closeMenu()">×</button>
+        <button class="btn-close" id="menuCloseBtn">×</button>
     </div>
     <div class="menu-content">
-        <button class="menu-item" onclick="app.showCategoryManagement(); app.closeMenu();">
+        <button class="menu-item" id="menuCategoriesBtn">
             <span class="menu-icon">📁</span>
             <span class="menu-text">Kategorien verwalten</span>
         </button>
-        <button class="menu-item" onclick="app.exportData(); app.closeMenu();">
+        <button class="menu-item" id="menuExportBtn">
             <span class="menu-icon">💾</span>
             <span class="menu-text">Daten exportieren</span>
         </button>
-        <button class="menu-item" onclick="app.importData(); app.closeMenu();">
+        <button class="menu-item" id="menuImportBtn">
             <span class="menu-icon">📥</span>
             <span class="menu-text">Daten importieren</span>
         </button>
-        <button class="menu-item" onclick="app.showGitHubSettings(); app.closeMenu();">
+        <button class="menu-item" id="menuGitHubBtn">
             <span class="menu-icon">⚙️</span>
             <span class="menu-text">GitHub Einstellungen</span>
         </button>
-        <button class="menu-item" onclick="app.manualSync(); app.closeMenu();">
+        <button class="menu-item" id="menuSyncBtn">
             <span class="menu-icon">🔄</span>
             <span class="menu-text">Jetzt synchronisieren</span>
         </button>
@@ -340,8 +340,102 @@
 
 <!-- ================= INITIALIZATION SCRIPT ================= -->
 <script>
+console.log('🚀 ef-sin Inventur v2.0.4 initializing...');
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initializing ef-sin Inventur v2.0.3');
+    
+    // ==========================================================================
+    // MENÜ EVENT HANDLERS (KRITISCH - GEFIXT!)
+    // ==========================================================================
+    const menuButton = document.getElementById('menuButton');
+    const menuSidebar = document.getElementById('menuSidebar');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const menuCloseBtn = document.getElementById('menuCloseBtn');
+    
+    // Menü öffnen
+    if (menuButton) {
+        menuButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📂 Menü öffnen...');
+            if (menuSidebar) menuSidebar.classList.add('active');
+            if (menuOverlay) menuOverlay.classList.add('active');
+        });
+    }
+    
+    // Menü schließen - Close Button
+    if (menuCloseBtn) {
+        menuCloseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('✖️ Menü schließen (Close Button)');
+            if (menuSidebar) menuSidebar.classList.remove('active');
+            if (menuOverlay) menuOverlay.classList.remove('active');
+        });
+    }
+    
+    // Menü schließen - Overlay
+    if (menuOverlay) {
+        menuOverlay.addEventListener('click', function(e) {
+            console.log('✖️ Menü schließen (Overlay)');
+            menuSidebar.classList.remove('active');
+            menuOverlay.classList.remove('active');
+        });
+    }
+    
+    // Menü-Items Event Handlers
+    const menuCategoriesBtn = document.getElementById('menuCategoriesBtn');
+    const menuExportBtn = document.getElementById('menuExportBtn');
+    const menuImportBtn = document.getElementById('menuImportBtn');
+    const menuGitHubBtn = document.getElementById('menuGitHubBtn');
+    const menuSyncBtn = document.getElementById('menuSyncBtn');
+    
+    function closeMenu() {
+        if (menuSidebar) menuSidebar.classList.remove('active');
+        if (menuOverlay) menuOverlay.classList.remove('active');
+    }
+    
+    if (menuCategoriesBtn) {
+        menuCategoriesBtn.addEventListener('click', function() {
+            console.log('📁 Kategorien verwalten');
+            if (window.app) window.app.showCategoryManagement();
+            closeMenu();
+        });
+    }
+    
+    if (menuExportBtn) {
+        menuExportBtn.addEventListener('click', function() {
+            console.log('💾 Export');
+            if (window.app) window.app.exportData();
+            closeMenu();
+        });
+    }
+    
+    if (menuImportBtn) {
+        menuImportBtn.addEventListener('click', function() {
+            console.log('📥 Import');
+            if (window.app) window.app.importData();
+            closeMenu();
+        });
+    }
+    
+    if (menuGitHubBtn) {
+        menuGitHubBtn.addEventListener('click', function() {
+            console.log('⚙️ GitHub Settings');
+            if (window.app) window.app.showGitHubSettings();
+            closeMenu();
+        });
+    }
+    
+    if (menuSyncBtn) {
+        menuSyncBtn.addEventListener('click', function() {
+            console.log('🔄 Sync');
+            if (window.app) window.app.manualSync();
+            closeMenu();
+        });
+    }
+    
+    console.log('✅ Menü Event Handlers installiert');
     
     // ==========================================================================
     // DARK MODE
@@ -351,7 +445,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const themeIcon = document.getElementById('themeIcon');
     
     if (themeToggle && themeIcon) {
-        // Theme laden
         const savedTheme = localStorage.getItem('theme');
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const initialTheme = savedTheme || (systemDark ? 'dark' : 'light');
@@ -359,7 +452,6 @@ document.addEventListener('DOMContentLoaded', function() {
         html.setAttribute('data-theme', initialTheme);
         themeIcon.textContent = initialTheme === 'dark' ? '☀️' : '🌙';
         
-        // Toggle
         themeToggle.addEventListener('click', function() {
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -378,7 +470,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // System Theme Changes
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
             if (!localStorage.getItem('theme')) {
                 const newTheme = e.matches ? 'dark' : 'light';
@@ -386,6 +477,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
             }
         });
+        
+        console.log('✅ Dark Mode installiert');
     }
     
     // ==========================================================================
@@ -395,12 +488,10 @@ document.addEventListener('DOMContentLoaded', function() {
         window.iconPicker = new IconPicker();
         console.log('✅ Icon Picker initialized');
         
-        // Icon Input Event
         const catIconInput = document.getElementById('catIcon');
         const catIconPreview = document.getElementById('catIconPreview');
         const openPickerBtn = document.getElementById('openIconPickerBtn');
         
-        // Preview bei Text-Eingabe
         if (catIconInput && catIconPreview) {
             catIconInput.addEventListener('input', function() {
                 const icon = this.value.trim();
@@ -409,13 +500,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            // Initial Preview
             if (catIconInput.value) {
                 catIconPreview.textContent = catIconInput.value;
             }
         }
         
-        // Picker Button
         if (openPickerBtn) {
             openPickerBtn.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -429,7 +518,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Icon Search
         const searchInput = document.getElementById('iconSearchInput');
         if (searchInput) {
             let searchTimeout;
@@ -479,8 +567,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
         }
-    } else {
-        console.warn('⚠️ IconPicker not loaded');
     }
     
     // ==========================================================================
@@ -509,7 +595,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Quick Add Foto
     const quickPhoto = document.getElementById('quickPhoto');
     const quickPhotoPreview = document.getElementById('quickPhotoPreview');
     
@@ -533,9 +618,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ Initialization complete');
+    console.log('✅ ef-sin Inventur v2.0.4 - Initialization complete!');
 });
 </script>
 
 </body>
-    </html>
+</html>
