@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.0.5">
-    <meta name="description" content="ef-sin Inventur v2.0.5 - Kategorie-Management Fix">
-    <title>ef-sin Inventur v2.0.5</title>
+    <meta name="version" content="2.1.0">
+    <meta name="description" content="ef-sin Inventur v2.1.0 - Dashboard + Statistiken">
+    <title>ef-sin Inventur v2.1.0</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -17,6 +17,240 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     
     <style>
+    /* ========================================
+       DASHBOARD & STATISTICS STYLING
+       ======================================== */
+    
+    /* Main Tabs Navigation */
+    .main-tabs {
+        display: flex;
+        background: var(--surface, #242424);
+        border-bottom: 2px solid var(--primary, #ff6b00);
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    
+    .main-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .main-tab {
+        flex: 1;
+        min-width: 80px;
+        padding: 15px 10px;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary, #999);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-bottom: 3px solid transparent;
+        text-align: center;
+    }
+    
+    .main-tab.active {
+        color: var(--primary, #ff6b00);
+        border-bottom-color: var(--primary, #ff6b00);
+    }
+    
+    .main-tab:hover {
+        background: var(--surface-elevated, #2a2a2a);
+    }
+    
+    /* Tab Content */
+    .tab-content {
+        display: none;
+        padding: 20px;
+        animation: fadeIn 0.3s;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Dashboard Cards */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .dashboard-card {
+        background: var(--surface, #242424);
+        border: 1px solid var(--border-color, #333);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 107, 0, 0.2);
+    }
+    
+    .dashboard-card-icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+    
+    .dashboard-card-value {
+        font-size: 32px;
+        font-weight: bold;
+        color: var(--primary, #ff6b00);
+        margin-bottom: 5px;
+    }
+    
+    .dashboard-card-label {
+        font-size: 14px;
+        color: var(--text-secondary, #999);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .dashboard-card.warning {
+        border-color: #ff6b00;
+        background: rgba(255, 107, 0, 0.1);
+    }
+    
+    .dashboard-card.warning .dashboard-card-value {
+        color: #ff6b00;
+    }
+    
+    /* Statistics Section */
+    .stats-section {
+        margin-bottom: 30px;
+    }
+    
+    .stats-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary, #e0e0e0);
+        margin-bottom: 15px;
+        padding-left: 10px;
+        border-left: 4px solid var(--primary, #ff6b00);
+    }
+    
+    /* Category Chart */
+    .category-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .chart-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .chart-icon {
+        font-size: 24px;
+        width: 32px;
+        text-align: center;
+    }
+    
+    .chart-label {
+        width: 100px;
+        font-size: 14px;
+        color: var(--text-primary, #e0e0e0);
+    }
+    
+    .chart-bar-container {
+        flex: 1;
+        height: 30px;
+        background: var(--surface, #242424);
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .chart-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary, #ff6b00), #ff8533);
+        border-radius: 15px;
+        transition: width 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 10px;
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    /* Value Distribution */
+    .value-distribution {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+    }
+    
+    .value-item {
+        background: var(--surface, #242424);
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary, #ff6b00);
+    }
+    
+    .value-item-name {
+        font-size: 12px;
+        color: var(--text-secondary, #999);
+        margin-bottom: 5px;
+    }
+    
+    .value-item-value {
+        font-size: 20px;
+        font-weight: bold;
+        color: var(--primary, #ff6b00);
+    }
+    
+    /* Recent Activity */
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .activity-item {
+        background: var(--surface, #242424);
+        padding: 12px;
+        border-radius: 8px;
+        border-left: 3px solid var(--primary, #ff6b00);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .activity-info {
+        flex: 1;
+    }
+    
+    .activity-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary, #e0e0e0);
+    }
+    
+    .activity-details {
+        font-size: 12px;
+        color: var(--text-secondary, #999);
+        margin-top: 3px;
+    }
+    
+    .activity-stock {
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--primary, #ff6b00);
+    }
+    
     /* Kategorie-Liste Styling */
     .category-list-item {
         display: flex;
@@ -91,6 +325,24 @@
         padding: 40px;
         color: var(--text-secondary, #999);
     }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .empty-state-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    .empty-state-text {
+        font-size: 16px;
+        color: var(--text-secondary, #999);
+        margin-bottom: 20px;
+    }
     </style>
 </head>
 <body>
@@ -98,39 +350,111 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version">v2.0.5</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version">v2.1.0</span></h1>
     </div>
     <div class="header-right">
-        <button id="themeToggle" class="btn-icon" title="Dark Mode umschalten">
+        <button id="themeToggle" class="btn-icon" title="Dark Mode">
             <span id="themeIcon">🌙</span>
         </button>
-        <button id="syncButton" class="btn-icon" title="GitHub Sync">🔄</button>
+        <button id="syncButton" class="btn-icon" title="Sync">🔄</button>
         <button id="menuButton" class="btn-icon" title="Menü">☰</button>
     </div>
 </header>
 
-<!-- ================= KATEGORIE TABS ================= -->
-<nav class="category-tabs" id="categoryTabs"></nav>
+<!-- ================= MAIN TABS ================= -->
+<nav class="main-tabs">
+    <button class="main-tab active" data-tab="dashboard">📊 Übersicht</button>
+    <button class="main-tab" data-tab="inventory">📦 Bestand</button>
+    <button class="main-tab" data-tab="scanner">📷 Scanner</button>
+    <button class="main-tab" data-tab="statistics">📈 Statistik</button>
+</nav>
 
-<!-- ================= ACTION BUTTONS ================= -->
-<div class="action-buttons">
-    <button id="addNormalButton" class="btn-primary">
-        <span class="btn-icon">+</span>
-        <span class="btn-text">Artikel</span>
-    </button>
-    <button id="addQuickButton" class="btn-success">
-        <span class="btn-icon">⚡</span>
-        <span class="btn-text">Quick Add</span>
-    </button>
+<!-- ================= DASHBOARD TAB ================= -->
+<div id="dashboard" class="tab-content active">
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <div class="dashboard-card-icon">📦</div>
+            <div class="dashboard-card-value" id="dashTotalItems">0</div>
+            <div class="dashboard-card-label">Artikel</div>
+        </div>
+        
+        <div class="dashboard-card warning">
+            <div class="dashboard-card-icon">⚠️</div>
+            <div class="dashboard-card-value" id="dashLowStock">0</div>
+            <div class="dashboard-card-label">Niedrig</div>
+        </div>
+        
+        <div class="dashboard-card">
+            <div class="dashboard-card-icon">📁</div>
+            <div class="dashboard-card-value" id="dashCategories">0</div>
+            <div class="dashboard-card-label">Kategorien</div>
+        </div>
+        
+        <div class="dashboard-card">
+            <div class="dashboard-card-icon">💶</div>
+            <div class="dashboard-card-value" id="dashTotalValue">0€</div>
+            <div class="dashboard-card-label">Gesamtwert</div>
+        </div>
+    </div>
+    
+    <div class="stats-section">
+        <h3 class="stats-title">Letzte Aktivitäten</h3>
+        <div id="recentActivity" class="activity-list"></div>
+    </div>
 </div>
 
-<!-- ================= SUCHE ================= -->
-<div class="search-container">
-    <input type="text" id="searchInput" placeholder="🔍 Suchen...">
+<!-- ================= BESTAND TAB ================= -->
+<div id="inventory" class="tab-content">
+    <!-- Kategorie Tabs -->
+    <nav class="category-tabs" id="categoryTabs"></nav>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button id="addNormalButton" class="btn-primary">
+            <span class="btn-icon">+</span>
+            <span class="btn-text">Artikel</span>
+        </button>
+        <button id="addQuickButton" class="btn-success">
+            <span class="btn-icon">⚡</span>
+            <span class="btn-text">Quick Add</span>
+        </button>
+    </div>
+    
+    <!-- Suche -->
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="🔍 Suchen...">
+    </div>
+    
+    <!-- Artikel Liste -->
+    <main class="items-container" id="itemsContainer"></main>
 </div>
 
-<!-- ================= ARTIKEL LISTE ================= -->
-<main class="items-container" id="itemsContainer"></main>
+<!-- ================= SCANNER TAB ================= -->
+<div id="scanner" class="tab-content">
+    <div class="empty-state">
+        <div class="empty-state-icon">📷</div>
+        <div class="empty-state-text">Scanner-Funktion</div>
+        <p style="color: var(--text-secondary, #999);">Wird in der nächsten Version implementiert</p>
+    </div>
+</div>
+
+<!-- ================= STATISTIK TAB ================= -->
+<div id="statistics" class="tab-content">
+    <div class="stats-section">
+        <h3 class="stats-title">Artikel pro Kategorie</h3>
+        <div id="categoryChart" class="category-chart"></div>
+    </div>
+    
+    <div class="stats-section">
+        <h3 class="stats-title">Wertverteilung</h3>
+        <div id="valueDistribution" class="value-distribution"></div>
+    </div>
+    
+    <div class="stats-section">
+        <h3 class="stats-title">Bestandsübersicht</h3>
+        <div id="stockOverview" class="value-distribution"></div>
+    </div>
+</div>
 
 <!-- ================= LOADING ================= -->
 <div class="loading-overlay" id="loadingOverlay">
@@ -138,7 +462,8 @@
     <p>Lade...</p>
 </div>
 
-<!-- ================= ARTIKEL MODAL ================= -->
+<!-- ================= MODALS (wie vorher) ================= -->
+<!-- Artikel Modal -->
 <div class="modal" id="addModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -209,7 +534,7 @@
     </div>
 </div>
 
-<!-- ================= QUICK ADD MODAL ================= -->
+<!-- Quick Add Modal -->
 <div class="modal" id="quickAddModal">
     <div class="modal-content quick-add">
         <div class="modal-header">
@@ -255,7 +580,7 @@
     </div>
 </div>
 
-<!-- ================= KATEGORIE EDIT MODAL ================= -->
+<!-- Kategorie Edit Modal -->
 <div class="modal" id="categoryEditModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -289,7 +614,7 @@
     </div>
 </div>
 
-<!-- ================= KATEGORIE MANAGEMENT MODAL ================= -->
+<!-- Kategorie Management Modal -->
 <div class="modal" id="categoryManagementModal">
     <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
@@ -308,7 +633,7 @@
     </div>
 </div>
 
-<!-- ================= GITHUB SETTINGS MODAL ================= -->
+<!-- GitHub Settings Modal -->
 <div class="modal" id="githubSettingsModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -343,7 +668,7 @@
     </div>
 </div>
 
-<!-- ================= ICON PICKER MODAL ================= -->
+<!-- Icon Picker Modal -->
 <div id="iconPickerModal" class="modal icon-picker-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -363,7 +688,7 @@
     </div>
 </div>
 
-<!-- ================= MENÜ ================= -->
+<!-- Menü -->
 <div class="menu-overlay" id="menuOverlay"></div>
 <aside class="menu-sidebar" id="menuSidebar">
     <div class="menu-header">
@@ -394,23 +719,21 @@
     </div>
 </aside>
 
-<!-- ================= SCRIPTS ================= -->
+<!-- SCRIPTS -->
 <script src="src/managers/CategoryManager.js"></script>
 <script src="src/managers/ImageManager.js"></script>
 <script src="src/managers/MultiFileGitHubSync.js"></script>
 <script src="src/components/QuickAdd.js"></script>
 <script src="src/components/IconPicker.js"></script>
-<script src="app.js"></script>
 
-<!-- ================= KATEGORIE-MANAGEMENT SYSTEM ================= -->
+<!-- KATEGORIE-SYSTEM & APP-INTEGRATION -->
 <script>
-console.log('🚀 ef-sin Inventur v2.0.5 initializing...');
+console.log('🚀 ef-sin Inventur v2.1.0 initializing...');
 
 // =============================================================================
-// KATEGORIE-MANAGEMENT FUNKTIONEN
+// KATEGORIE-VERWALTUNG (localStorage-basiert)
 // =============================================================================
 
-// Kategorien aus localStorage laden
 function loadCategories() {
     const stored = localStorage.getItem('categories');
     if (stored) {
@@ -422,7 +745,7 @@ function loadCategories() {
     }
     
     // Default-Kategorien
-    return [
+    const defaults = [
         { id: 'holz', name: 'Holz', icon: '🪵' },
         { id: 'platten', name: 'Platten', icon: '📋' },
         { id: 'beschlaege', name: 'Beschläge', icon: '🔩' },
@@ -431,17 +754,26 @@ function loadCategories() {
         { id: 'schrauben', name: 'Schrauben', icon: '⚙️' },
         { id: 'sonstiges', name: 'Sonstiges', icon: '📦' }
     ];
+    saveCategories(defaults);
+    return defaults;
 }
 
-// Kategorien speichern
 function saveCategories(categories) {
     localStorage.setItem('categories', JSON.stringify(categories));
     console.log('✅ Kategorien gespeichert:', categories.length);
+    
+    // App neu laden wenn vorhanden
+    if (window.app && window.app.loadCategories) {
+        window.app.loadCategories();
+        window.app.renderItems();
+    }
+    
+    // Dashboard aktualisieren
+    updateDashboard();
+    updateStatistics();
 }
 
-// Kategorie-Liste laden und anzeigen
 function loadCategoryList() {
-    console.log('📋 Kategorie-Liste laden');
     const container = document.getElementById('categoryListContainer');
     const categories = loadCategories();
     
@@ -468,9 +800,7 @@ function loadCategoryList() {
     `).join('');
 }
 
-// Kategorie bearbeiten
 function editCategory(id) {
-    console.log('✏️ Kategorie bearbeiten:', id);
     const categories = loadCategories();
     const category = categories.find(c => c.id === id);
     
@@ -479,20 +809,15 @@ function editCategory(id) {
         return;
     }
     
-    // Modal füllen
     document.getElementById('categoryModalTitle').textContent = 'Kategorie bearbeiten';
     document.getElementById('catId').value = id;
     document.getElementById('catName').value = category.name;
     document.getElementById('catIcon').value = category.icon || '📦';
     document.getElementById('catIconPreview').textContent = category.icon || '📦';
-    
-    // Modal öffnen
     document.getElementById('categoryEditModal').classList.add('active');
 }
 
-// Kategorie löschen
 function deleteCategory(id) {
-    console.log('🗑️ Kategorie löschen:', id);
     const categories = loadCategories();
     const category = categories.find(c => c.id === id);
     
@@ -505,41 +830,21 @@ function deleteCategory(id) {
         return;
     }
     
-    // Kategorie entfernen
     const updated = categories.filter(c => c.id !== id);
     saveCategories(updated);
-    
-    // Liste neu laden
     loadCategoryList();
-    
-    // App neu laden (falls vorhanden)
-    if (window.app && window.app.loadCategories) {
-        window.app.loadCategories();
-    }
-    if (window.categoryManager && window.categoryManager.loadCategories) {
-        window.categoryManager.loadCategories();
-    }
-    
-    console.log('✅ Kategorie gelöscht');
 }
 
-// =============================================================================
-// GLOBALE MODAL-FUNKTIONEN
-// =============================================================================
-
 function showCategoryManagement() {
-    console.log('📁 Kategorie-Management öffnen');
     document.getElementById('categoryManagementModal').classList.add('active');
     loadCategoryList();
 }
 
 function closeCategoryManagement() {
-    console.log('✖️ Kategorie-Management schließen');
     document.getElementById('categoryManagementModal').classList.remove('active');
 }
 
 function openNewCategoryModal() {
-    console.log('➕ Neue Kategorie Modal öffnen');
     document.getElementById('categoryModalTitle').textContent = 'Neue Kategorie';
     document.getElementById('catId').value = '';
     document.getElementById('catName').value = '';
@@ -549,12 +854,10 @@ function openNewCategoryModal() {
 }
 
 function closeCategoryEditModal() {
-    console.log('✖️ Kategorie-Edit Modal schließen');
     document.getElementById('categoryEditModal').classList.remove('active');
 }
 
 function saveCategory() {
-    console.log('💾 Kategorie speichern');
     const id = document.getElementById('catId').value;
     const name = document.getElementById('catName').value.trim();
     const icon = document.getElementById('catIcon').value.trim();
@@ -572,7 +875,6 @@ function saveCategory() {
         if (index !== -1) {
             categories[index].name = name;
             categories[index].icon = icon || '📦';
-            console.log('✅ Kategorie aktualisiert');
         }
     } else {
         // Neue Kategorie erstellen
@@ -582,26 +884,150 @@ function saveCategory() {
             name: name,
             icon: icon || '📦'
         });
-        console.log('✅ Neue Kategorie erstellt');
     }
     
     saveCategories(categories);
     closeCategoryEditModal();
     loadCategoryList();
-    
-    // App neu laden
-    if (window.app && window.app.loadCategories) {
-        window.app.loadCategories();
-    }
-    if (window.categoryManager && window.categoryManager.loadCategories) {
-        window.categoryManager.loadCategories();
-    }
-    
     alert(`Kategorie "${name}" gespeichert!`);
 }
 
+// =============================================================================
+// DASHBOARD & STATISTIK
+// =============================================================================
+
+function updateDashboard() {
+    if (!window.app || !window.app.items) return;
+    
+    const items = window.app.items;
+    const categories = loadCategories();
+    
+    // Gesamtzahl Artikel
+    document.getElementById('dashTotalItems').textContent = items.length;
+    
+    // Niedrige Bestände
+    const lowStock = items.filter(item => 
+        item.min && parseInt(item.stock) <= parseInt(item.min)
+    ).length;
+    document.getElementById('dashLowStock').textContent = lowStock;
+    
+    // Anzahl Kategorien
+    document.getElementById('dashCategories').textContent = categories.length;
+    
+    // Gesamtwert
+    const totalValue = items.reduce((sum, item) => {
+        const price = parseFloat(item.price) || 0;
+        const stock = parseFloat(item.stock) || 0;
+        return sum + (price * stock);
+    }, 0);
+    document.getElementById('dashTotalValue').textContent = totalValue.toFixed(2) + '€';
+    
+    // Letzte Aktivitäten (neueste 5 Artikel)
+    const recentItems = items
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .slice(0, 5);
+    
+    const activityContainer = document.getElementById('recentActivity');
+    
+    if (recentItems.length === 0) {
+        activityContainer.innerHTML = '<div class="empty-state-text">Noch keine Artikel vorhanden</div>';
+    } else {
+        activityContainer.innerHTML = recentItems.map(item => `
+            <div class="activity-item">
+                <div class="activity-info">
+                    <div class="activity-name">${item.name}</div>
+                    <div class="activity-details">${item.category} • ${item.location || 'Kein Standort'}</div>
+                </div>
+                <div class="activity-stock">${item.stock} ${item.unit || 'Stk'}</div>
+            </div>
+        `).join('');
+    }
+}
+
+function updateStatistics() {
+    if (!window.app || !window.app.items) return;
+    
+    const items = window.app.items;
+    const categories = loadCategories();
+    
+    // Artikel pro Kategorie
+    const categoryStats = categories.map(cat => {
+        const count = items.filter(item => item.category === cat.name).length;
+        return { ...cat, count };
+    }).filter(cat => cat.count > 0);
+    
+    const maxCount = Math.max(...categoryStats.map(c => c.count), 1);
+    
+    const chartContainer = document.getElementById('categoryChart');
+    if (categoryStats.length === 0) {
+        chartContainer.innerHTML = '<div class="empty-state-text">Keine Artikel vorhanden</div>';
+    } else {
+        chartContainer.innerHTML = categoryStats.map(cat => `
+            <div class="chart-bar">
+                <div class="chart-icon">${cat.icon}</div>
+                <div class="chart-label">${cat.name}</div>
+                <div class="chart-bar-container">
+                    <div class="chart-bar-fill" style="width: ${(cat.count / maxCount) * 100}%">
+                        ${cat.count}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Wertverteilung
+    const valueStats = categories.map(cat => {
+        const catItems = items.filter(item => item.category === cat.name);
+        const value = catItems.reduce((sum, item) => {
+            return sum + ((parseFloat(item.price) || 0) * (parseFloat(item.stock) || 0));
+        }, 0);
+        return { ...cat, value };
+    }).filter(cat => cat.value > 0);
+    
+    const valueContainer = document.getElementById('valueDistribution');
+    if (valueStats.length === 0) {
+        valueContainer.innerHTML = '<div class="empty-state-text">Keine Werte vorhanden</div>';
+    } else {
+        valueContainer.innerHTML = valueStats.map(cat => `
+            <div class="value-item">
+                <div class="value-item-name">${cat.icon} ${cat.name}</div>
+                <div class="value-item-value">${cat.value.toFixed(2)}€</div>
+            </div>
+        `).join('');
+    }
+    
+    // Bestandsübersicht
+    const stockContainer = document.getElementById('stockOverview');
+    const totalStock = items.length;
+    const okStock = items.filter(item => !item.min || parseInt(item.stock) > parseInt(item.min)).length;
+    const lowStockCount = items.filter(item => item.min && parseInt(item.stock) <= parseInt(item.min) && parseInt(item.stock) > 0).length;
+    const emptyStock = items.filter(item => parseInt(item.stock) === 0).length;
+    
+    stockContainer.innerHTML = `
+        <div class="value-item" style="border-color: #4caf50;">
+            <div class="value-item-name">✅ OK</div>
+            <div class="value-item-value" style="color: #4caf50;">${okStock}</div>
+        </div>
+        <div class="value-item" style="border-color: #ff6b00;">
+            <div class="value-item-name">⚠️ Niedrig</div>
+            <div class="value-item-value" style="color: #ff6b00;">${lowStockCount}</div>
+        </div>
+        <div class="value-item" style="border-color: #dc3545;">
+            <div class="value-item-name">❌ Leer</div>
+            <div class="value-item-value" style="color: #dc3545;">${emptyStock}</div>
+        </div>
+        <div class="value-item">
+            <div class="value-item-name">📦 Gesamt</div>
+            <div class="value-item-value">${totalStock}</div>
+        </div>
+    `;
+}
+
+// =============================================================================
+// GLOBALE FUNKTIONEN
+// =============================================================================
+
 function exportData() {
-    console.log('💾 Daten exportieren');
     if (window.app && window.app.exportData) {
         window.app.exportData();
     } else {
@@ -610,7 +1036,6 @@ function exportData() {
 }
 
 function importData() {
-    console.log('📥 Daten importieren');
     if (window.app && window.app.importData) {
         window.app.importData();
     } else {
@@ -627,8 +1052,13 @@ function importData() {
                         if (data.categories) {
                             saveCategories(data.categories);
                             loadCategoryList();
-                            alert('Kategorien importiert!');
                         }
+                        if (data.items && window.app) {
+                            window.app.items = data.items;
+                            window.app.saveToIndexedDB();
+                            window.app.renderItems();
+                        }
+                        alert('Daten importiert!');
                     } catch (err) {
                         alert('Fehler beim Importieren!');
                     }
@@ -641,10 +1071,7 @@ function importData() {
 }
 
 function showGitHubSettings() {
-    console.log('⚙️ GitHub Settings öffnen');
     document.getElementById('githubSettingsModal').classList.add('active');
-    
-    // Werte laden
     document.getElementById('ghToken').value = localStorage.getItem('github_token') || '';
     document.getElementById('ghUsername').value = localStorage.getItem('github_username') || '';
     document.getElementById('ghRepo').value = localStorage.getItem('github_repo') || '';
@@ -652,12 +1079,10 @@ function showGitHubSettings() {
 }
 
 function closeGitHubSettings() {
-    console.log('✖️ GitHub Settings schließen');
     document.getElementById('githubSettingsModal').classList.remove('active');
 }
 
 function saveGitHubSettings() {
-    console.log('💾 GitHub Settings speichern');
     const token = document.getElementById('ghToken').value;
     const username = document.getElementById('ghUsername').value;
     const repo = document.getElementById('ghRepo').value;
@@ -673,7 +1098,6 @@ function saveGitHubSettings() {
 }
 
 function manualSync() {
-    console.log('🔄 Manueller Sync');
     if (window.githubSync && window.githubSync.sync) {
         window.githubSync.sync();
     } else {
@@ -688,84 +1112,58 @@ function manualSync() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ DOM loaded');
     
-    // =========================================================================
-    // MENÜ EVENT HANDLERS
-    // =========================================================================
+    // Tab-Navigation
+    const mainTabs = document.querySelectorAll('.main-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    mainTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabName = this.dataset.tab;
+            
+            // Tabs umschalten
+            mainTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Content umschalten
+            tabContents.forEach(c => c.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            
+            // Statistiken aktualisieren wenn Tab geöffnet wird
+            if (tabName === 'statistics') {
+                updateStatistics();
+            }
+        });
+    });
+    
+    // Menü Event-Handler
     const menuButton = document.getElementById('menuButton');
     const menuSidebar = document.getElementById('menuSidebar');
     const menuOverlay = document.getElementById('menuOverlay');
     const menuCloseBtn = document.getElementById('menuCloseBtn');
     
     function closeMenu() {
-        console.log('✖️ Menü schließen');
         if (menuSidebar) menuSidebar.classList.remove('active');
         if (menuOverlay) menuOverlay.classList.remove('active');
     }
     
     if (menuButton) {
-        menuButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('📂 Menü öffnen');
+        menuButton.addEventListener('click', function() {
             if (menuSidebar) menuSidebar.classList.add('active');
             if (menuOverlay) menuOverlay.classList.add('active');
         });
     }
     
-    if (menuCloseBtn) {
-        menuCloseBtn.addEventListener('click', closeMenu);
-    }
-    
-    if (menuOverlay) {
-        menuOverlay.addEventListener('click', closeMenu);
-    }
+    if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
+    if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
     
     // Menü-Items
-    const menuCategoriesBtn = document.getElementById('menuCategoriesBtn');
-    const menuExportBtn = document.getElementById('menuExportBtn');
-    const menuImportBtn = document.getElementById('menuImportBtn');
-    const menuGitHubBtn = document.getElementById('menuGitHubBtn');
-    const menuSyncBtn = document.getElementById('menuSyncBtn');
+    document.getElementById('menuCategoriesBtn').addEventListener('click', () => { showCategoryManagement(); closeMenu(); });
+    document.getElementById('menuExportBtn').addEventListener('click', () => { exportData(); closeMenu(); });
+    document.getElementById('menuImportBtn').addEventListener('click', () => { importData(); closeMenu(); });
+    document.getElementById('menuGitHubBtn').addEventListener('click', () => { showGitHubSettings(); closeMenu(); });
+    document.getElementById('menuSyncBtn').addEventListener('click', () => { manualSync(); closeMenu(); });
     
-    if (menuCategoriesBtn) {
-        menuCategoriesBtn.addEventListener('click', function() {
-            showCategoryManagement();
-            closeMenu();
-        });
-    }
-    
-    if (menuExportBtn) {
-        menuExportBtn.addEventListener('click', function() {
-            exportData();
-            closeMenu();
-        });
-    }
-    
-    if (menuImportBtn) {
-        menuImportBtn.addEventListener('click', function() {
-            importData();
-            closeMenu();
-        });
-    }
-    
-    if (menuGitHubBtn) {
-        menuGitHubBtn.addEventListener('click', function() {
-            showGitHubSettings();
-            closeMenu();
-        });
-    }
-    
-    if (menuSyncBtn) {
-        menuSyncBtn.addEventListener('click', function() {
-            manualSync();
-            closeMenu();
-        });
-    }
-    
-    console.log('✅ Menü Event Handlers installiert');
-    
-    // =========================================================================
-    // DARK MODE
-    // =========================================================================
+    // Dark Mode
     const html = document.documentElement;
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
@@ -785,19 +1183,12 @@ document.addEventListener('DOMContentLoaded', function() {
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-            
-            console.log(`🎨 Theme: ${newTheme}`);
         });
-        
-        console.log('✅ Dark Mode installiert');
     }
     
-    // =========================================================================
-    // ICON PICKER
-    // =========================================================================
+    // Icon Picker
     if (typeof IconPicker !== 'undefined') {
         window.iconPicker = new IconPicker();
-        console.log('✅ Icon Picker initialized');
         
         const catIconInput = document.getElementById('catIcon');
         const catIconPreview = document.getElementById('catIconPreview');
@@ -806,83 +1197,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (catIconInput && catIconPreview) {
             catIconInput.addEventListener('input', function() {
                 const icon = this.value.trim();
-                if (icon) {
-                    catIconPreview.textContent = icon;
-                }
+                if (icon) catIconPreview.textContent = icon;
             });
-            
-            if (catIconInput.value) {
-                catIconPreview.textContent = catIconInput.value;
-            }
         }
         
         if (openPickerBtn) {
             openPickerBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const currentIcon = catIconInput.value || '📦';
-                
                 window.iconPicker.open(currentIcon, function(selectedIcon) {
                     catIconInput.value = selectedIcon;
                     catIconPreview.textContent = selectedIcon;
-                    console.log('✅ Icon selected:', selectedIcon);
-                });
-            });
-        }
-        
-        const searchInput = document.getElementById('iconSearchInput');
-        if (searchInput) {
-            let searchTimeout;
-            searchInput.addEventListener('input', function(e) {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    const query = e.target.value.trim();
-                    if (query.length > 0 && window.iconPicker) {
-                        const results = window.iconPicker.search(query);
-                        displaySearchResults(results);
-                    } else {
-                        const activeTab = document.querySelector('.icon-tab.active');
-                        if (activeTab && window.iconPicker) {
-                            window.iconPicker.renderCategory(activeTab.dataset.category);
-                        }
-                    }
-                }, 300);
-            });
-        }
-        
-        function displaySearchResults(results) {
-            const container = document.getElementById('iconPickerGrid');
-            if (!container) return;
-            
-            if (results.length === 0) {
-                container.innerHTML = `
-                    <div class="icon-picker-empty">
-                        <div class="icon-picker-empty-icon">🔍</div>
-                        <div class="icon-picker-empty-text">Keine Icons gefunden</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = results.map(item => `
-                <div class="icon-item ${window.iconPicker.selectedIcon === item.icon ? 'selected' : ''}" 
-                     data-icon="${item.icon}"
-                     title="${item.name}${item.category ? ' (' + item.category + ')' : ''}">
-                    <span class="icon-display">${item.icon}</span>
-                    <span class="icon-name">${item.name}</span>
-                </div>
-            `).join('');
-            
-            container.querySelectorAll('.icon-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    window.iconPicker.select(item.dataset.icon);
                 });
             });
         }
     }
     
-    // =========================================================================
-    // FOTO UPLOAD PREVIEW
-    // =========================================================================
+    // Foto Upload Preview
     const itemPhoto = document.getElementById('itemPhoto');
     const photoPreview = document.getElementById('photoPreview');
     
@@ -929,7 +1260,91 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ ef-sin Inventur v2.0.5 - Initialization complete!');
+    console.log('✅ ef-sin Inventur v2.1.0 - Initialization complete!');
+});
+</script>
+
+<!-- APP.JS LADEN -->
+<script src="app.js"></script>
+
+<!-- APP-INTEGRATION NACH LOAD -->
+<script>
+// Warte bis app.js geladen ist
+window.addEventListener('load', function() {
+    console.log('🔗 Verbinde Kategorie-System mit App...');
+    
+    // Override app.loadCategories um localStorage zu nutzen
+    if (window.app) {
+        const originalLoadCategories = window.app.loadCategories.bind(window.app);
+        
+        window.app.loadCategories = function() {
+            console.log('📁 Lade Kategorien aus localStorage...');
+            const categories = loadCategories();
+            
+            // Konvertiere zu altem Format für Kompatibilität
+            window.app.categories = categories.map(c => c.name);
+            
+            // Render Category Tabs
+            const tabsContainer = document.getElementById('categoryTabs');
+            if (tabsContainer) {
+                tabsContainer.innerHTML = `
+                    <button class="category-tab active" data-category="Alle">Alle</button>
+                    ${categories.map(cat => `
+                        <button class="category-tab" data-category="${cat.name}">
+                            ${cat.icon} ${cat.name}
+                        </button>
+                    `).join('')}
+                `;
+                
+                // Event-Listener für Tabs
+                tabsContainer.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        tabsContainer.querySelectorAll('.category-tab').forEach(t => 
+                            t.classList.remove('active')
+                        );
+                        this.classList.add('active');
+                        window.app.currentCategory = this.dataset.category;
+                        window.app.renderItems();
+                    });
+                });
+            }
+            
+            // Update Dropdowns
+            const categorySelect = document.getElementById('itemCategory');
+            const quickCategorySelect = document.getElementById('quickCategory');
+            
+            if (categorySelect) {
+                categorySelect.innerHTML = categories.map(cat => 
+                    `<option value="${cat.name}">${cat.icon} ${cat.name}</option>`
+                ).join('');
+            }
+            
+            if (quickCategorySelect) {
+                quickCategorySelect.innerHTML = categories.map(cat => 
+                    `<option value="${cat.name}">${cat.icon} ${cat.name}</option>`
+                ).join('');
+            }
+            
+            console.log('✅ Kategorien geladen:', categories.length);
+        };
+        
+        // Override renderItems um Dashboard zu aktualisieren
+        const originalRenderItems = window.app.renderItems.bind(window.app);
+        
+        window.app.renderItems = function() {
+            originalRenderItems();
+            updateDashboard();
+        };
+        
+        // Initial laden
+        window.app.loadCategories();
+        
+        // Dashboard initial aktualisieren
+        setTimeout(() => {
+            updateDashboard();
+            updateStatistics();
+        }, 500);
+    }
 });
 </script>
 

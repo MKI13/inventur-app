@@ -1,8 +1,8 @@
 {
   "name": "ef-sin Inventur",
   "short_name": "Inventur",
-  "description": "ef-sin Inventur v2.0.5 - Kategorie-Management komplett",
-  "version": "2.0.5",
+  "description": "ef-sin Inventur v2.1.0 - Dashboard + Statistiken",
+  "version": "2.1.0",
   "start_url": "/inventur-app/",
   "display": "standalone",
   "background_color": "#ffffff",
