@@ -1,8 +1,8 @@
 {
   "name": "ef-sin Inventur",
   "short_name": "Inventur",
-  "description": "ef-sin Inventur v2.0.4 - Icon-Picker, Dark Mode, Foto-Upload",
-  "version": "2.0.4",
+  "description": "ef-sin Inventur v2.0.5 - Kategorie-Management komplett",
+  "version": "2.0.5",
   "start_url": "/inventur-app/",
   "display": "standalone",
   "background_color": "#ffffff",
