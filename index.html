@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.1.4">
-    <meta name="description" content="ef-sin Inventur v2.1.4 - Dashboard/Statistik Auto-Update">
-    <title>ef-sin Inventur v2.1.4</title>
+    <meta name="version" content="2.1.5">
+    <meta name="description" content="ef-sin Inventur v2.1.5 - saveItem Override Fix">
+    <title>ef-sin Inventur v2.1.5</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -483,7 +483,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version">v2.1.4</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version">v2.1.5</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -866,7 +866,7 @@
 
 <!-- KATEGORIE-SYSTEM & APP-INTEGRATION -->
 <script>
-console.log('🚀 ef-sin Inventur v2.1.4 initializing...');
+console.log('🚀 ef-sin Inventur v2.1.5 initializing...');
 
 // =============================================================================
 // KATEGORIE-VERWALTUNG (localStorage-basiert)
@@ -1462,7 +1462,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ ef-sin Inventur v2.1.4 - Initialization complete!');
+    console.log('✅ ef-sin Inventur v2.1.5 - Initialization complete!');
 });
 </script>
 
@@ -1536,8 +1536,40 @@ window.addEventListener('load', function() {
         window.app.renderItems = function() {
             originalRenderItems();
             updateDashboard();
-            updateStatistics(); // ← Statistik auch updaten!
+            updateStatistics();
         };
+        
+        // Override saveItem um ALLES zu aktualisieren
+        const originalSaveItem = window.app.saveItem.bind(window.app);
+        
+        window.app.saveItem = function() {
+            console.log('💾 Speichere Artikel...');
+            originalSaveItem();
+            
+            // Nach dem Speichern: ALLES aktualisieren
+            setTimeout(() => {
+                console.log('🔄 Aktualisiere Dashboard & Statistik...');
+                updateDashboard();
+                updateStatistics();
+            }, 200);
+        };
+        
+        // Override deleteItem falls vorhanden
+        if (window.app.deleteItem) {
+            const originalDeleteItem = window.app.deleteItem.bind(window.app);
+            
+            window.app.deleteItem = function(id) {
+                console.log('🗑️ Lösche Artikel...');
+                originalDeleteItem(id);
+                
+                // Nach dem Löschen: ALLES aktualisieren
+                setTimeout(() => {
+                    console.log('🔄 Aktualisiere Dashboard & Statistik...');
+                    updateDashboard();
+                    updateStatistics();
+                }, 200);
+            };
+        }
         
         // Initial laden
         window.app.loadCategories();
