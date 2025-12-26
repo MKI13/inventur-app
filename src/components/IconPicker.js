@@ -2,6 +2,7 @@
 // ICON PICKER COMPONENT
 // Version 3.0 - Mit TEXT-basierten Icons für Schreinerei-Produkte
 // =============================================================================
+
 class IconPicker {
     constructor() {
         this.iconDatabase = {
@@ -200,15 +201,18 @@ class IconPicker {
         this.onSelectCallback = null;
         this.currentCategory = 'Holz & Schreinerei';
     }
+
     open(currentIcon, onSelect) {
         this.selectedIcon = currentIcon || '📦';
         this.onSelectCallback = onSelect;
         this.render();
         document.getElementById('iconPickerModal').classList.add('active');
     }
+
     close() {
         document.getElementById('iconPickerModal').classList.remove('active');
     }
+
     select(icon) {
         this.selectedIcon = icon;
         if (this.onSelectCallback) {
@@ -216,6 +220,7 @@ class IconPicker {
         }
         this.close();
     }
+
     render() {
         // Tabs rendern
         const tabsContainer = document.getElementById('iconPickerTabs');
@@ -223,6 +228,7 @@ class IconPicker {
             `<button class="icon-tab ${category === this.currentCategory ? 'active' : ''}" 
                      data-category="${category}">${category}</button>`
         ).join('');
+
         // Event Listeners für Tabs
         tabsContainer.querySelectorAll('.icon-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
@@ -232,9 +238,11 @@ class IconPicker {
                 this.renderCategory(this.currentCategory);
             });
         });
+
         // Erste Kategorie anzeigen
         this.renderCategory(this.currentCategory);
     }
+
     renderCategory(category) {
         const container = document.getElementById('iconPickerGrid');
         const icons = this.iconDatabase[category] || [];
@@ -252,6 +260,7 @@ class IconPicker {
                 <span class="icon-name">${item.name}</span>
             </div>
         `).join('');
+
         // Event Listeners für Icons
         container.querySelectorAll('.icon-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -259,9 +268,11 @@ class IconPicker {
             });
         });
     }
+
     search(query) {
         const results = [];
         query = query.toLowerCase();
+
         Object.entries(this.iconDatabase).forEach(([category, icons]) => {
             icons.forEach(item => {
                 if (item.name.toLowerCase().includes(query) || 
@@ -270,9 +281,11 @@ class IconPicker {
                 }
             });
         });
+
         return results;
     }
 }
+
 // Export für globale Verwendung
 if (typeof window !== 'undefined') {
     window.IconPicker = IconPicker;
