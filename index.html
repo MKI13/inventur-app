@@ -636,6 +636,7 @@
                         <option>Kilogramm</option>
                         <option>Liter</option>
                         <option>Paket</option>
+                        <option>m²</option>
                     </select>
                 </div>
             </div>
@@ -778,34 +779,10 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2>⚙️ GitHub Einstellungen</h2>
-            <div id="githubSyncContainer"></div>
-            <button class="btn-close" onclick="closeGitHubSettings()">×</button>
+            <button class="btn-close" onclick="window.githubSync?.close()">×</button>
         </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label for="ghToken">GitHub Token</label>
-                <input type="password" id="ghToken" placeholder="ghp_...">
-                <small>Personal Access Token mit repo-Rechten</small>
-            </div>
-            <div class="form-group">
-                <label for="ghUsername">Username</label>
-                <input type="text" id="ghUsername" placeholder="username">
-            </div>
-            <div class="form-group">
-                <label for="ghRepo">Repository</label>
-                <input type="text" id="ghRepo" placeholder="inventur-v2">
-            </div>
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" id="ghAutoSync">
-                    Auto-Sync aktivieren
-                </label>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-secondary" onclick="closeGitHubSettings()">Abbrechen</button>
-            <button class="btn-primary" onclick="saveGitHubSettings()">Speichern</button>
-        </div>
+        <!-- Hier rendert die externe Komponente -->
+        <div id="githubSyncContainer"></div>
     </div>
 </div>
 
