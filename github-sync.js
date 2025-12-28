@@ -1,10 +1,9 @@
 /**
- * GitHub Sync - SOFORT initialisiert
+ * GitHub Sync - MIT ROBUSTEM UTF-8 ENCODING
  */
 
 class GitHubSync {
     constructor() {
-        // WICHTIG: Settings SOFORT laden mit Defaults
         this.settings = {
             token: '',
             username: 'MKI13',
@@ -14,7 +13,6 @@ class GitHubSync {
             lastSyncStatus: null
         };
         
-        // Gespeicherte Settings laden
         try {
             const saved = localStorage.getItem('githubSyncSettings');
             if (saved) {
@@ -25,21 +23,17 @@ class GitHubSync {
         }
         
         this.isInitialized = false;
-        console.log('✅ GitHubSync Konstruktor fertig:', this.settings);
+        console.log('✅ GitHubSync Konstruktor fertig');
     }
 
     init() {
         if (this.isInitialized) return;
         const container = document.getElementById('githubSyncContainer');
-        if (!container) {
-            console.warn('Container nicht gefunden, init später');
-            return;
-        }
+        if (!container) return;
         container.innerHTML = this.renderModal();
         this.attachEventListeners();
         this.updateUI();
         this.isInitialized = true;
-        console.log('✅ GitHubSync UI initialisiert');
     }
 
     renderModal() {
@@ -49,7 +43,7 @@ class GitHubSync {
                     <label for="ghToken">🔑 GitHub Token</label>
                     <input type="password" id="ghToken" placeholder="ghp_..." 
                            value="${this.settings.token || ''}">
-                    <small>Token erstellen: <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a></small>
+                    <small><a href="https://github.com/settings/tokens" target="_blank">Token erstellen</a></small>
                 </div>
                 
                 <div class="form-group">
@@ -62,14 +56,14 @@ class GitHubSync {
                     <label for="ghRepo">📦 Backup Repository</label>
                     <input type="text" id="ghRepo" placeholder="inventur-v2" 
                            value="${this.settings.repo}">
-                    <small>Backups gehen nach: <strong>github.com/${this.settings.username}/${this.settings.repo}</strong></small>
+                    <small>Ziel: <strong>github.com/${this.settings.username}/${this.settings.repo}</strong></small>
                 </div>
                 
                 <div class="form-group">
                     <label>
                         <input type="checkbox" id="ghAutoSync" 
                                ${this.settings.autoSync ? 'checked' : ''}>
-                        🔄 Auto-Sync aktivieren (bei jeder Änderung)
+                        🔄 Auto-Sync aktivieren
                     </label>
                 </div>
 
@@ -130,7 +124,7 @@ class GitHubSync {
         const autoSync = document.getElementById('ghAutoSync')?.checked;
 
         if (!token) {
-            alert('⚠️ Bitte GitHub Token eingeben!\n\nToken erstellen: https://github.com/settings/tokens\nRechte: "repo" auswählen');
+            alert('⚠️ Bitte GitHub Token eingeben!');
             return;
         }
 
@@ -146,11 +140,10 @@ class GitHubSync {
     }
 
     async syncNow() {
-        console.log('🔄 syncNow aufgerufen, Settings:', this.settings);
+        console.log('🔄 syncNow gestartet');
 
-        // SOFORT prüfen ob Token vorhanden
         if (!this.settings.token) {
-            alert('⚠️ Bitte erst GitHub Token eingeben!\n\n1. Menü öffnen\n2. GitHub Einstellungen\n3. Token erstellen und einfügen\n4. Speichern');
+            alert('⚠️ Bitte erst GitHub Token eingeben!');
             this.open();
             return;
         }
@@ -162,7 +155,6 @@ class GitHubSync {
         }
 
         try {
-            console.log(`📤 Starte Backup nach ${this.settings.username}/${this.settings.repo}`);
             await this.pushToGitHub();
             
             if (btn) {
@@ -173,7 +165,7 @@ class GitHubSync {
                 }, 2000);
             }
             
-            alert(`✅ Backup erfolgreich!\n\nRepository: ${this.settings.username}/${this.settings.repo}\nDatei: backup/inventory.json`);
+            alert(`✅ Backup erfolgreich!\n\nRepository: ${this.settings.username}/${this.settings.repo}`);
             
         } catch (error) {
             console.error('❌ Sync-Fehler:', error);
@@ -186,24 +178,49 @@ class GitHubSync {
                 }, 2000);
             }
             
-            alert(`❌ Backup fehlgeschlagen!\n\nFehler: ${error.message}\n\nBitte prüfen:\n- Token korrekt?\n- Repository existiert?\n- Internet-Verbindung?`);
+            alert(`❌ Backup fehlgeschlagen!\n\n${error.message}`);
+        }
+    }
+
+    // ROBUSTES UTF-8 zu Base64 Encoding (funktioniert mit Umlauten!)
+    utf8ToBase64(str) {
+        try {
+            // Moderne Methode mit TextEncoder
+            const bytes = new TextEncoder().encode(str);
+            const binString = Array.from(bytes, (byte) => String.fromCodePoint(byte)).join('');
+            return btoa(binString);
+        } catch (e) {
+            console.warn('TextEncoder fehlgeschlagen, Fallback:', e);
+            // Fallback für ältere Browser
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+                return String.fromCharCode(parseInt('0x' + p1));
+            }));
         }
     }
 
     async pushToGitHub() {
         const { token, username, repo } = this.settings;
+        
+        console.log('📤 Hole Daten aus IndexedDB...');
         const data = await this.getInventoryData();
         
         if (!data || data.items.length === 0) {
-            throw new Error('Keine Inventardaten zum Sichern vorhanden!');
+            throw new Error('Keine Inventardaten zum Sichern!');
         }
 
-        console.log(`📤 Backup: ${data.items.length} Artikel → ${username}/${repo}`);
+        console.log(`📦 ${data.items.length} Artikel bereit`);
 
+        // JSON erstellen
         const jsonContent = JSON.stringify(data, null, 2);
-        const base64Content = btoa(unescape(encodeURIComponent(jsonContent)));
+        console.log(`📄 JSON Größe: ${(jsonContent.length / 1024).toFixed(2)} KB`);
+        
+        // UTF-8 zu Base64 (funktioniert mit deutschen Umlauten!)
+        const base64Content = this.utf8ToBase64(jsonContent);
+        console.log(`🔐 Base64 kodiert: ${(base64Content.length / 1024).toFixed(2)} KB`);
+
         const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/backup/inventory.json`;
         
+        // Prüfen ob Datei existiert
         let sha = null;
         try {
             const checkResponse = await fetch(apiUrl, {
@@ -215,12 +232,16 @@ class GitHubSync {
             if (checkResponse.ok) {
                 const fileData = await checkResponse.json();
                 sha = fileData.sha;
-                console.log('📝 Existierende Datei wird aktualisiert');
+                console.log('📝 Update existierender Datei');
+            } else {
+                console.log('📝 Neue Datei wird erstellt');
             }
         } catch (e) {
             console.log('📝 Neue Datei wird erstellt');
         }
 
+        // Zu GitHub pushen
+        console.log('🚀 Push zu GitHub...');
         const response = await fetch(apiUrl, {
             method: 'PUT',
             headers: {
@@ -229,7 +250,7 @@ class GitHubSync {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                message: `🔄 ef-sin Inventur Backup vom ${new Date().toLocaleString('de-DE')}`,
+                message: `🔄 ef-sin Inventur Backup - ${data.items.length} Artikel vom ${new Date().toLocaleString('de-DE')}`,
                 content: base64Content,
                 sha: sha || undefined,
                 committer: {
@@ -241,7 +262,7 @@ class GitHubSync {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || response.statusText);
+            throw new Error(`GitHub API: ${errorData.message || response.statusText}`);
         }
 
         const result = await response.json();
@@ -258,24 +279,28 @@ class GitHubSync {
     async getInventoryData() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open('efsinInventurDB', 1);
-            request.onerror = () => reject(new Error('Datenbank konnte nicht geöffnet werden'));
+            request.onerror = () => reject(new Error('Datenbank-Zugriff fehlgeschlagen'));
             request.onsuccess = (event) => {
-                const db = event.target.result;
-                const transaction = db.transaction(['inventory'], 'readonly');
-                const objectStore = transaction.objectStore('inventory');
-                const getAllRequest = objectStore.getAll();
-                
-                getAllRequest.onsuccess = () => {
-                    resolve({
-                        version: '2.1.9',
-                        exportDate: new Date().toISOString(),
-                        source: 'ef-sin Inventur PWA',
-                        backupTarget: `${this.settings.username}/${this.settings.repo}`,
-                        itemCount: getAllRequest.result.length,
-                        items: getAllRequest.result
-                    });
-                };
-                getAllRequest.onerror = () => reject(new Error('Daten konnten nicht gelesen werden'));
+                try {
+                    const db = event.target.result;
+                    const transaction = db.transaction(['inventory'], 'readonly');
+                    const objectStore = transaction.objectStore('inventory');
+                    const getAllRequest = objectStore.getAll();
+                    
+                    getAllRequest.onsuccess = () => {
+                        resolve({
+                            version: '2.1.9',
+                            exportDate: new Date().toISOString(),
+                            source: 'ef-sin Inventur PWA',
+                            backupTarget: `${this.settings.username}/${this.settings.repo}`,
+                            itemCount: getAllRequest.result.length,
+                            items: getAllRequest.result
+                        });
+                    };
+                    getAllRequest.onerror = () => reject(new Error('Daten konnten nicht gelesen werden'));
+                } catch (e) {
+                    reject(new Error(`IndexedDB Fehler: ${e.message}`));
+                }
             };
         });
     }
@@ -318,16 +343,12 @@ class GitHubSync {
     }
 }
 
-// SOFORT initialisieren (nicht warten auf DOMContentLoaded)
 window.githubSync = new GitHubSync();
-console.log('✅ window.githubSync verfügbar');
 
-// UI initialisieren wenn DOM ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.githubSync.init();
-    });
+    document.addEventListener('DOMContentLoaded', () => window.githubSync.init());
 } else {
-    // DOM bereits ready
     window.githubSync.init();
 }
+
+console.log('✅ GitHub Sync geladen - UTF-8 sicher!');
