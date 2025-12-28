@@ -1,51 +1,75 @@
 /**
- * GitHub Sync Komponente - VORKONFIGURIERT für inventur-v2
+ * GitHub Sync - SOFORT initialisiert
  */
 
 class GitHubSync {
     constructor() {
-        this.settings = this.loadSettings();
+        // WICHTIG: Settings SOFORT laden mit Defaults
+        this.settings = {
+            token: '',
+            username: 'MKI13',
+            repo: 'inventur-v2',
+            autoSync: false,
+            lastSync: null,
+            lastSyncStatus: null
+        };
+        
+        // Gespeicherte Settings laden
+        try {
+            const saved = localStorage.getItem('githubSyncSettings');
+            if (saved) {
+                this.settings = { ...this.settings, ...JSON.parse(saved) };
+            }
+        } catch (e) {
+            console.error('Settings laden fehlgeschlagen:', e);
+        }
+        
         this.isInitialized = false;
+        console.log('✅ GitHubSync Konstruktor fertig:', this.settings);
     }
 
     init() {
         if (this.isInitialized) return;
         const container = document.getElementById('githubSyncContainer');
-        if (!container) return;
+        if (!container) {
+            console.warn('Container nicht gefunden, init später');
+            return;
+        }
         container.innerHTML = this.renderModal();
         this.attachEventListeners();
         this.updateUI();
         this.isInitialized = true;
+        console.log('✅ GitHubSync UI initialisiert');
     }
 
     renderModal() {
         return `
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="ghToken">GitHub Token</label>
+                    <label for="ghToken">🔑 GitHub Token</label>
                     <input type="password" id="ghToken" placeholder="ghp_..." 
                            value="${this.settings.token || ''}">
-                    <small>Personal Access Token mit repo-Rechten</small>
+                    <small>Token erstellen: <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a></small>
                 </div>
                 
                 <div class="form-group">
-                    <label for="ghUsername">Username</label>
+                    <label for="ghUsername">👤 Username</label>
                     <input type="text" id="ghUsername" placeholder="MKI13" 
-                           value="${this.settings.username || 'MKI13'}">
+                           value="${this.settings.username}">
                 </div>
                 
                 <div class="form-group">
-                    <label for="ghRepo">Backup Repository</label>
+                    <label for="ghRepo">📦 Backup Repository</label>
                     <input type="text" id="ghRepo" placeholder="inventur-v2" 
-                           value="${this.settings.repo || 'inventur-v2'}">
-                    <small>Ziel-Repository für Backups</small>
+                           value="${this.settings.repo}">
+                    <small>Backups gehen nach: <strong>github.com/${this.settings.username}/${this.settings.repo}</strong></small>
                 </div>
                 
                 <div class="form-group">
                     <label>
                         <input type="checkbox" id="ghAutoSync" 
                                ${this.settings.autoSync ? 'checked' : ''}>
-                        Auto-Sync aktivieren
+                        🔄 Auto-Sync aktivieren (bei jeder Änderung)
                     </label>
                 </div>
 
@@ -59,7 +83,7 @@ class GitHubSync {
                     Abbrechen
                 </button>
                 <button class="btn-primary" onclick="window.githubSync.save()">
-                    Speichern
+                    💾 Speichern
                 </button>
                 <button class="btn-primary" onclick="window.githubSync.syncNow()" 
                         id="syncNowBtn">
@@ -79,9 +103,9 @@ class GitHubSync {
     }
 
     attachEventListeners() {
-        const autoSyncCheckbox = document.getElementById('ghAutoSync');
-        if (autoSyncCheckbox) {
-            autoSyncCheckbox.addEventListener('change', (e) => {
+        const autoSync = document.getElementById('ghAutoSync');
+        if (autoSync) {
+            autoSync.addEventListener('change', (e) => {
                 this.settings.autoSync = e.target.checked;
                 this.saveSettings();
             });
@@ -106,26 +130,27 @@ class GitHubSync {
         const autoSync = document.getElementById('ghAutoSync')?.checked;
 
         if (!token) {
-            alert('⚠️ Bitte GitHub Token eingeben!');
+            alert('⚠️ Bitte GitHub Token eingeben!\n\nToken erstellen: https://github.com/settings/tokens\nRechte: "repo" auswählen');
             return;
         }
 
-        if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
-            alert('⚠️ Token-Format scheint ungültig.');
-            return;
-        }
-
-        this.settings = { token, username, repo, autoSync,
+        this.settings = { 
+            token, username, repo, autoSync,
             lastSync: this.settings.lastSync,
-            lastSyncStatus: this.settings.lastSyncStatus };
+            lastSyncStatus: this.settings.lastSyncStatus 
+        };
+        
         this.saveSettings();
-        alert('✅ Einstellungen gespeichert!');
+        alert(`✅ Gespeichert!\n\nBackup-Ziel: ${username}/${repo}`);
         this.close();
     }
 
     async syncNow() {
-        if (!this.settings.token || !this.settings.username || !this.settings.repo) {
-            alert('⚠️ Bitte erst GitHub Token eingeben!');
+        console.log('🔄 syncNow aufgerufen, Settings:', this.settings);
+
+        // SOFORT prüfen ob Token vorhanden
+        if (!this.settings.token) {
+            alert('⚠️ Bitte erst GitHub Token eingeben!\n\n1. Menü öffnen\n2. GitHub Einstellungen\n3. Token erstellen und einfügen\n4. Speichern');
             this.open();
             return;
         }
@@ -137,7 +162,9 @@ class GitHubSync {
         }
 
         try {
+            console.log(`📤 Starte Backup nach ${this.settings.username}/${this.settings.repo}`);
             await this.pushToGitHub();
+            
             if (btn) {
                 btn.textContent = '✅ Fertig!';
                 setTimeout(() => {
@@ -145,9 +172,12 @@ class GitHubSync {
                     btn.textContent = '🔄 Jetzt Synchronisieren';
                 }, 2000);
             }
-            alert('✅ Backup erfolgreich nach inventur-v2!');
+            
+            alert(`✅ Backup erfolgreich!\n\nRepository: ${this.settings.username}/${this.settings.repo}\nDatei: backup/inventory.json`);
+            
         } catch (error) {
             console.error('❌ Sync-Fehler:', error);
+            
             if (btn) {
                 btn.textContent = '❌ Fehler';
                 setTimeout(() => {
@@ -155,7 +185,8 @@ class GitHubSync {
                     btn.textContent = '🔄 Jetzt Synchronisieren';
                 }, 2000);
             }
-            alert(`❌ Backup fehlgeschlagen:\n${error.message}`);
+            
+            alert(`❌ Backup fehlgeschlagen!\n\nFehler: ${error.message}\n\nBitte prüfen:\n- Token korrekt?\n- Repository existiert?\n- Internet-Verbindung?`);
         }
     }
 
@@ -164,7 +195,7 @@ class GitHubSync {
         const data = await this.getInventoryData();
         
         if (!data || data.items.length === 0) {
-            throw new Error('Keine Inventardaten gefunden!');
+            throw new Error('Keine Inventardaten zum Sichern vorhanden!');
         }
 
         console.log(`📤 Backup: ${data.items.length} Artikel → ${username}/${repo}`);
@@ -184,8 +215,11 @@ class GitHubSync {
             if (checkResponse.ok) {
                 const fileData = await checkResponse.json();
                 sha = fileData.sha;
+                console.log('📝 Existierende Datei wird aktualisiert');
             }
-        } catch (e) { }
+        } catch (e) {
+            console.log('📝 Neue Datei wird erstellt');
+        }
 
         const response = await fetch(apiUrl, {
             method: 'PUT',
@@ -197,72 +231,59 @@ class GitHubSync {
             body: JSON.stringify({
                 message: `🔄 ef-sin Inventur Backup vom ${new Date().toLocaleString('de-DE')}`,
                 content: base64Content,
-                sha: sha || undefined
+                sha: sha || undefined,
+                committer: {
+                    name: 'ef-sin Inventur PWA',
+                    email: 'inventur@ef-sin.de'
+                }
             })
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`GitHub: ${errorData.message || response.statusText}`);
+            throw new Error(errorData.message || response.statusText);
         }
+
+        const result = await response.json();
+        console.log('✅ Backup erfolgreich:', result.commit.sha);
 
         this.settings.lastSync = new Date().toISOString();
         this.settings.lastSyncStatus = 'success';
         this.saveSettings();
         this.updateUI();
-        return await response.json();
+        
+        return result;
     }
 
     async getInventoryData() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open('efsinInventurDB', 1);
-            request.onerror = () => reject(request.error);
+            request.onerror = () => reject(new Error('Datenbank konnte nicht geöffnet werden'));
             request.onsuccess = (event) => {
                 const db = event.target.result;
                 const transaction = db.transaction(['inventory'], 'readonly');
                 const objectStore = transaction.objectStore('inventory');
                 const getAllRequest = objectStore.getAll();
+                
                 getAllRequest.onsuccess = () => {
                     resolve({
                         version: '2.1.9',
                         exportDate: new Date().toISOString(),
                         source: 'ef-sin Inventur PWA',
+                        backupTarget: `${this.settings.username}/${this.settings.repo}`,
                         itemCount: getAllRequest.result.length,
                         items: getAllRequest.result
                     });
                 };
-                getAllRequest.onerror = () => reject(getAllRequest.error);
+                getAllRequest.onerror = () => reject(new Error('Daten konnten nicht gelesen werden'));
             };
         });
-    }
-
-    loadSettings() {
-        try {
-            const saved = localStorage.getItem('githubSyncSettings');
-            const defaults = {
-                token: '',
-                username: 'MKI13',
-                repo: 'inventur-v2',
-                autoSync: false,
-                lastSync: null,
-                lastSyncStatus: null
-            };
-            return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
-        } catch (e) {
-            return {
-                token: '',
-                username: 'MKI13',
-                repo: 'inventur-v2',
-                autoSync: false,
-                lastSync: null,
-                lastSyncStatus: null
-            };
-        }
     }
 
     saveSettings() {
         try {
             localStorage.setItem('githubSyncSettings', JSON.stringify(this.settings));
+            console.log('💾 Settings gespeichert');
         } catch (e) {
             console.error('Fehler beim Speichern:', e);
         }
@@ -287,21 +308,26 @@ class GitHubSync {
     }
 
     async triggerAutoSync() {
-        if (!this.settings.autoSync) return;
+        if (!this.settings.autoSync || !this.settings.token) return;
         try {
             await this.pushToGitHub();
+            console.log('✅ Auto-Sync erfolgreich');
         } catch (error) {
-            console.error('Auto-Sync fehlgeschlagen:', error);
+            console.error('❌ Auto-Sync fehlgeschlagen:', error);
         }
     }
 }
 
+// SOFORT initialisieren (nicht warten auf DOMContentLoaded)
 window.githubSync = new GitHubSync();
+console.log('✅ window.githubSync verfügbar');
 
+// UI initialisieren wenn DOM ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => window.githubSync.init());
+    document.addEventListener('DOMContentLoaded', () => {
+        window.githubSync.init();
+    });
 } else {
+    // DOM bereits ready
     window.githubSync.init();
 }
-
-console.log('✅ GitHub Sync geladen - Ziel: MKI13/inventur-v2');
