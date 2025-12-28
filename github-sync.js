@@ -260,7 +260,7 @@ class GitHubSync {
                 try {
                     const db = event.target.result;
                     const tx = db.transaction(['items'], 'readonly');
-                    const store = tx.objectStore('inventory');
+                    const store = tx.objectStore('items');
                     const getAll = store.getAll();
                     
                     getAll.onsuccess = () => {
