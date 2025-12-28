@@ -475,3 +475,35 @@
     };
     
 })();
+
+// GitHub Modal Funktionen
+function closeGitHubSettingsModal() {
+    document.getElementById('githubSettingsModal').style.display = 'none';
+}
+
+function openGitHubSettings() {
+    document.getElementById('ghToken').value = localStorage.getItem('efsin_github_token') || '';
+    document.getElementById('ghUsername').value = localStorage.getItem('efsin_github_owner') || 'MKI13';
+    document.getElementById('ghRepo').value = localStorage.getItem('efsin_github_repo') || 'inventur-v2';
+    document.getElementById('githubSettingsModal').style.display = 'flex';
+}
+
+async function syncNowMultiFile() {
+    if (!window.multiFileSync) {
+        alert('⚠️ Multi-File Sync nicht initialisiert!');
+        return;
+    }
+    
+    if (!window.multiFileSync.isConfigured()) {
+        alert('⚠️ Bitte erst GitHub Token eingeben!');
+        return;
+    }
+    
+    try {
+        const result = await window.multiFileSync.smartSync();
+        alert(`✅ Backup erfolgreich!\n\nKategorien: ${result.categories?.length || 0}\nDauer: ${result.duration}ms`);
+        closeGitHubSettingsModal();
+    } catch (error) {
+        alert(`❌ Backup fehlgeschlagen:\n${error.message}`);
+    }
+}
