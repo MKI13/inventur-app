@@ -1359,32 +1359,8 @@ function showGitHubSettings() {
     document.getElementById('ghAutoSync').checked = localStorage.getItem('github_autosync') === 'true';
 }
 
-function closeGitHubSettings() {
-    document.getElementById('githubSettingsModal').classList.remove('active');
-}
 
-function saveGitHubSettings() {
-    const token = document.getElementById('ghToken').value;
-    const username = document.getElementById('ghUsername').value;
-    const repo = document.getElementById('ghRepo').value;
-    const autoSync = document.getElementById('ghAutoSync').checked;
-    
-    localStorage.setItem('github_token', token);
-    localStorage.setItem('github_username', username);
-    localStorage.setItem('github_repo', repo);
-    localStorage.setItem('github_autosync', autoSync);
-    
-    closeGitHubSettings();
-    alert('GitHub Einstellungen gespeichert!');
-}
 
-function manualSync() {
-    if (window.githubSync && window.githubSync.sync) {
-        window.githubSync.sync();
-    } else {
-        alert('Sync wird noch initialisiert...');
-    }
-}
 
 // =============================================================================
 // DOM CONTENT LOADED
@@ -1442,7 +1418,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('menuExportBtn').addEventListener('click', () => { exportData(); closeMenu(); });
     document.getElementById('menuImportBtn').addEventListener('click', () => { importData(); closeMenu(); });
     document.getElementById('menuGitHubBtn').addEventListener('click', () => { showGitHubSettings(); closeMenu(); });
-    document.getElementById('menuSyncBtn').addEventListener('click', () => { manualSync(); closeMenu(); });
+    document.getElementById('menuSyncBtn').addEventListener('click', () => { window.githubSync.syncNow(); closeMenu(); });
     
     // Dark Mode
     const html = document.documentElement;
