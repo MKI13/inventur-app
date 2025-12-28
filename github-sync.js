@@ -254,12 +254,12 @@ class GitHubSync {
 
     async getInventoryData() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open('efsinInventurDB', 1);
+            const request = indexedDB.open('InventurDB', 1);
             request.onerror = () => reject(new Error('DB-Fehler'));
             request.onsuccess = (event) => {
                 try {
                     const db = event.target.result;
-                    const tx = db.transaction(['inventory'], 'readonly');
+                    const tx = db.transaction(['items'], 'readonly');
                     const store = tx.objectStore('inventory');
                     const getAll = store.getAll();
                     
