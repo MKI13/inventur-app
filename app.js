@@ -6,7 +6,7 @@
 (function() {
     'use strict';
     
-    console.log('📦 app.js v2.1.6 loading...');
+    console.log('📦 app.js v2.2.0 loading...');
     
     // ========================================================================
     // DATENBANK (IndexedDB)
@@ -375,6 +375,103 @@
         window.app.init();
     }
     
-    console.log('✅ app.js v2.1.6 loaded');
+    console.log('✅ app.js v2.2.0 loaded');
+    
+})();
+
+// ============================================================================
+// MULTI-FILE GITHUB SYNC v2.2.0
+// ============================================================================
+
+(function() {
+    'use strict';
+    
+    let categoryManager = null;
+    let imageManager = null;
+    let multiFileSync = null;
+    
+    // Initialisierung nach DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMultiFileSync);
+    } else {
+        initMultiFileSync();
+    }
+    
+    async function initMultiFileSync() {
+        try {
+            // CategoryManager initialisieren
+            categoryManager = new CategoryManager(db);
+            await categoryManager.init();
+            
+            // ImageManager initialisieren  
+            imageManager = new ImageManager();
+            
+            // MultiFileGitHubSync initialisieren
+            multiFileSync = new MultiFileGitHubSync(categoryManager, imageManager);
+            
+            // Global verfügbar machen
+            window.categoryManager = categoryManager;
+            window.imageManager = imageManager;
+            window.multiFileSync = multiFileSync;
+            
+            console.log('✅ Multi-File GitHub Sync v2.2.0 initialisiert');
+            
+            // GitHub Settings Button im Menü verknüpfen
+            const syncBtn = document.getElementById('menuSyncBtn');
+            if (syncBtn) {
+                syncBtn.onclick = async () => {
+                    if (!multiFileSync.isConfigured()) {
+                        openGitHubSettings();
+                    } else {
+                        await multiFileSync.smartSync();
+                    }
+                    closeMenu();
+                };
+            }
+            
+        } catch (error) {
+            console.error('❌ Multi-File Sync Init Fehler:', error);
+        }
+    }
+    
+    // GitHub Settings Modal
+    function openGitHubSettings() {
+        const modal = document.getElementById('githubSettingsModal');
+        if (!modal) return;
+        
+        // Aktuelle Settings laden
+        document.getElementById('ghToken').value = localStorage.getItem('efsin_github_token') || '';
+        document.getElementById('ghUsername').value = localStorage.getItem('efsin_github_owner') || 'MKI13';
+        document.getElementById('ghRepo').value = localStorage.getItem('efsin_github_repo') || 'inventur-v2';
+        
+        modal.style.display = 'flex';
+    }
+    
+    window.openGitHubSettings = openGitHubSettings;
+    
+    window.saveGitHubSettings = function() {
+        const token = document.getElementById('ghToken').value.trim();
+        const owner = document.getElementById('ghUsername').value.trim() || 'MKI13';
+        const repo = document.getElementById('ghRepo').value.trim() || 'inventur-v2';
+        
+        if (!token) {
+            alert('⚠️ Bitte GitHub Token eingeben!');
+            return;
+        }
+        
+        localStorage.setItem('efsin_github_token', token);
+        localStorage.setItem('efsin_github_owner', owner);
+        localStorage.setItem('efsin_github_repo', repo);
+        
+        // MultiFileSync neu initialisieren
+        if (multiFileSync) {
+            multiFileSync.token = token;
+            multiFileSync.owner = owner;
+            multiFileSync.repo = repo;
+        }
+        
+        alert(`✅ Gespeichert!\n\nBackup-Ziel: ${owner}/${repo}\nStruktur: categories/*.json + index.json`);
+        document.getElementById('githubSettingsModal').style.display = 'none';
+    };
     
 })();
