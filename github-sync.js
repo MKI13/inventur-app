@@ -1,5 +1,5 @@
 /**
- * GitHub Sync Komponente für Inventur PWA
+ * GitHub Sync Komponente - VORKONFIGURIERT für inventur-v2
  */
 
 class GitHubSync {
@@ -10,13 +10,8 @@ class GitHubSync {
 
     init() {
         if (this.isInitialized) return;
-        
         const container = document.getElementById('githubSyncContainer');
-        if (!container) {
-            console.error('GitHub Sync Container nicht gefunden!');
-            return;
-        }
-
+        if (!container) return;
         container.innerHTML = this.renderModal();
         this.attachEventListeners();
         this.updateUI();
@@ -35,14 +30,15 @@ class GitHubSync {
                 
                 <div class="form-group">
                     <label for="ghUsername">Username</label>
-                    <input type="text" id="ghUsername" placeholder="username" 
-                           value="${this.settings.username || ''}">
+                    <input type="text" id="ghUsername" placeholder="MKI13" 
+                           value="${this.settings.username || 'MKI13'}">
                 </div>
                 
                 <div class="form-group">
-                    <label for="ghRepo">Repository</label>
-                    <input type="text" id="ghRepo" placeholder="inventur-app" 
-                           value="${this.settings.repo || ''}">
+                    <label for="ghRepo">Backup Repository</label>
+                    <input type="text" id="ghRepo" placeholder="inventur-v2" 
+                           value="${this.settings.repo || 'inventur-v2'}">
+                    <small>Ziel-Repository für Backups</small>
                 </div>
                 
                 <div class="form-group">
@@ -75,15 +71,10 @@ class GitHubSync {
 
     renderStatus() {
         const { lastSync, lastSyncStatus } = this.settings;
-        
-        if (!lastSync) {
-            return '<p class="status-info">⏳ Noch nicht synchronisiert</p>';
-        }
-
+        if (!lastSync) return '<p class="status-info">⏳ Noch nicht synchronisiert</p>';
         const timeAgo = this.getTimeAgo(lastSync);
         const statusIcon = lastSyncStatus === 'success' ? '✅' : '❌';
         const statusClass = lastSyncStatus === 'success' ? 'status-success' : 'status-error';
-
         return `<p class="${statusClass}">${statusIcon} Letzte Sync: ${timeAgo}</p>`;
     }
 
@@ -99,27 +90,23 @@ class GitHubSync {
 
     close() {
         const modal = document.getElementById('githubSettingsModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
+        if (modal) modal.style.display = 'none';
     }
 
     open() {
         this.init();
         const modal = document.getElementById('githubSettingsModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
+        if (modal) modal.style.display = 'flex';
     }
 
     save() {
         const token = document.getElementById('ghToken')?.value.trim();
-        const username = document.getElementById('ghUsername')?.value.trim();
-        const repo = document.getElementById('ghRepo')?.value.trim();
+        const username = document.getElementById('ghUsername')?.value.trim() || 'MKI13';
+        const repo = document.getElementById('ghRepo')?.value.trim() || 'inventur-v2';
         const autoSync = document.getElementById('ghAutoSync')?.checked;
 
-        if (!token || !username || !repo) {
-            alert('⚠️ Bitte alle Felder ausfüllen!');
+        if (!token) {
+            alert('⚠️ Bitte GitHub Token eingeben!');
             return;
         }
 
@@ -128,25 +115,17 @@ class GitHubSync {
             return;
         }
 
-        this.settings = {
-            token,
-            username,
-            repo,
-            autoSync,
+        this.settings = { token, username, repo, autoSync,
             lastSync: this.settings.lastSync,
-            lastSyncStatus: this.settings.lastSyncStatus
-        };
-
+            lastSyncStatus: this.settings.lastSyncStatus };
         this.saveSettings();
         alert('✅ Einstellungen gespeichert!');
         this.close();
     }
 
     async syncNow() {
-        console.log('🔄 Starte Synchronisation...');
-
         if (!this.settings.token || !this.settings.username || !this.settings.repo) {
-            alert('⚠️ Bitte erst GitHub-Einstellungen konfigurieren!');
+            alert('⚠️ Bitte erst GitHub Token eingeben!');
             this.open();
             return;
         }
@@ -159,7 +138,6 @@ class GitHubSync {
 
         try {
             await this.pushToGitHub();
-            
             if (btn) {
                 btn.textContent = '✅ Fertig!';
                 setTimeout(() => {
@@ -167,12 +145,9 @@ class GitHubSync {
                     btn.textContent = '🔄 Jetzt Synchronisieren';
                 }, 2000);
             }
-
-            alert('✅ Synchronisation erfolgreich!');
-            
+            alert('✅ Backup erfolgreich nach inventur-v2!');
         } catch (error) {
             console.error('❌ Sync-Fehler:', error);
-            
             if (btn) {
                 btn.textContent = '❌ Fehler';
                 setTimeout(() => {
@@ -180,8 +155,7 @@ class GitHubSync {
                     btn.textContent = '🔄 Jetzt Synchronisieren';
                 }, 2000);
             }
-
-            alert(`❌ Synchronisation fehlgeschlagen:\n${error.message}`);
+            alert(`❌ Backup fehlgeschlagen:\n${error.message}`);
         }
     }
 
@@ -192,6 +166,8 @@ class GitHubSync {
         if (!data || data.items.length === 0) {
             throw new Error('Keine Inventardaten gefunden!');
         }
+
+        console.log(`📤 Backup: ${data.items.length} Artikel → ${username}/${repo}`);
 
         const jsonContent = JSON.stringify(data, null, 2);
         const base64Content = btoa(unescape(encodeURIComponent(jsonContent)));
@@ -205,14 +181,11 @@ class GitHubSync {
                     'Accept': 'application/vnd.github.v3+json'
                 }
             });
-            
             if (checkResponse.ok) {
                 const fileData = await checkResponse.json();
                 sha = fileData.sha;
             }
-        } catch (e) {
-            console.log('Neue Datei wird erstellt');
-        }
+        } catch (e) { }
 
         const response = await fetch(apiUrl, {
             method: 'PUT',
@@ -222,28 +195,22 @@ class GitHubSync {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                message: `🔄 Inventar-Backup vom ${new Date().toLocaleString('de-DE')}`,
+                message: `🔄 ef-sin Inventur Backup vom ${new Date().toLocaleString('de-DE')}`,
                 content: base64Content,
-                sha: sha || undefined,
-                committer: {
-                    name: 'ef-sin Inventur PWA',
-                    email: 'inventur@ef-sin.de'
-                }
+                sha: sha || undefined
             })
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`GitHub API Fehler: ${errorData.message || response.statusText}`);
+            throw new Error(`GitHub: ${errorData.message || response.statusText}`);
         }
 
-        const result = await response.json();
         this.settings.lastSync = new Date().toISOString();
         this.settings.lastSyncStatus = 'success';
         this.saveSettings();
         this.updateUI();
-
-        return result;
+        return await response.json();
     }
 
     async getInventoryData() {
@@ -255,11 +222,11 @@ class GitHubSync {
                 const transaction = db.transaction(['inventory'], 'readonly');
                 const objectStore = transaction.objectStore('inventory');
                 const getAllRequest = objectStore.getAll();
-
                 getAllRequest.onsuccess = () => {
                     resolve({
-                        version: '1.0.0',
+                        version: '2.1.9',
                         exportDate: new Date().toISOString(),
+                        source: 'ef-sin Inventur PWA',
                         itemCount: getAllRequest.result.length,
                         items: getAllRequest.result
                     });
@@ -272,19 +239,20 @@ class GitHubSync {
     loadSettings() {
         try {
             const saved = localStorage.getItem('githubSyncSettings');
-            return saved ? JSON.parse(saved) : {
+            const defaults = {
                 token: '',
-                username: '',
-                repo: '',
+                username: 'MKI13',
+                repo: 'inventur-v2',
                 autoSync: false,
                 lastSync: null,
                 lastSyncStatus: null
             };
+            return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
         } catch (e) {
             return {
                 token: '',
-                username: '',
-                repo: '',
+                username: 'MKI13',
+                repo: 'inventur-v2',
                 autoSync: false,
                 lastSync: null,
                 lastSyncStatus: null
@@ -302,9 +270,7 @@ class GitHubSync {
 
     updateUI() {
         const statusDiv = document.getElementById('syncStatus');
-        if (statusDiv) {
-            statusDiv.innerHTML = this.renderStatus();
-        }
+        if (statusDiv) statusDiv.innerHTML = this.renderStatus();
     }
 
     getTimeAgo(isoString) {
@@ -314,7 +280,6 @@ class GitHubSync {
         const diffMins = Math.floor(diffMs / 60000);
         const diffHours = Math.floor(diffMins / 60);
         const diffDays = Math.floor(diffHours / 24);
-
         if (diffMins < 1) return 'vor wenigen Sekunden';
         if (diffMins < 60) return `vor ${diffMins} Minuten`;
         if (diffHours < 24) return `vor ${diffHours} Stunden`;
@@ -334,9 +299,9 @@ class GitHubSync {
 window.githubSync = new GitHubSync();
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.githubSync.init();
-    });
+    document.addEventListener('DOMContentLoaded', () => window.githubSync.init());
 } else {
     window.githubSync.init();
 }
+
+console.log('✅ GitHub Sync geladen - Ziel: MKI13/inventur-v2');
