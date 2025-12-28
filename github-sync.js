@@ -202,7 +202,7 @@ class GitHubSync {
         const base64Content = await this.stringToBase64(jsonContent);
         console.log(`🔐 Base64: ${(base64Content.length / 1024).toFixed(1)} KB`);
 
-        const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/backup/inventory.json`;
+        const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/inventory.json`;
         
         let sha = null;
         try {
