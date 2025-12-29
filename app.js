@@ -393,57 +393,6 @@
 (function() {
     'use strict';
     
-    let categoryManager = null;
-    let imageManager = null;
-    let multiFileSync = null;
-    
-    // Initialisierung nach DOM ready
-    if (document.readyState === 'loading') {
-    }
-    
-    async function initMultiFileSync() {
-        try {
-            // CategoryManager initialisieren
-            const dbInstance = window.app?.db || db;
-            categoryManager = new CategoryManager(dbInstance);
-            await categoryManager.init();
-            
-            // ImageManager initialisieren  
-            imageManager = new ImageManager();
-            
-            // MultiFileGitHubSync initialisieren
-            multiFileSync = new MultiFileGitHubSync(categoryManager, imageManager);
-            
-            // Global verfügbar machen
-            window.categoryManager = categoryManager;
-            window.imageManager = imageManager;
-            window.multiFileSync = multiFileSync;
-            
-            console.log('✅ Multi-File GitHub Sync v2.2.0 initialisiert');
-            
-            // GitHub Settings Button im Menü verknüpfen
-            const syncBtn = document.getElementById('menuSyncBtn');
-            if (syncBtn) {
-                syncBtn.onclick = async () => {
-                    if (!multiFileSync.isConfigured()) {
-                        openGitHubSettings();
-                    } else {
-                        await multiFileSync.smartSync();
-                    }
-                    closeMenu();
-                };
-            }
-            
-        } catch (error) {
-            console.error('❌ Multi-File Sync Init Fehler:', error);
-            console.error("Details:", error.stack);
-        }
-    }
-    
-    // GitHub Settings Modal
-    
-    
-    
 })();
 
 // GitHub Modal Funktionen
