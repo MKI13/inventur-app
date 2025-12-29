@@ -21,9 +21,6 @@ function await this.base64ToString(str) {
 class MultiFileGitHubSync {
 
     // UTF-8 zu Base64 Konvertierung (Blob-basiert)
-    async stringToBase64(str) {
-
-    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
     async base64ToString(base64) {
         return new Promise((resolve, reject) => {
             try {
