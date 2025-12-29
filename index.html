@@ -1439,7 +1439,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('menuExportBtn').addEventListener('click', () => { exportData(); closeMenu(); });
     document.getElementById('menuImportBtn').addEventListener('click', () => { importData(); closeMenu(); });
     document.getElementById('menuGitHubBtn').addEventListener('click', () => { openGitHubSettings(); closeMenu(); });
-    document.getElementById('menuSyncBtn').addEventListener('click', () => { window.githubSync.syncNow(); closeMenu(); });
+    document.getElementById('menuSyncBtn').addEventListener('click', () => { window.multiFileSync && window.multiFileSync.smartSync(); closeMenu(); });
     
     // Dark Mode
     const html = document.documentElement;

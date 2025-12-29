@@ -373,6 +373,13 @@
         document.addEventListener('DOMContentLoaded', () => window.app.init());
     } else {
         window.app.init();
+        
+        // Multi-File Sync nach app.init (wenn db ready ist)
+        setTimeout(() => {
+            if (typeof initMultiFileSync === "function") {
+                initMultiFileSync();
+            }
+        }, 100);
     }
     
     console.log('✅ app.js v2.2.0 loaded');
@@ -392,9 +399,6 @@
     
     // Initialisierung nach DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initMultiFileSync);
-    } else {
-        initMultiFileSync();
     }
     
     async function initMultiFileSync() {
