@@ -3,6 +3,36 @@
 // =============================================================================
 
 // UTF-8 Helper Funktionen
+async function base64EncodeUTF8(str) {
+    return new Promise((resolve) => {
+        const blob = new Blob([str], { type: "text/plain;charset=utf-8" });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result.split(",")[1];
+            resolve(base64);
+        };
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function base64DecodeUTF8(base64) {
+    return new Promise((resolve, reject) => {
+        try {
+            const binaryString = atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes]);
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsText(blob, "utf-8");
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
 
 class MultiFileGitHubSync {
     constructor(categoryManager, imageManager) {
