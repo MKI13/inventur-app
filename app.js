@@ -451,3 +451,57 @@ function saveGitHubSettings() {
     alert(`✅ Gespeichert!\n\nBackup-Ziel: ${owner}/${repo}`);
     closeGitHubSettingsModal();
 }
+
+// ============================================================================
+// MULTI-FILE GITHUB SYNC INIT
+// ============================================================================
+
+let categoryManager = null;
+let imageManager = null;
+let multiFileSync = null;
+
+async function initMultiFileSync() {
+    console.log('🔧 initMultiFileSync() gestartet...');
+    
+    try {
+        // Warte bis app.db ready ist
+        if (!window.app || !window.app.db) {
+            console.log('⏳ DB nicht ready, warte 200ms...');
+            setTimeout(initMultiFileSync, 200);
+            return;
+        }
+
+        console.log('📦 DB bereit, initialisiere Manager...');
+
+        // CategoryManager
+        categoryManager = new CategoryManager(window.app.db);
+        await categoryManager.init();
+        console.log('✅ CategoryManager initialisiert');
+
+        // ImageManager
+        imageManager = new ImageManager();
+        console.log('✅ ImageManager initialisiert');
+
+        // MultiFileGitHubSync
+        multiFileSync = new MultiFileGitHubSync(categoryManager, imageManager);
+        console.log('✅ MultiFileGitHubSync erstellt');
+
+        // Global verfügbar machen
+        window.categoryManager = categoryManager;
+        window.imageManager = imageManager;
+        window.multiFileSync = multiFileSync;
+
+        console.log('🎉 Multi-File GitHub Sync v2.2.0 bereit!');
+
+    } catch (error) {
+        console.error('❌ Multi-File Sync Init Fehler:', error);
+        console.error('Stack:', error.stack);
+    }
+}
+
+// Auto-Start
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(initMultiFileSync, 500));
+} else {
+    setTimeout(initMultiFileSync, 500);
+}
