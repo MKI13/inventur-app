@@ -270,12 +270,6 @@ class MultiFileGitHubSync {
     // -------------------------------------------------------------------------
 
     async smartSync() {
-        if (this.isSyncing) {
-            console.log('⏸️ Sync läuft bereits');
-            return { status: 'busy' };
-        }
-        
-        this.isSyncing = true;
         const startTime = Date.now();
         
         try {
