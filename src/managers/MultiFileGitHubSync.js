@@ -3,7 +3,7 @@
 // =============================================================================
 
 // UTF-8 Helper Funktionen
-function base64EncodeUTF8(str) {
+function base64EncodeUTF8_OLD(str) {
     return btoa(encodeURIComponent(str).replace(
         /%([0-9A-F]{2})/g,
         (match, p1) => String.fromCharCode(parseInt(p1, 16))
@@ -245,7 +245,7 @@ class MultiFileGitHubSync {
         const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`;
         
         const jsonString = JSON.stringify(data, null, 2);
-        const content = base64EncodeUTF8(jsonString);
+        const content = await stringToBase64Blob(jsonString);
         
         const body = {
             message,
@@ -409,3 +409,18 @@ class MultiFileGitHubSync {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = MultiFileGitHubSync;
 }
+
+// BLOB-basiertes UTF-8 Encoding (100% sicher!)
+async function stringToBase64Blob(str) {
+    return new Promise((resolve) => {
+        const blob = new Blob([str], { type: 'text/plain;charset=utf-8' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+        };
+        reader.readAsDataURL(blob);
+    });
+}
+
+// Ersetze alte base64EncodeUTF8 Aufrufe durch stringToBase64Blob

@@ -435,44 +435,8 @@
     }
     
     // GitHub Settings Modal
-    function openGitHubSettings() {
-        const modal = document.getElementById('githubSettingsModal');
-        if (!modal) return;
-        
-        // Aktuelle Settings laden
-        document.getElementById('ghToken').value = localStorage.getItem('efsin_github_token') || '';
-        document.getElementById('ghUsername').value = localStorage.getItem('efsin_github_owner') || 'MKI13';
-        document.getElementById('ghRepo').value = localStorage.getItem('efsin_github_repo') || 'inventur-v2';
-        
-        modal.style.display = 'flex';
-    }
     
-    window.openGitHubSettings = openGitHubSettings;
     
-    window.saveGitHubSettings = function() {
-        const token = document.getElementById('ghToken').value.trim();
-        const owner = document.getElementById('ghUsername').value.trim() || 'MKI13';
-        const repo = document.getElementById('ghRepo').value.trim() || 'inventur-v2';
-        
-        if (!token) {
-            alert('⚠️ Bitte GitHub Token eingeben!');
-            return;
-        }
-        
-        localStorage.setItem('efsin_github_token', token);
-        localStorage.setItem('efsin_github_owner', owner);
-        localStorage.setItem('efsin_github_repo', repo);
-        
-        // MultiFileSync neu initialisieren
-        if (multiFileSync) {
-            multiFileSync.token = token;
-            multiFileSync.owner = owner;
-            multiFileSync.repo = repo;
-        }
-        
-        alert(`✅ Gespeichert!\n\nBackup-Ziel: ${owner}/${repo}\nStruktur: categories/*.json + index.json`);
-        document.getElementById('githubSettingsModal').style.display = 'none';
-    };
     
 })();
 
