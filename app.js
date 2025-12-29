@@ -14,6 +14,7 @@
     
     let db;
     const DB_NAME = 'InventurDB';
+    let db; // Global DB reference
     const DB_VERSION = 1;
     const STORE_NAME = 'items';
     
@@ -470,4 +471,29 @@ async function syncNowMultiFile() {
     } catch (error) {
         alert(`❌ Backup fehlgeschlagen:\n${error.message}`);
     }
+}
+
+function saveGitHubSettings() {
+    const token = document.getElementById('ghToken').value.trim();
+    const owner = document.getElementById('ghUsername').value.trim() || 'MKI13';
+    const repo = document.getElementById('ghRepo').value.trim() || 'inventur-v2';
+    
+    if (!token) {
+        alert('⚠️ Bitte GitHub Token eingeben!');
+        return;
+    }
+    
+    localStorage.setItem('efsin_github_token', token);
+    localStorage.setItem('efsin_github_owner', owner);
+    localStorage.setItem('efsin_github_repo', repo);
+    
+    // MultiFileSync aktualisieren
+    if (window.multiFileSync) {
+        window.multiFileSync.token = token;
+        window.multiFileSync.owner = owner;
+        window.multiFileSync.repo = repo;
+    }
+    
+    alert(`✅ Gespeichert!\n\nBackup-Ziel: ${owner}/${repo}`);
+    closeGitHubSettingsModal();
 }
