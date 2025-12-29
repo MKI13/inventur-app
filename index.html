@@ -1462,6 +1462,41 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('theme', newTheme);
             themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
         });
+
+    // Sync Button (oben rechts)
+    const syncButton = document.getElementById("syncButton");
+    if (syncButton) {
+        syncButton.addEventListener("click", async function() {
+            console.log("🔄 Sync Button geklickt!");
+            
+            if (!window.multiFileSync) {
+                alert("⚠️ Multi-File Sync nicht initialisiert!");
+                return;
+            }
+            
+            if (!window.multiFileSync.isConfigured()) {
+                alert("⚠️ Bitte erst GitHub Token in den Einstellungen eingeben!");
+                openGitHubSettings();
+                return;
+            }
+            
+            // Button Animation
+            syncButton.style.transform = "rotate(360deg)";
+            syncButton.style.transition = "transform 0.5s";
+            
+            try {
+                const result = await window.multiFileSync.smartSync();
+                alert(`✅ Backup erfolgreich!\n\nKategorien: ${result.categories?.length || 0}\nDauer: ${result.duration}ms`);
+            } catch (error) {
+                console.error("Sync Fehler:", error);
+                alert(`❌ Backup fehlgeschlagen:\n${error.message}`);
+            } finally {
+                setTimeout(() => {
+                    syncButton.style.transform = "rotate(0deg)";
+                }, 500);
+            }
+        });
+    }
     }
     
     // ⭐ BUTTON EVENT-LISTENER - KRITISCH!
