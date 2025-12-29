@@ -10,7 +10,7 @@ function base64EncodeUTF8_OLD(str) {
     ));
 }
 
-function base64DecodeUTF8(str) {
+function await this.base64ToString(str) {
     return decodeURIComponent(
         atob(str).split('').map(c =>
             '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
@@ -22,14 +22,234 @@ class MultiFileGitHubSync {
 
     // UTF-8 zu Base64 Konvertierung (Blob-basiert)
     async stringToBase64(str) {
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
         return new Promise((resolve) => {
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
             const blob = new Blob([str], { type: "text/plain;charset=utf-8" });
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
             const reader = new FileReader();
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
             reader.onloadend = () => {
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
                 const base64 = reader.result.split(",")[1];
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
                 resolve(base64);
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
             };
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
             reader.readAsDataURL(blob);
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+        });
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+    }
+
+    // Base64 zu UTF-8 Konvertierung (Blob-basiert)
+    async base64ToString(base64) {
+        return new Promise((resolve, reject) => {
+            try {
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes]);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(blob, "utf-8");
+            } catch (error) {
+                reject(error);
+            }
         });
     }
     constructor(categoryManager, imageManager) {
@@ -242,7 +462,7 @@ class MultiFileGitHubSync {
             
             // Content decodieren
             const base64Content = data.content.replace(/\s/g, '');
-            const jsonString = base64DecodeUTF8(base64Content);
+            const jsonString = await this.base64ToString(base64Content);
             return JSON.parse(jsonString);
             
         } catch (error) {

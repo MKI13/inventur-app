@@ -400,7 +400,8 @@
     async function initMultiFileSync() {
         try {
             // CategoryManager initialisieren
-            categoryManager = new CategoryManager(db);
+            const dbInstance = window.app?.db || db;
+            categoryManager = new CategoryManager(dbInstance);
             await categoryManager.init();
             
             // ImageManager initialisieren  
@@ -431,6 +432,7 @@
             
         } catch (error) {
             console.error('❌ Multi-File Sync Init Fehler:', error);
+            console.error("Details:", error.stack);
         }
     }
     
