@@ -1372,7 +1372,7 @@ function importData() {
     }
 }
 
-function showGitHubSettings() {
+function openGitHubSettings() {
     document.getElementById('githubSettingsModal').classList.add('active');
     document.getElementById('ghToken').value = localStorage.getItem('github_token') || '';
     document.getElementById('ghUsername').value = localStorage.getItem('github_username') || '';
@@ -1438,7 +1438,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('menuCategoriesBtn').addEventListener('click', () => { showCategoryManagement(); closeMenu(); });
     document.getElementById('menuExportBtn').addEventListener('click', () => { exportData(); closeMenu(); });
     document.getElementById('menuImportBtn').addEventListener('click', () => { importData(); closeMenu(); });
-    document.getElementById('menuGitHubBtn').addEventListener('click', () => { showGitHubSettings(); closeMenu(); });
+    document.getElementById('menuGitHubBtn').addEventListener('click', () => { openGitHubSettings(); closeMenu(); });
     document.getElementById('menuSyncBtn').addEventListener('click', () => { window.githubSync.syncNow(); closeMenu(); });
     
     // Dark Mode

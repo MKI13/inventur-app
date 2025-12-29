@@ -14,7 +14,6 @@
     
     let db;
     const DB_NAME = 'InventurDB';
-    let db; // Global DB reference
     const DB_VERSION = 1;
     const STORE_NAME = 'items';
     
