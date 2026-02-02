@@ -101,5 +101,50 @@ class ImageManager {
             reader.readAsDataURL(blob);
         });
     }
+
+    // -----------------------------------------------------------------
+    // GitHub Sync: Download & Upload
+    // -----------------------------------------------------------------
+
+    async downloadFromGitHub(imageId, githubSync) {
+        const path = `images/${imageId}.jpg`;
+        try {
+            console.log(`📥 Bild laden: ${path}`);
+            const base64Content = await githubSync.downloadFile(path);
+            if (!base64Content) return null;
+
+            const binaryString = atob(base64Content);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'image/jpeg' });
+
+            await this.storeInDB(imageId, blob);
+            this.imageCache.set(imageId, blob);
+            console.log(`✅ Bild gespeichert: ${imageId}`);
+            return blob;
+        } catch (error) {
+            console.warn(`⚠️ Bild nicht gefunden: ${path}`, error.message);
+            return null;
+        }
+    }
+
+    async uploadToGitHub(imageId, blob, githubSync) {
+        const path = `images/${imageId}.jpg`;
+        try {
+            console.log(`📤 Bild hochladen: ${path}`);
+            const base64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(blob);
+            });
+            await githubSync.uploadFile(path, base64);
+            console.log(`✅ Bild hochgeladen: ${path}`);
+        } catch (error) {
+            console.error(`❌ Bild-Upload fehlgeschlagen: ${path}`, error);
+            throw error;
+        }
+    }
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = ImageManager;

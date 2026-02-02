@@ -167,10 +167,34 @@ class MultiFileGitHubSync {
             return { action: 'uploaded', category: categoryId };
         } else if (remoteTime > localTime) {
             await this.categoryManager.importCategoryJSON(categoryId, remoteData);
+            // Bilder für alle Items mit Foto herunterladen
+            await this.syncImagesForCategory(categoryId, remoteData);
             return { action: 'downloaded', category: categoryId };
         }
         
+        // Auch bei 'none': fehlende Bilder nachladen
+        await this.syncImagesForCategory(categoryId, remoteData || localData);
         return { action: 'none', category: categoryId };
+    }
+
+    async syncImagesForCategory(categoryId, categoryData) {
+        if (!categoryData || !categoryData.items) return;
+        
+        for (const item of categoryData.items) {
+            if (!item.photo) continue;
+            
+            const imageId = `${categoryId}/${item.id}`;
+            const localImage = await this.imageManager.loadImage(imageId);
+            
+            if (!localImage) {
+                // Bild fehlt lokal → von GitHub laden
+                try {
+                    await this.imageManager.downloadFromGitHub(imageId, this);
+                } catch (err) {
+                    console.warn(`⚠️ Bild-Sync übersprungen: ${imageId}`);
+                }
+            }
+        }
     }
 
     async syncAllCategories() {
