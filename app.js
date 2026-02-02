@@ -86,6 +86,7 @@
             
             try {
                 await initDB();
+                window.app.db = db;  // DB global verfügbar für MultiFileSync
                 await this.loadItems();
                 this.loadCategories();
                 this.renderItems();
@@ -480,6 +481,7 @@ async function initMultiFileSync() {
 
         // ImageManager
         imageManager = new ImageManager();
+        await imageManager.init();
         console.log('✅ ImageManager initialisiert');
 
         // MultiFileGitHubSync
