@@ -507,3 +507,120 @@ if (document.readyState === 'loading') {
 } else {
     setTimeout(initMultiFileSync, 500);
 }
+
+// ============================================================================
+// 1:1 FULL EXPORT / IMPORT FUNKTIONEN
+// ============================================================================
+
+function updateSyncStatus(message, type = 'info') {
+    const statusDiv = document.getElementById('syncStatus');
+    const statusText = document.getElementById('syncStatusText');
+    if (statusDiv && statusText) {
+        statusDiv.style.display = 'block';
+        statusText.textContent = message;
+        statusDiv.style.background = type === 'success' ? '#d4edda' :
+                                     type === 'error' ? '#f8d7da' :
+                                     type === 'warning' ? '#fff3cd' : 'var(--card-bg)';
+        statusDiv.style.color = type === 'success' ? '#155724' :
+                                type === 'error' ? '#721c24' :
+                                type === 'warning' ? '#856404' : 'inherit';
+    }
+}
+
+async function fullExportToGitHub() {
+    if (!window.multiFileSync) {
+        alert('⚠️ Sync nicht initialisiert! Bitte Seite neu laden.');
+        return;
+    }
+
+    // Einstellungen speichern
+    saveGitHubSettings();
+
+    if (!window.multiFileSync.isConfigured()) {
+        alert('⚠️ Bitte erst GitHub Token eingeben!');
+        return;
+    }
+
+    if (!confirm('📤 EXPORT: Alle lokalen Daten zu GitHub hochladen?\n\nDies überschreibt die Daten im Repository inventur-v2!')) {
+        return;
+    }
+
+    updateSyncStatus('📤 Export läuft... Bitte warten.', 'info');
+
+    try {
+        const result = await window.multiFileSync.fullExport();
+
+        if (result.status === 'success') {
+            updateSyncStatus(
+                `✅ Export erfolgreich! ${result.categories.length} Kategorien, ${result.totalItems} Artikel, ${result.totalImages} Bilder (${result.duration}ms)`,
+                'success'
+            );
+
+            alert(
+                `✅ EXPORT ERFOLGREICH!\n\n` +
+                `📁 Kategorien: ${result.categories.length}\n` +
+                `📦 Artikel: ${result.totalItems}\n` +
+                `📸 Bilder: ${result.totalImages}\n` +
+                `⏱️ Dauer: ${result.duration}ms\n\n` +
+                `Ziel: ${window.multiFileSync.owner}/${window.multiFileSync.repo}`
+            );
+        } else {
+            updateSyncStatus(`❌ Export fehlgeschlagen: ${result.error}`, 'error');
+            alert(`❌ Export fehlgeschlagen:\n${result.error}`);
+        }
+    } catch (error) {
+        updateSyncStatus(`❌ Fehler: ${error.message}`, 'error');
+        alert(`❌ Export Fehler:\n${error.message}`);
+    }
+}
+
+async function fullImportFromGitHub() {
+    if (!window.multiFileSync) {
+        alert('⚠️ Sync nicht initialisiert! Bitte Seite neu laden.');
+        return;
+    }
+
+    // Einstellungen speichern
+    saveGitHubSettings();
+
+    if (!window.multiFileSync.isConfigured()) {
+        alert('⚠️ Bitte erst GitHub Token eingeben!');
+        return;
+    }
+
+    if (!confirm('📥 IMPORT: Alle Daten von GitHub herunterladen?\n\n⚠️ ACHTUNG: Dies überschreibt alle lokalen Daten!')) {
+        return;
+    }
+
+    updateSyncStatus('📥 Import läuft... Bitte warten.', 'info');
+
+    try {
+        const result = await window.multiFileSync.fullImport();
+
+        if (result.status === 'success') {
+            updateSyncStatus(
+                `✅ Import erfolgreich! ${result.categories.length} Kategorien, ${result.totalItems} Artikel, ${result.totalImages} Bilder`,
+                'success'
+            );
+
+            alert(
+                `✅ IMPORT ERFOLGREICH!\n\n` +
+                `📁 Kategorien: ${result.categories.length}\n` +
+                `📦 Artikel: ${result.totalItems}\n` +
+                `📸 Bilder: ${result.totalImages}\n` +
+                `⏱️ Dauer: ${result.duration}ms\n\n` +
+                `Quelle: ${window.multiFileSync.owner}/${window.multiFileSync.repo}\n\n` +
+                `Die Seite wird neu geladen...`
+            );
+
+            // Seite neu laden um alle Daten anzuzeigen
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            updateSyncStatus(`❌ Import fehlgeschlagen: ${result.error}`, 'error');
+            alert(`❌ Import fehlgeschlagen:\n${result.error}`);
+        }
+    } catch (error) {
+        updateSyncStatus(`❌ Fehler: ${error.message}`, 'error');
+        alert(`❌ Import Fehler:\n${error.message}`);
+    }
+}

@@ -779,7 +779,7 @@
 <div class="modal" id="githubSettingsModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>⚙️ GitHub Einstellungen</h2>
+            <h2>⚙️ GitHub Backup (inventur-v2)</h2>
             <button class="btn-close" onclick="closeGitHubSettingsModal()">×</button>
         </div>
         <div class="modal-body">
@@ -795,13 +795,33 @@
             <div class="form-group">
                 <label for="ghRepo">📦 Backup Repository</label>
                 <input type="text" id="ghRepo" placeholder="inventur-v2">
-                <small>Struktur: categories/*.json + index.json</small>
+                <small>Verbunden mit: MKI13/inventur-v2</small>
+            </div>
+
+            <!-- Status-Anzeige -->
+            <div id="syncStatus" class="sync-status" style="display: none; padding: 12px; margin: 12px 0; border-radius: 8px; background: var(--card-bg);">
+                <span id="syncStatusText"></span>
+            </div>
+
+            <!-- 1:1 Sync Bereich -->
+            <div style="margin-top: 20px; padding: 16px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+                <h3 style="margin: 0 0 12px 0; font-size: 16px;">📦 1:1 Backup mit inventur-v2</h3>
+                <p style="margin: 0 0 16px 0; font-size: 13px; opacity: 0.8;">
+                    Vollständiger Export/Import aller Kategorien, Artikel und Bilder.
+                </p>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn-primary" onclick="fullExportToGitHub()" style="flex: 1; min-width: 140px; background: #2ea44f;">
+                        📤 Export zu GitHub
+                    </button>
+                    <button class="btn-primary" onclick="fullImportFromGitHub()" style="flex: 1; min-width: 140px; background: #0969da;">
+                        📥 Import von GitHub
+                    </button>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn-secondary" onclick="closeGitHubSettingsModal()">Abbrechen</button>
-            <button class="btn-primary" onclick="saveGitHubSettings()">💾 Speichern</button>
-            <button class="btn-primary" onclick="syncNowMultiFile()">🔄 Jetzt Synchronisieren</button>
+            <button class="btn-secondary" onclick="closeGitHubSettingsModal()">Schließen</button>
+            <button class="btn-primary" onclick="saveGitHubSettings()">💾 Einstellungen Speichern</button>
         </div>
     </div>
 </div>

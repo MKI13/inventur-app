@@ -440,8 +440,274 @@ class MultiFileGitHubSync {
         if (!this.isConfigured()) {
             throw new Error('GitHub nicht konfiguriert! Bitte Token, Owner und Repo in Einstellungen eintragen.');
         }
-        
+
         return await this.smartSync();
+    }
+
+    // -------------------------------------------------------------------------
+    // 1:1 FULL EXPORT - Alle lokalen Daten zu GitHub hochladen
+    // -------------------------------------------------------------------------
+
+    async fullExport() {
+        if (this.isSyncing) {
+            console.log('⏸️ Sync läuft bereits');
+            return { status: 'busy' };
+        }
+
+        if (!this.isConfigured()) {
+            throw new Error('GitHub nicht konfiguriert! Bitte Token, Owner und Repo in Einstellungen eintragen.');
+        }
+
+        this.isSyncing = true;
+        const startTime = Date.now();
+
+        try {
+            console.log('📤 FULL EXPORT gestartet...');
+
+            // 1. Index hochladen
+            const localIndex = await this.categoryManager.exportIndexJSON();
+            await this.putFile('index.json', localIndex, 'Full Export: index.json');
+            console.log('✅ index.json hochgeladen');
+
+            // 2. Alle Kategorien hochladen
+            const categoryResults = [];
+            for (const category of this.categoryManager.categories) {
+                try {
+                    const categoryData = await this.categoryManager.exportCategoryJSON(category.id);
+                    await this.putFile(
+                        `categories/${category.id}.json`,
+                        categoryData,
+                        `Full Export: ${category.name}`
+                    );
+                    console.log(`✅ Kategorie "${category.id}" hochgeladen (${categoryData.itemCount} Items)`);
+
+                    // 3. Bilder für diese Kategorie hochladen
+                    const imageCount = await this.uploadAllImagesForCategory(category.id, categoryData);
+
+                    categoryResults.push({
+                        category: category.id,
+                        name: category.name,
+                        items: categoryData.itemCount,
+                        images: imageCount,
+                        status: 'uploaded'
+                    });
+                } catch (error) {
+                    console.error(`❌ Fehler bei Kategorie ${category.id}:`, error);
+                    categoryResults.push({
+                        category: category.id,
+                        status: 'error',
+                        error: error.message
+                    });
+                }
+            }
+
+            const duration = Date.now() - startTime;
+            const totalItems = categoryResults.reduce((sum, c) => sum + (c.items || 0), 0);
+            const totalImages = categoryResults.reduce((sum, c) => sum + (c.images || 0), 0);
+
+            console.log(`✅ FULL EXPORT abgeschlossen in ${duration}ms`);
+            console.log(`📊 ${categoryResults.length} Kategorien, ${totalItems} Items, ${totalImages} Bilder`);
+
+            return {
+                status: 'success',
+                action: 'export',
+                duration,
+                categories: categoryResults,
+                totalItems,
+                totalImages
+            };
+
+        } catch (error) {
+            console.error('❌ Full Export Fehler:', error);
+            return { status: 'error', error: error.message };
+        } finally {
+            this.isSyncing = false;
+        }
+    }
+
+    async uploadAllImagesForCategory(categoryId, categoryData) {
+        if (!categoryData || !categoryData.items) return 0;
+
+        let uploadedCount = 0;
+
+        for (const item of categoryData.items) {
+            if (!item.photo) continue;
+
+            const imageId = `${categoryId}/${item.id}`;
+
+            try {
+                const localBlob = await this.imageManager.loadImage(imageId);
+                if (localBlob) {
+                    await this.imageManager.uploadToGitHub(imageId, localBlob, this);
+                    uploadedCount++;
+                    console.log(`📸 Bild hochgeladen: ${imageId}`);
+                }
+            } catch (error) {
+                console.warn(`⚠️ Bild-Upload übersprungen: ${imageId}`, error.message);
+            }
+        }
+
+        return uploadedCount;
+    }
+
+    // -------------------------------------------------------------------------
+    // 1:1 FULL IMPORT - Alle Daten von GitHub herunterladen
+    // -------------------------------------------------------------------------
+
+    async fullImport() {
+        if (this.isSyncing) {
+            console.log('⏸️ Sync läuft bereits');
+            return { status: 'busy' };
+        }
+
+        if (!this.isConfigured()) {
+            throw new Error('GitHub nicht konfiguriert! Bitte Token, Owner und Repo in Einstellungen eintragen.');
+        }
+
+        this.isSyncing = true;
+        const startTime = Date.now();
+
+        try {
+            console.log('📥 FULL IMPORT gestartet...');
+
+            // 1. Index von GitHub laden
+            const remoteIndex = await this.getFile('index.json');
+            if (!remoteIndex) {
+                throw new Error('Keine Daten im Repository gefunden! (index.json fehlt)');
+            }
+            console.log(`✅ index.json geladen: ${remoteIndex.categories?.length || 0} Kategorien`);
+
+            // 2. Kategorien aus dem Index aktualisieren
+            if (remoteIndex.categories && remoteIndex.categories.length > 0) {
+                const newCategories = remoteIndex.categories.map(cat => ({
+                    id: cat.id,
+                    name: cat.name,
+                    icon: this.categoryManager.getCategoryById(cat.id)?.icon || '📦'
+                }));
+
+                // Kategorien in localStorage speichern
+                this.categoryManager.categories = newCategories;
+                this.categoryManager.saveCategories();
+                console.log(`✅ ${newCategories.length} Kategorien aktualisiert`);
+            }
+
+            // 3. Alle Kategorien herunterladen
+            const categoryResults = [];
+            for (const remoteCat of remoteIndex.categories || []) {
+                try {
+                    const categoryData = await this.getFile(`categories/${remoteCat.id}.json`);
+                    if (categoryData) {
+                        // Items importieren
+                        await this.importCategoryItems(remoteCat.id, categoryData);
+                        console.log(`✅ Kategorie "${remoteCat.id}" importiert: ${categoryData.itemCount} Items`);
+
+                        // 4. Bilder herunterladen
+                        const imageCount = await this.downloadAllImagesForCategory(remoteCat.id, categoryData);
+
+                        categoryResults.push({
+                            category: remoteCat.id,
+                            name: remoteCat.name,
+                            items: categoryData.itemCount,
+                            images: imageCount,
+                            status: 'imported'
+                        });
+                    }
+                } catch (error) {
+                    console.error(`❌ Fehler bei Import Kategorie ${remoteCat.id}:`, error);
+                    categoryResults.push({
+                        category: remoteCat.id,
+                        status: 'error',
+                        error: error.message
+                    });
+                }
+            }
+
+            const duration = Date.now() - startTime;
+            const totalItems = categoryResults.reduce((sum, c) => sum + (c.items || 0), 0);
+            const totalImages = categoryResults.reduce((sum, c) => sum + (c.images || 0), 0);
+
+            console.log(`✅ FULL IMPORT abgeschlossen in ${duration}ms`);
+            console.log(`📊 ${categoryResults.length} Kategorien, ${totalItems} Items, ${totalImages} Bilder`);
+
+            // Cache invalidieren und UI aktualisieren
+            this.categoryManager.invalidateCache();
+
+            return {
+                status: 'success',
+                action: 'import',
+                duration,
+                categories: categoryResults,
+                totalItems,
+                totalImages
+            };
+
+        } catch (error) {
+            console.error('❌ Full Import Fehler:', error);
+            return { status: 'error', error: error.message };
+        } finally {
+            this.isSyncing = false;
+        }
+    }
+
+    async importCategoryItems(categoryId, categoryData) {
+        if (!categoryData || !categoryData.items) return;
+
+        // Alle Items dieser Kategorie in die DB importieren
+        for (const item of categoryData.items) {
+            // Photo-Pfad zu Marker umwandeln (wird später geladen)
+            const itemToSave = {
+                ...item,
+                category: categoryId,
+                photo: item.photo ? `github:${item.photo}` : ''
+            };
+
+            await this.saveItemToDB(itemToSave);
+        }
+
+        // CategoryManager Cache aktualisieren
+        this.categoryManager.categoryData.set(categoryId, categoryData.items);
+    }
+
+    async saveItemToDB(item) {
+        return new Promise((resolve, reject) => {
+            const db = this.categoryManager.db;
+            const transaction = db.transaction(['items'], 'readwrite');
+            const store = transaction.objectStore('items');
+
+            let request;
+            if (item.id) {
+                request = store.put(item);
+            } else {
+                request = store.add(item);
+            }
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async downloadAllImagesForCategory(categoryId, categoryData) {
+        if (!categoryData || !categoryData.items) return 0;
+
+        let downloadedCount = 0;
+
+        for (const item of categoryData.items) {
+            if (!item.photo) continue;
+
+            const imageId = `${categoryId}/${item.id}`;
+
+            try {
+                const blob = await this.imageManager.downloadFromGitHub(imageId, this);
+                if (blob) {
+                    downloadedCount++;
+                    console.log(`📸 Bild heruntergeladen: ${imageId}`);
+                }
+            } catch (error) {
+                console.warn(`⚠️ Bild-Download übersprungen: ${imageId}`, error.message);
+            }
+        }
+
+        return downloadedCount;
     }
 }
 
