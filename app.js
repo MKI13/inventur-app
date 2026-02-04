@@ -413,18 +413,48 @@ async function syncNowMultiFile() {
         alert('⚠️ Multi-File Sync nicht initialisiert!');
         return;
     }
-    
+
+    // Einstellungen speichern
+    saveGitHubSettings();
+
     if (!window.multiFileSync.isConfigured()) {
         alert('⚠️ Bitte erst GitHub Token eingeben!');
         return;
     }
-    
+
+    updateSyncStatus('🔄 Synchronisierung läuft... Bitte warten.', 'info');
+
     try {
-        const result = await window.multiFileSync.smartSync();
-        alert(`✅ Backup erfolgreich!\n\nKategorien: ${result.categories?.length || 0}\nDauer: ${result.duration}ms`);
-        closeGitHubSettingsModal();
+        // MERGE SYNC verwenden - bidirektional ohne Datenverlust
+        const result = await window.multiFileSync.mergeSync();
+
+        if (result.status === 'success') {
+            const stats = result.stats;
+            updateSyncStatus(
+                `✅ Sync erfolgreich! ↑${stats.localToGitHub} ↓${stats.gitHubToLocal} (${result.duration}ms)`,
+                'success'
+            );
+
+            alert(
+                `✅ SYNCHRONISIERUNG ERFOLGREICH!\n\n` +
+                `📤 Zu GitHub hochgeladen: ${stats.localToGitHub} Artikel\n` +
+                `📥 Von GitHub geladen: ${stats.gitHubToLocal} Artikel\n` +
+                `📸 Bilder: ${stats.images.uploaded}↑ ${stats.images.downloaded}↓\n` +
+                `⏱️ Dauer: ${result.duration}ms\n\n` +
+                `Repository: ${window.multiFileSync.owner}/${window.multiFileSync.repo}`
+            );
+
+            // Seite neu laden wenn Daten von GitHub geladen wurden
+            if (stats.gitHubToLocal > 0) {
+                setTimeout(() => window.location.reload(), 1000);
+            }
+        } else {
+            updateSyncStatus(`❌ Sync fehlgeschlagen: ${result.error}`, 'error');
+            alert(`❌ Sync fehlgeschlagen:\n${result.error}`);
+        }
     } catch (error) {
-        alert(`❌ Backup fehlgeschlagen:\n${error.message}`);
+        updateSyncStatus(`❌ Fehler: ${error.message}`, 'error');
+        alert(`❌ Sync Fehler:\n${error.message}`);
     }
 }
 

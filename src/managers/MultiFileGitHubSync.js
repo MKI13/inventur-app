@@ -445,6 +445,226 @@ class MultiFileGitHubSync {
     }
 
     // -------------------------------------------------------------------------
+    // MERGE SYNC - Bidirektionaler Sync (ohne Datenverlust)
+    // -------------------------------------------------------------------------
+
+    async mergeSync() {
+        if (this.isSyncing) {
+            console.log('⏸️ Sync läuft bereits');
+            return { status: 'busy' };
+        }
+
+        if (!this.isConfigured()) {
+            throw new Error('GitHub nicht konfiguriert! Bitte Token, Owner und Repo in Einstellungen eintragen.');
+        }
+
+        this.isSyncing = true;
+        const startTime = Date.now();
+
+        try {
+            console.log('🔄 MERGE SYNC gestartet...');
+
+            const stats = {
+                localToGitHub: 0,
+                gitHubToLocal: 0,
+                conflicts: 0,
+                unchanged: 0,
+                newCategories: 0,
+                images: { uploaded: 0, downloaded: 0 }
+            };
+
+            // 1. Remote Index laden (oder null wenn nicht vorhanden)
+            let remoteIndex = await this.getFile('index.json');
+            const remoteCategories = remoteIndex?.categories || [];
+
+            // 2. Alle Kategorien sammeln (lokal + remote)
+            const allCategoryIds = new Set([
+                ...this.categoryManager.categories.map(c => c.id),
+                ...remoteCategories.map(c => c.id)
+            ]);
+
+            const categoryResults = [];
+
+            // 3. Jede Kategorie mergen
+            for (const categoryId of allCategoryIds) {
+                try {
+                    const result = await this.mergeCategorySync(categoryId, stats);
+                    categoryResults.push(result);
+                } catch (error) {
+                    console.error(`❌ Merge-Fehler bei ${categoryId}:`, error);
+                    categoryResults.push({
+                        category: categoryId,
+                        status: 'error',
+                        error: error.message
+                    });
+                }
+            }
+
+            // 4. Index aktualisieren und hochladen
+            const localIndex = await this.categoryManager.exportIndexJSON();
+            await this.putFile('index.json', localIndex, 'Merge Sync: index.json aktualisiert');
+
+            const duration = Date.now() - startTime;
+
+            console.log(`✅ MERGE SYNC abgeschlossen in ${duration}ms`);
+            console.log(`📊 Lokal→GitHub: ${stats.localToGitHub}, GitHub→Lokal: ${stats.gitHubToLocal}, Unverändert: ${stats.unchanged}`);
+
+            return {
+                status: 'success',
+                action: 'merge',
+                duration,
+                stats,
+                categories: categoryResults
+            };
+
+        } catch (error) {
+            console.error('❌ Merge Sync Fehler:', error);
+            return { status: 'error', error: error.message };
+        } finally {
+            this.isSyncing = false;
+        }
+    }
+
+    async mergeCategorySync(categoryId, stats) {
+        console.log(`🔀 Merging category: ${categoryId}...`);
+
+        // Lokale Daten laden
+        const localData = await this.categoryManager.exportCategoryJSON(categoryId);
+        const localItems = localData?.items || [];
+
+        // Remote Daten laden
+        const remoteData = await this.getFile(`categories/${categoryId}.json`);
+        const remoteItems = remoteData?.items || [];
+
+        // Wenn keine Remote-Daten → alles hochladen
+        if (!remoteData) {
+            console.log(`📤 Neue Kategorie "${categoryId}" → zu GitHub`);
+            await this.putFile(
+                `categories/${categoryId}.json`,
+                localData,
+                `Merge: Neue Kategorie ${categoryId}`
+            );
+            stats.newCategories++;
+            stats.localToGitHub += localItems.length;
+
+            // Bilder hochladen
+            const imgCount = await this.uploadAllImagesForCategory(categoryId, localData);
+            stats.images.uploaded += imgCount;
+
+            return { category: categoryId, action: 'uploaded_new', items: localItems.length };
+        }
+
+        // Merge-Maps erstellen
+        const localMap = new Map(localItems.map(item => [item.id, item]));
+        const remoteMap = new Map(remoteItems.map(item => [item.id, item]));
+
+        // Alle Item-IDs sammeln
+        const allItemIds = new Set([...localMap.keys(), ...remoteMap.keys()]);
+
+        const mergedItems = [];
+        const itemsToUpload = [];
+        const itemsToDownload = [];
+
+        for (const itemId of allItemIds) {
+            const localItem = localMap.get(itemId);
+            const remoteItem = remoteMap.get(itemId);
+
+            if (localItem && !remoteItem) {
+                // Nur lokal vorhanden → zu GitHub hochladen
+                mergedItems.push(localItem);
+                itemsToUpload.push(localItem);
+                stats.localToGitHub++;
+            } else if (!localItem && remoteItem) {
+                // Nur remote vorhanden → lokal speichern
+                mergedItems.push(remoteItem);
+                itemsToDownload.push(remoteItem);
+                stats.gitHubToLocal++;
+            } else if (localItem && remoteItem) {
+                // Beides vorhanden → neueren nehmen
+                const localTime = new Date(localItem.updatedAt || 0).getTime();
+                const remoteTime = new Date(remoteItem.updatedAt || 0).getTime();
+
+                if (localTime > remoteTime) {
+                    mergedItems.push(localItem);
+                    itemsToUpload.push(localItem);
+                    stats.localToGitHub++;
+                } else if (remoteTime > localTime) {
+                    mergedItems.push(remoteItem);
+                    itemsToDownload.push(remoteItem);
+                    stats.gitHubToLocal++;
+                } else {
+                    // Gleich → lokal behalten
+                    mergedItems.push(localItem);
+                    stats.unchanged++;
+                }
+            }
+        }
+
+        // Remote Items lokal speichern
+        for (const item of itemsToDownload) {
+            await this.saveItemToDB({
+                ...item,
+                category: categoryId
+            });
+
+            // Bild herunterladen falls vorhanden
+            if (item.photo) {
+                try {
+                    const imageId = `${categoryId}/${item.id}`;
+                    await this.imageManager.downloadFromGitHub(imageId, this);
+                    stats.images.downloaded++;
+                } catch (e) {
+                    console.warn(`⚠️ Bild-Download übersprungen: ${item.id}`);
+                }
+            }
+        }
+
+        // Bilder für lokale Items hochladen
+        for (const item of itemsToUpload) {
+            if (item.photo) {
+                try {
+                    const imageId = `${categoryId}/${item.id}`;
+                    const blob = await this.imageManager.loadImage(imageId);
+                    if (blob) {
+                        await this.imageManager.uploadToGitHub(imageId, blob, this);
+                        stats.images.uploaded++;
+                    }
+                } catch (e) {
+                    console.warn(`⚠️ Bild-Upload übersprungen: ${item.id}`);
+                }
+            }
+        }
+
+        // Merged Daten zu GitHub hochladen
+        const mergedCategoryData = {
+            category: categoryId,
+            categoryName: localData.categoryName || remoteData.categoryName,
+            lastModified: new Date().toISOString(),
+            itemCount: mergedItems.length,
+            items: mergedItems
+        };
+
+        await this.putFile(
+            `categories/${categoryId}.json`,
+            mergedCategoryData,
+            `Merge Sync: ${categoryId}`
+        );
+
+        // CategoryManager Cache aktualisieren
+        this.categoryManager.categoryData.set(categoryId, mergedItems);
+
+        console.log(`✅ ${categoryId}: ${itemsToUpload.length}↑ ${itemsToDownload.length}↓ ${stats.unchanged} unverändert`);
+
+        return {
+            category: categoryId,
+            action: 'merged',
+            uploaded: itemsToUpload.length,
+            downloaded: itemsToDownload.length,
+            total: mergedItems.length
+        };
+    }
+
+    // -------------------------------------------------------------------------
     // 1:1 FULL EXPORT - Alle lokalen Daten zu GitHub hochladen
     // -------------------------------------------------------------------------
 

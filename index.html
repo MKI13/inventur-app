@@ -803,18 +803,30 @@
                 <span id="syncStatusText"></span>
             </div>
 
-            <!-- 1:1 Sync Bereich -->
-            <div style="margin-top: 20px; padding: 16px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
-                <h3 style="margin: 0 0 12px 0; font-size: 16px;">📦 1:1 Backup mit inventur-v2</h3>
+            <!-- Sync Bereich -->
+            <div style="margin-top: 20px; padding: 16px; background: var(--card-bg); border-radius: 12px; border: 2px solid #6f42c1;">
+                <h3 style="margin: 0 0 12px 0; font-size: 16px;">🔄 Jetzt Synchronisieren</h3>
                 <p style="margin: 0 0 16px 0; font-size: 13px; opacity: 0.8;">
-                    Vollständiger Export/Import aller Kategorien, Artikel und Bilder.
+                    Bidirektionaler Sync: Lädt neue Daten von GitHub und lädt lokale Änderungen hoch.<br>
+                    <strong>Deine Daten werden NICHT gelöscht!</strong>
+                </p>
+                <button class="btn-primary" onclick="syncNowMultiFile()" style="width: 100%; background: #6f42c1; padding: 14px; font-size: 16px;">
+                    🔄 Jetzt Synchronisieren
+                </button>
+            </div>
+
+            <!-- 1:1 Backup Bereich -->
+            <div style="margin-top: 16px; padding: 16px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+                <h3 style="margin: 0 0 12px 0; font-size: 16px;">📦 Vollständiger Backup (1:1)</h3>
+                <p style="margin: 0 0 16px 0; font-size: 13px; opacity: 0.8;">
+                    Kompletter Export/Import - <strong>überschreibt</strong> alle Daten.
                 </p>
                 <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <button class="btn-primary" onclick="fullExportToGitHub()" style="flex: 1; min-width: 140px; background: #2ea44f;">
-                        📤 Export zu GitHub
+                        📤 Alles Exportieren
                     </button>
                     <button class="btn-primary" onclick="fullImportFromGitHub()" style="flex: 1; min-width: 140px; background: #0969da;">
-                        📥 Import von GitHub
+                        📥 Alles Importieren
                     </button>
                 </div>
             </div>
