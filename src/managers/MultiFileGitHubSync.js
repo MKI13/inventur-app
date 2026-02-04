@@ -1,5 +1,5 @@
 // =============================================================================
-// MultiFileGitHubSync v2.0.0 - VOLLSTÄNDIG mit GitHub API
+// MultiFileGitHubSync v2.3.0 - VOLLSTÄNDIG mit GitHub API + Merge Sync
 // =============================================================================
 
 // UTF-8 Helper Funktionen

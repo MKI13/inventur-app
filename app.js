@@ -1,12 +1,14 @@
 // ============================================================================
 // ef-sin INVENTUR APP - CORE JAVASCRIPT
-// Version: 2.1.6 - Mit Dashboard/Statistik Integration
+// Version: 2.3.0 - GitHub Sync Fix + Bidirektionaler Merge
 // ============================================================================
+
+const APP_VERSION = '2.3.0';
 
 (function() {
     'use strict';
-    
-    console.log('📦 app.js v2.2.0 loading...');
+
+    console.log(`📦 app.js v${APP_VERSION} loading...`);
     
     // ========================================================================
     // DATENBANK (IndexedDB)
