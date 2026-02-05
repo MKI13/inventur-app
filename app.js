@@ -1,9 +1,9 @@
 // ============================================================================
 // ef-sin INVENTUR APP - CORE JAVASCRIPT
-// Version: 2.3.3 - Kategorie-Filter Fix (Anzeige korrigiert)
+// Version: 2.3.4 - Vorlagen-System + Platten-Maße + Kategorie-Fix
 // ============================================================================
 
-const APP_VERSION = '2.3.3';
+const APP_VERSION = '2.3.4';
 
 (function() {
     'use strict';
@@ -217,12 +217,20 @@ const APP_VERSION = '2.3.3';
             const location = document.getElementById('itemLocation').value;
             const notes = document.getElementById('itemNotes').value;
             const photoInput = document.getElementById('itemPhoto');
-            
+
+            // Platten-Maße (optional)
+            const lengthEl = document.getElementById('itemLength');
+            const widthEl = document.getElementById('itemWidth');
+            const thicknessEl = document.getElementById('itemThickness');
+            const length = lengthEl ? lengthEl.value : '';
+            const width = widthEl ? widthEl.value : '';
+            const thickness = thicknessEl ? thicknessEl.value : '';
+
             if (!name || !stock) {
                 alert('Bitte Name und Bestand ausfüllen!');
                 return;
             }
-            
+
             const item = {
                 category,
                 name,
@@ -234,6 +242,10 @@ const APP_VERSION = '2.3.3';
                 price: price ? parseFloat(price) : null,
                 location,
                 notes,
+                // Platten-Maße (nur wenn ausgefüllt)
+                length: length ? parseInt(length) : null,
+                width: width ? parseInt(width) : null,
+                thickness: thickness ? parseInt(thickness) : null,
                 updatedAt: new Date().toISOString()
             };
             
@@ -295,7 +307,7 @@ const APP_VERSION = '2.3.3';
         editItem(id) {
             const item = this.items.find(i => i.id === id);
             if (!item) return;
-            
+
             document.getElementById('itemId').value = item.id;
             document.getElementById('itemCategory').value = item.category;
             document.getElementById('itemName').value = item.name;
@@ -307,12 +319,31 @@ const APP_VERSION = '2.3.3';
             document.getElementById('itemPrice').value = item.price || '';
             document.getElementById('itemLocation').value = item.location || '';
             document.getElementById('itemNotes').value = item.notes || '';
-            
+
+            // Platten-Maße laden
+            const lengthEl = document.getElementById('itemLength');
+            const widthEl = document.getElementById('itemWidth');
+            const thicknessEl = document.getElementById('itemThickness');
+            const dimensionsGroup = document.getElementById('dimensionsGroup');
+
+            if (lengthEl) lengthEl.value = item.length || '';
+            if (widthEl) widthEl.value = item.width || '';
+            if (thicknessEl) thicknessEl.value = item.thickness || '';
+
+            // Zeige Platten-Maße wenn vorhanden
+            if (dimensionsGroup && (item.length || item.width || item.thickness)) {
+                dimensionsGroup.style.display = 'flex';
+            }
+
+            // Vorlage-Bereich verstecken beim Bearbeiten
+            const templateGroup = document.getElementById('templateGroup');
+            if (templateGroup) templateGroup.style.display = 'none';
+
             if (item.photo) {
                 const preview = document.getElementById('photoPreview');
                 preview.innerHTML = `<img src="${item.photo}" style="max-width: 200px; border-radius: 8px;">`;
             }
-            
+
             this.openModal('itemModal');
         },
         

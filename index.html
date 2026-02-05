@@ -485,7 +485,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version" id="appVersion">v2.3.3</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version" id="appVersion">v2.3.4</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -612,6 +612,58 @@
         </div>
         <div class="modal-body">
             <input type="hidden" id="itemId">
+
+            <!-- VORLAGEN-AUSWAHL (nur für neue Artikel) -->
+            <div class="form-group" id="templateGroup" style="background: var(--card-bg); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 2px dashed var(--border-color);">
+                <label for="itemTemplate">📋 Vorlage verwenden</label>
+                <select id="itemTemplate" onchange="applyTemplate(this.value)" style="font-size: 14px;">
+                    <option value="">-- Keine Vorlage --</option>
+                    <optgroup label="🔩 Beschläge">
+                        <option value="scharnier">Scharnier</option>
+                        <option value="griff">Möbelgriff</option>
+                        <option value="schubladenfuehrung">Schubladenführung</option>
+                        <option value="schloss">Möbelschloss</option>
+                        <option value="verbinder">Möbelverbinder</option>
+                        <option value="winkel">Winkel/Eckverbinder</option>
+                        <option value="puffer">Anschlagpuffer</option>
+                        <option value="regal_traeger">Regalträger</option>
+                    </optgroup>
+                    <optgroup label="📋 Platten">
+                        <option value="spanplatte">Spanplatte</option>
+                        <option value="mdf">MDF-Platte</option>
+                        <option value="sperrholz">Sperrholz</option>
+                        <option value="multiplex">Multiplex</option>
+                        <option value="hpl">HPL/Schichtstoff</option>
+                        <option value="arbeitsplatte">Arbeitsplatte</option>
+                    </optgroup>
+                    <optgroup label="🪵 Holz">
+                        <option value="leimholz">Leimholz</option>
+                        <option value="massivholz">Massivholz</option>
+                        <option value="kantholz">Kantholz</option>
+                        <option value="leiste">Leiste/Profil</option>
+                    </optgroup>
+                    <optgroup label="⚙️ Schrauben/Verbindung">
+                        <option value="holzschraube">Holzschraube</option>
+                        <option value="spanplattenschraube">Spanplattenschraube</option>
+                        <option value="duebel">Holzdübel</option>
+                        <option value="exzenter">Exzenterverbinder</option>
+                        <option value="rampa">Rampamuffe</option>
+                    </optgroup>
+                    <optgroup label="🎨 Lacke/Öle">
+                        <option value="lack">Holzlack</option>
+                        <option value="oel">Holzöl</option>
+                        <option value="beize">Holzbeize</option>
+                        <option value="grundierung">Grundierung</option>
+                    </optgroup>
+                    <optgroup label="🧴 Klebstoffe">
+                        <option value="holzleim">Holzleim</option>
+                        <option value="montagekleber">Montagekleber</option>
+                        <option value="kontaktkleber">Kontaktkleber</option>
+                        <option value="pu_leim">PU-Leim</option>
+                    </optgroup>
+                </select>
+            </div>
+
             <div class="form-group">
                 <label for="itemCategory">Kategorie *</label>
                 <select id="itemCategory" required></select>
@@ -621,9 +673,26 @@
                 <input type="text" id="itemName" required>
             </div>
             <div class="form-group">
-                <label for="itemSKU">SKU</label>
-                <input type="text" id="itemSKU">
+                <label for="itemSKU">SKU / Artikelnummer</label>
+                <input type="text" id="itemSKU" placeholder="z.B. BES-001">
             </div>
+
+            <!-- PLATTEN-MASSE (nur sichtbar bei Platten-Kategorie) -->
+            <div id="dimensionsGroup" class="form-row" style="display: none; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                <div class="form-group">
+                    <label for="itemLength">Länge (mm)</label>
+                    <input type="number" id="itemLength" placeholder="2800">
+                </div>
+                <div class="form-group">
+                    <label for="itemWidth">Breite (mm)</label>
+                    <input type="number" id="itemWidth" placeholder="2070">
+                </div>
+                <div class="form-group">
+                    <label for="itemThickness">Dicke (mm)</label>
+                    <input type="number" id="itemThickness" placeholder="19">
+                </div>
+            </div>
+
             <div class="form-row">
                 <div class="form-group">
                     <label for="itemStock">Bestand *</label>
@@ -638,6 +707,9 @@
                         <option>Liter</option>
                         <option>Paket</option>
                         <option>m²</option>
+                        <option>Platte</option>
+                        <option>Dose</option>
+                        <option>Tube</option>
                     </select>
                 </div>
             </div>
@@ -656,8 +728,8 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="itemLocation">Standort</label>
-                <input type="text" id="itemLocation">
+                <label for="itemLocation">Standort / Lagerplatz</label>
+                <input type="text" id="itemLocation" placeholder="z.B. Regal 2, Fach 3">
             </div>
             <div class="form-group">
                 <label for="itemPhoto">Foto</label>
@@ -666,7 +738,7 @@
             </div>
             <div class="form-group">
                 <label for="itemNotes">Notizen</label>
-                <textarea id="itemNotes" rows="3"></textarea>
+                <textarea id="itemNotes" rows="3" placeholder="Zusätzliche Informationen..."></textarea>
             </div>
         </div>
         <div class="modal-footer">
@@ -959,37 +1031,39 @@ function saveCategories(categories) {
     updateStatistics();
 }
 
-// Zu Kategorie-Ansicht wechseln
-function switchToCategoryView(categoryName) {
-    console.log('🔄 Wechsle zu Kategorie:', categoryName);
-    
+// Zu Kategorie-Ansicht wechseln (unterstützt ID und Name)
+function switchToCategoryView(categoryId, categoryName) {
+    console.log('🔄 Wechsle zu Kategorie:', categoryId, categoryName);
+
     // Zum Bestand-Tab wechseln
     document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    
+
     const inventoryTab = document.querySelector('[data-tab="inventory"]');
     if (inventoryTab) {
         inventoryTab.classList.add('active');
     }
-    
+
     const inventoryContent = document.getElementById('inventory');
     if (inventoryContent) {
         inventoryContent.classList.add('active');
     }
-    
+
     // Kategorie-Tab aktivieren
     setTimeout(() => {
         const categoryTabs = document.querySelectorAll('.category-tab');
         categoryTabs.forEach(tab => {
             tab.classList.remove('active');
-            if (tab.dataset.category === categoryName) {
+            // Vergleiche mit ID
+            if (tab.dataset.category === categoryId) {
                 tab.classList.add('active');
             }
         });
-        
-        // App-Filter setzen
+
+        // App-Filter setzen (ID und Name für Kompatibilität)
         if (window.app) {
-            window.app.currentCategory = categoryName;
+            window.app.currentCategory = categoryId;
+            window.app.currentCategoryName = categoryName || categoryId;
             window.app.renderItems();
         }
     }, 100);
@@ -1168,22 +1242,27 @@ function updateDashboard() {
     
     // Kategorie-Karten rendern
     const categoryCardsContainer = document.getElementById('categoryCards');
-    
+
     if (categoryCardsContainer) {
         const categoryStats = categories.map(cat => {
-            const catItems = items.filter(item => item.category === cat.name);
+            // Robust: Filtert nach ID ODER Name (für Kompatibilität)
+            const catItems = items.filter(item =>
+                item.category === cat.id ||
+                item.category === cat.name ||
+                item.category?.toLowerCase() === cat.id?.toLowerCase()
+            );
             const count = catItems.length;
             const value = catItems.reduce((sum, item) => {
                 return sum + ((parseFloat(item.price) || 0) * (parseFloat(item.stock) || 0));
             }, 0);
             return { ...cat, count, value };
         });
-        
+
         if (categoryStats.length === 0) {
             categoryCardsContainer.innerHTML = '<div class="empty-state-text">Keine Kategorien vorhanden</div>';
         } else {
             categoryCardsContainer.innerHTML = categoryStats.map(cat => `
-                <div class="category-card" onclick="switchToCategoryView('${cat.name}')">
+                <div class="category-card" onclick="switchToCategoryView('${cat.id}', '${cat.name}')">
                     <div class="category-card-icon">${cat.icon}</div>
                     <div class="category-card-name">${cat.name}</div>
                     <div class="category-card-count">${cat.count}</div>
@@ -1196,18 +1275,27 @@ function updateDashboard() {
 
 function updateStatistics() {
     if (!window.app || !window.app.items) return;
-    
+
     const items = window.app.items;
     const categories = loadCategories();
-    
+
+    // Helper: Items nach Kategorie filtern (robust: ID oder Name)
+    function filterByCategory(cat) {
+        return items.filter(item =>
+            item.category === cat.id ||
+            item.category === cat.name ||
+            item.category?.toLowerCase() === cat.id?.toLowerCase()
+        );
+    }
+
     // Artikel pro Kategorie
     const categoryStats = categories.map(cat => {
-        const count = items.filter(item => item.category === cat.name).length;
+        const count = filterByCategory(cat).length;
         return { ...cat, count };
     }).filter(cat => cat.count > 0);
-    
+
     const maxCount = Math.max(...categoryStats.map(c => c.count), 1);
-    
+
     const chartContainer = document.getElementById('categoryChart');
     if (categoryStats.length === 0) {
         chartContainer.innerHTML = '<div class="empty-state-text">Keine Artikel vorhanden</div>';
@@ -1224,10 +1312,10 @@ function updateStatistics() {
             </div>
         `).join('');
     }
-    
+
     // Wertverteilung
     const valueStats = categories.map(cat => {
-        const catItems = items.filter(item => item.category === cat.name);
+        const catItems = filterByCategory(cat);
         const value = catItems.reduce((sum, item) => {
             return sum + ((parseFloat(item.price) || 0) * (parseFloat(item.stock) || 0));
         }, 0);
@@ -1693,7 +1781,146 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ ef-sin Inventur v2.1.9 - Initialization complete!');
+    console.log('✅ ef-sin Inventur v2.3.4 - Initialization complete!');
+});
+
+// =============================================================================
+// VORLAGEN-SYSTEM FÜR SCHREINEREI-ARTIKEL
+// =============================================================================
+
+const ARTICLE_TEMPLATES = {
+    // BESCHLÄGE
+    scharnier: { category: 'beschlaege', name: 'Scharnier', unit: 'Stück', min: 10, notes: 'Typ: ' },
+    griff: { category: 'beschlaege', name: 'Möbelgriff', unit: 'Stück', min: 5, notes: 'Bohrmaß: ' },
+    schubladenfuehrung: { category: 'beschlaege', name: 'Schubladenführung', unit: 'Paar', min: 5, notes: 'Länge: ' },
+    schloss: { category: 'beschlaege', name: 'Möbelschloss', unit: 'Stück', min: 3 },
+    verbinder: { category: 'beschlaege', name: 'Möbelverbinder', unit: 'Stück', min: 20 },
+    winkel: { category: 'beschlaege', name: 'Winkel/Eckverbinder', unit: 'Stück', min: 20 },
+    puffer: { category: 'beschlaege', name: 'Anschlagpuffer', unit: 'Stück', min: 50 },
+    regal_traeger: { category: 'beschlaege', name: 'Regalträger', unit: 'Stück', min: 20 },
+
+    // PLATTEN
+    spanplatte: { category: 'platten', name: 'Spanplatte', unit: 'Platte', min: 2, showDimensions: true, notes: 'Dekor: ' },
+    mdf: { category: 'platten', name: 'MDF-Platte', unit: 'Platte', min: 2, showDimensions: true },
+    sperrholz: { category: 'platten', name: 'Sperrholz', unit: 'Platte', min: 2, showDimensions: true },
+    multiplex: { category: 'platten', name: 'Multiplex', unit: 'Platte', min: 2, showDimensions: true },
+    hpl: { category: 'platten', name: 'HPL/Schichtstoff', unit: 'Platte', min: 1, showDimensions: true },
+    arbeitsplatte: { category: 'platten', name: 'Arbeitsplatte', unit: 'Stück', min: 1, showDimensions: true, notes: 'Dekor: ' },
+
+    // HOLZ
+    leimholz: { category: 'holz', name: 'Leimholz', unit: 'Stück', min: 2, showDimensions: true, notes: 'Holzart: ' },
+    massivholz: { category: 'holz', name: 'Massivholz', unit: 'Stück', min: 1, showDimensions: true, notes: 'Holzart: ' },
+    kantholz: { category: 'holz', name: 'Kantholz', unit: 'Stück', min: 5, notes: 'Querschnitt: ' },
+    leiste: { category: 'holz', name: 'Leiste/Profil', unit: 'Meter', min: 10, notes: 'Profil: ' },
+
+    // SCHRAUBEN
+    holzschraube: { category: 'schrauben', name: 'Holzschraube', unit: 'Paket', min: 2, notes: 'Größe: ' },
+    spanplattenschraube: { category: 'schrauben', name: 'Spanplattenschraube', unit: 'Paket', min: 2, notes: 'Größe: ' },
+    duebel: { category: 'schrauben', name: 'Holzdübel', unit: 'Paket', min: 2, notes: 'Durchmesser: ' },
+    exzenter: { category: 'schrauben', name: 'Exzenterverbinder', unit: 'Paket', min: 1 },
+    rampa: { category: 'schrauben', name: 'Rampamuffe', unit: 'Paket', min: 1, notes: 'Gewinde: ' },
+
+    // LACKE
+    lack: { category: 'lacke', name: 'Holzlack', unit: 'Dose', min: 1, notes: 'Farbe/Glanz: ' },
+    oel: { category: 'lacke', name: 'Holzöl', unit: 'Dose', min: 1, notes: 'Typ: ' },
+    beize: { category: 'lacke', name: 'Holzbeize', unit: 'Dose', min: 1, notes: 'Farbton: ' },
+    grundierung: { category: 'lacke', name: 'Grundierung', unit: 'Dose', min: 1 },
+
+    // KLEBSTOFFE
+    holzleim: { category: 'sonstiges', name: 'Holzleim', unit: 'Flasche', min: 2, notes: 'Typ: D3/D4' },
+    montagekleber: { category: 'sonstiges', name: 'Montagekleber', unit: 'Tube', min: 2 },
+    kontaktkleber: { category: 'sonstiges', name: 'Kontaktkleber', unit: 'Dose', min: 1 },
+    pu_leim: { category: 'sonstiges', name: 'PU-Leim', unit: 'Flasche', min: 1 }
+};
+
+function applyTemplate(templateId) {
+    if (!templateId) {
+        // Keine Vorlage - Formular zurücksetzen
+        document.getElementById('dimensionsGroup').style.display = 'none';
+        return;
+    }
+
+    const template = ARTICLE_TEMPLATES[templateId];
+    if (!template) return;
+
+    console.log('📋 Vorlage anwenden:', templateId, template);
+
+    // Kategorie setzen
+    const categorySelect = document.getElementById('itemCategory');
+    if (categorySelect && template.category) {
+        categorySelect.value = template.category;
+        // Trigger change event für Platten-Maße
+        categorySelect.dispatchEvent(new Event('change'));
+    }
+
+    // Name setzen
+    if (template.name) {
+        document.getElementById('itemName').value = template.name;
+    }
+
+    // Einheit setzen
+    if (template.unit) {
+        document.getElementById('itemUnit').value = template.unit;
+    }
+
+    // Minimum setzen
+    if (template.min) {
+        document.getElementById('itemMin').value = template.min;
+    }
+
+    // Notizen setzen
+    if (template.notes) {
+        document.getElementById('itemNotes').value = template.notes;
+    }
+
+    // Platten-Maße anzeigen wenn nötig
+    if (template.showDimensions) {
+        document.getElementById('dimensionsGroup').style.display = 'flex';
+    } else {
+        document.getElementById('dimensionsGroup').style.display = 'none';
+    }
+}
+
+// Kategorie-Wechsel: Platten-Maße ein/ausblenden
+function setupCategoryChangeHandler() {
+    const categorySelect = document.getElementById('itemCategory');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            const catId = this.value.toLowerCase();
+            const dimensionsGroup = document.getElementById('dimensionsGroup');
+
+            // Zeige Platten-Maße für Platten oder Holz
+            if (catId === 'platten' || catId === 'holz' || catId.includes('platte') || catId.includes('holz')) {
+                dimensionsGroup.style.display = 'flex';
+            } else {
+                dimensionsGroup.style.display = 'none';
+            }
+        });
+    }
+}
+
+// Bei Modal-Öffnung: Vorlagen-Bereich und Handler initialisieren
+document.addEventListener('DOMContentLoaded', function() {
+    setupCategoryChangeHandler();
+
+    // Verstecke Vorlagen-Bereich wenn Item bearbeitet wird
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.target.classList.contains('active')) {
+                const itemId = document.getElementById('itemId').value;
+                const templateGroup = document.getElementById('templateGroup');
+                if (templateGroup) {
+                    // Nur bei neuem Artikel anzeigen
+                    templateGroup.style.display = itemId ? 'none' : 'block';
+                }
+            }
+        });
+    });
+
+    const itemModal = document.getElementById('itemModal');
+    if (itemModal) {
+        observer.observe(itemModal, { attributes: true, attributeFilter: ['class'] });
+    }
 });
 </script>
 
