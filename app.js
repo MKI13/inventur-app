@@ -1,9 +1,9 @@
 // ============================================================================
 // ef-sin INVENTUR APP - CORE JAVASCRIPT
-// Version: 2.3.2 - Kategorie-Mapping Fix (0 Artikel behoben)
+// Version: 2.3.3 - Kategorie-Filter Fix (Anzeige korrigiert)
 // ============================================================================
 
-const APP_VERSION = '2.3.2';
+const APP_VERSION = '2.3.3';
 
 (function() {
     'use strict';
@@ -139,12 +139,21 @@ const APP_VERSION = '2.3.2';
         renderItems() {
             const container = document.getElementById('itemsContainer');
             if (!container) return;
-            
-            // Filter nach Kategorie
-            let filtered = this.currentCategory === 'Alle' 
-                ? this.items 
-                : this.items.filter(item => item.category === this.currentCategory);
-            
+
+            // Filter nach Kategorie (ID oder Name für Kompatibilität)
+            let filtered;
+            if (this.currentCategory === 'Alle') {
+                filtered = this.items;
+            } else {
+                const catId = this.currentCategory;
+                const catName = this.currentCategoryName || this.currentCategory;
+                filtered = this.items.filter(item =>
+                    item.category === catId ||
+                    item.category === catName ||
+                    item.category?.toLowerCase() === catId?.toLowerCase()
+                );
+            }
+
             // Sortieren nach updatedAt
             filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
             

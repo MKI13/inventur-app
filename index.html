@@ -485,7 +485,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version" id="appVersion">v2.3.2</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version" id="appVersion">v2.3.3</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -1723,20 +1723,22 @@ window.addEventListener('load', function() {
                 tabsContainer.innerHTML = `
                     <button class="category-tab active" data-category="Alle">Alle</button>
                     ${categories.map(cat => `
-                        <button class="category-tab" data-category="${cat.name}">
+                        <button class="category-tab" data-category="${cat.id}" data-name="${cat.name}">
                             ${cat.icon} ${cat.name}
                         </button>
                     `).join('')}
                 `;
-                
+
                 // Event-Listener für Tabs
                 tabsContainer.querySelectorAll('.category-tab').forEach(tab => {
                     tab.addEventListener('click', function() {
-                        tabsContainer.querySelectorAll('.category-tab').forEach(t => 
+                        tabsContainer.querySelectorAll('.category-tab').forEach(t =>
                             t.classList.remove('active')
                         );
                         this.classList.add('active');
+                        // Speichere sowohl ID als auch Name für Filterung
                         window.app.currentCategory = this.dataset.category;
+                        window.app.currentCategoryName = this.dataset.name;
                         window.app.renderItems();
                     });
                 });
