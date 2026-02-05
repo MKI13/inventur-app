@@ -1,9 +1,9 @@
 // ============================================================================
 // ef-sin INVENTUR APP - CORE JAVASCRIPT
-// Version: 2.3.1 - SHA Conflict Fix (409 Error behoben)
+// Version: 2.3.2 - Kategorie-Mapping Fix (0 Artikel behoben)
 // ============================================================================
 
-const APP_VERSION = '2.3.1';
+const APP_VERSION = '2.3.2';
 
 (function() {
     'use strict';

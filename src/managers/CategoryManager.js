@@ -90,10 +90,20 @@ class CategoryManager {
         }
 
         const allItems = await this.getAllItemsFromDB();
-        const items = allItems.filter(item => item.category === categoryId);
+
+        // Kategorie finden (für Name-Matching)
+        const category = this.getCategoryById(categoryId);
+
+        // Items filtern: nach ID ODER nach Name (für Kompatibilität)
+        const items = allItems.filter(item =>
+            item.category === categoryId ||
+            item.category === category?.name ||
+            item.category?.toLowerCase() === categoryId
+        );
+
         this.categoryData.set(categoryId, items);
 
-        console.log(`📂 Kategorie "${categoryId}": ${items.length} Artikel`);
+        console.log(`📂 Kategorie "${categoryId}" (${category?.name}): ${items.length} Artikel`);
         return items;
     }
 

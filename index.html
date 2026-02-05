@@ -485,7 +485,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version" id="appVersion">v2.3.1</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version" id="appVersion">v2.3.2</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -1747,14 +1747,14 @@ window.addEventListener('load', function() {
             const quickCategorySelect = document.getElementById('quickCategory');
             
             if (categorySelect) {
-                categorySelect.innerHTML = categories.map(cat => 
-                    `<option value="${cat.name}">${cat.icon} ${cat.name}</option>`
+                categorySelect.innerHTML = categories.map(cat =>
+                    `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`
                 ).join('');
             }
-            
+
             if (quickCategorySelect) {
-                quickCategorySelect.innerHTML = categories.map(cat => 
-                    `<option value="${cat.name}">${cat.icon} ${cat.name}</option>`
+                quickCategorySelect.innerHTML = categories.map(cat =>
+                    `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`
                 ).join('');
             }
             
