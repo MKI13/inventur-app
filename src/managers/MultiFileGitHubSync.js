@@ -1,5 +1,5 @@
 // =============================================================================
-// MultiFileGitHubSync v2.3.0 - VOLLSTÄNDIG mit GitHub API + Merge Sync
+// MultiFileGitHubSync v2.3.1 - SHA Conflict Fix (409 Error behoben)
 // =============================================================================
 
 // UTF-8 Helper Funktionen
@@ -283,21 +283,24 @@ class MultiFileGitHubSync {
 
     async putFile(path, data, message) {
         const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`;
-        
+
         const jsonString = JSON.stringify(data, null, 2);
         const content = await base64EncodeUTF8(jsonString);
-        
+
+        // IMMER aktuellen SHA von GitHub holen (behebt 409 Conflict)
+        const currentSha = await this.getCurrentSHA(path);
+
         const body = {
             message,
             content,
             branch: this.branch
         };
-        
-        // SHA hinzufügen wenn vorhanden (für Updates)
-        if (this.fileSHAs.has(path)) {
-            body.sha = this.fileSHAs.get(path);
+
+        // SHA hinzufügen wenn Datei existiert
+        if (currentSha) {
+            body.sha = currentSha;
         }
-        
+
         try {
             const response = await fetch(url, {
                 method: 'PUT',
@@ -308,23 +311,54 @@ class MultiFileGitHubSync {
                 },
                 body: JSON.stringify(body)
             });
-            
+
             if (!response.ok) {
                 const error = await response.json();
                 throw new Error(`GitHub API Error: ${response.status} - ${error.message || ''}`);
             }
-            
+
             const result = await response.json();
-            
+
             // SHA aktualisieren für zukünftige Updates
             this.fileSHAs.set(path, result.content.sha);
-            
+
             console.log(`✅ ${path} hochgeladen`);
             return result;
-            
+
         } catch (error) {
             console.error(`❌ putFile(${path}) Fehler:`, error);
             throw error;
+        }
+    }
+
+    // Aktuellen SHA von GitHub holen
+    async getCurrentSHA(path) {
+        const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`;
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${this.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (response.status === 404) {
+                // Datei existiert nicht - kein SHA nötig
+                return null;
+            }
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const data = await response.json();
+            this.fileSHAs.set(path, data.sha);
+            return data.sha;
+
+        } catch (error) {
+            console.warn(`⚠️ SHA nicht gefunden für ${path}:`, error.message);
+            return null;
         }
     }
 
@@ -355,18 +389,21 @@ class MultiFileGitHubSync {
 
     async uploadFile(path, base64Content) {
         const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}`;
-        
+
+        // IMMER aktuellen SHA holen (behebt 409 Conflict)
+        const currentSha = await this.getCurrentSHA(path);
+
         const body = {
             message: `Upload image: ${path}`,
             content: base64Content,
             branch: this.branch
         };
-        
-        // SHA wenn vorhanden
-        if (this.fileSHAs.has(path)) {
-            body.sha = this.fileSHAs.get(path);
+
+        // SHA wenn Datei existiert
+        if (currentSha) {
+            body.sha = currentSha;
         }
-        
+
         const response = await fetch(url, {
             method: 'PUT',
             headers: {
@@ -376,12 +413,12 @@ class MultiFileGitHubSync {
             },
             body: JSON.stringify(body)
         });
-        
+
         if (!response.ok) {
             const error = await response.json();
             throw new Error(`Upload failed: ${response.status} - ${error.message || ''}`);
         }
-        
+
         const result = await response.json();
         this.fileSHAs.set(path, result.content.sha);
         return result;

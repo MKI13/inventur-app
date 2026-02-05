@@ -1,9 +1,9 @@
 // ============================================================================
 // ef-sin INVENTUR APP - CORE JAVASCRIPT
-// Version: 2.3.0 - GitHub Sync Fix + Bidirektionaler Merge
+// Version: 2.3.1 - SHA Conflict Fix (409 Error behoben)
 // ============================================================================
 
-const APP_VERSION = '2.3.0';
+const APP_VERSION = '2.3.1';
 
 (function() {
     'use strict';
