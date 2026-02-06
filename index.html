@@ -485,7 +485,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version" id="appVersion">v2.3.4</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version" id="appVersion">v2.3.5</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -613,60 +613,23 @@
         <div class="modal-body">
             <input type="hidden" id="itemId">
 
-            <!-- VORLAGEN-AUSWAHL (nur für neue Artikel) -->
-            <div class="form-group" id="templateGroup" style="background: var(--card-bg); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 2px dashed var(--border-color);">
-                <label for="itemTemplate">📋 Vorlage verwenden</label>
-                <select id="itemTemplate" onchange="applyTemplate(this.value)" style="font-size: 14px;">
-                    <option value="">-- Keine Vorlage --</option>
-                    <optgroup label="🔩 Beschläge">
-                        <option value="scharnier">Scharnier</option>
-                        <option value="griff">Möbelgriff</option>
-                        <option value="schubladenfuehrung">Schubladenführung</option>
-                        <option value="schloss">Möbelschloss</option>
-                        <option value="verbinder">Möbelverbinder</option>
-                        <option value="winkel">Winkel/Eckverbinder</option>
-                        <option value="puffer">Anschlagpuffer</option>
-                        <option value="regal_traeger">Regalträger</option>
-                    </optgroup>
-                    <optgroup label="📋 Platten">
-                        <option value="spanplatte">Spanplatte</option>
-                        <option value="mdf">MDF-Platte</option>
-                        <option value="sperrholz">Sperrholz</option>
-                        <option value="multiplex">Multiplex</option>
-                        <option value="hpl">HPL/Schichtstoff</option>
-                        <option value="arbeitsplatte">Arbeitsplatte</option>
-                    </optgroup>
-                    <optgroup label="🪵 Holz">
-                        <option value="leimholz">Leimholz</option>
-                        <option value="massivholz">Massivholz</option>
-                        <option value="kantholz">Kantholz</option>
-                        <option value="leiste">Leiste/Profil</option>
-                    </optgroup>
-                    <optgroup label="⚙️ Schrauben/Verbindung">
-                        <option value="holzschraube">Holzschraube</option>
-                        <option value="spanplattenschraube">Spanplattenschraube</option>
-                        <option value="duebel">Holzdübel</option>
-                        <option value="exzenter">Exzenterverbinder</option>
-                        <option value="rampa">Rampamuffe</option>
-                    </optgroup>
-                    <optgroup label="🎨 Lacke/Öle">
-                        <option value="lack">Holzlack</option>
-                        <option value="oel">Holzöl</option>
-                        <option value="beize">Holzbeize</option>
-                        <option value="grundierung">Grundierung</option>
-                    </optgroup>
-                    <optgroup label="🧴 Klebstoffe">
-                        <option value="holzleim">Holzleim</option>
-                        <option value="montagekleber">Montagekleber</option>
-                        <option value="kontaktkleber">Kontaktkleber</option>
-                        <option value="pu_leim">PU-Leim</option>
-                    </optgroup>
-                </select>
+            <!-- VORLAGEN-AUSWAHL (aufklappbar, nur für neue Artikel) -->
+            <div id="templateGroup" style="margin-bottom: 16px;">
+                <button type="button" id="templateToggleBtn" onclick="toggleTemplates()"
+                    style="width: 100%; padding: 12px; background: var(--card-bg); border: 2px dashed var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px;">
+                    <span>📋 Vorlage verwenden (Schreinerei)</span>
+                    <span id="templateArrow">▼</span>
+                </button>
+                <div id="templateContent" style="display: none; margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div id="templateButtons" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <!-- Buttons werden dynamisch generiert -->
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="itemCategory">Kategorie *</label>
-                <select id="itemCategory" required></select>
+                <select id="itemCategory" required onchange="filterTemplatesByCategory(this.value)"></select>
             </div>
             <div class="form-group">
                 <label for="itemName">Name *</label>
@@ -1833,9 +1796,94 @@ const ARTICLE_TEMPLATES = {
     pu_leim: { category: 'sonstiges', name: 'PU-Leim', unit: 'Flasche', min: 1 }
 };
 
+// Vorlagen aufklappen/zuklappen
+let templatesExpanded = false;
+
+function toggleTemplates() {
+    templatesExpanded = !templatesExpanded;
+    const content = document.getElementById('templateContent');
+    const arrow = document.getElementById('templateArrow');
+
+    if (templatesExpanded) {
+        content.style.display = 'block';
+        arrow.textContent = '▲';
+        renderTemplateButtons();
+    } else {
+        content.style.display = 'none';
+        arrow.textContent = '▼';
+    }
+}
+
+// Vorlagen-Buttons rendern (nach Kategorie gefiltert)
+function renderTemplateButtons(filterCategory = null) {
+    const container = document.getElementById('templateButtons');
+    if (!container) return;
+
+    // Kategorie-Gruppen definieren
+    const categoryGroups = {
+        'beschlaege': { icon: '🔩', name: 'Beschläge', templates: ['scharnier', 'griff', 'schubladenfuehrung', 'schloss', 'verbinder', 'winkel', 'puffer', 'regal_traeger'] },
+        'platten': { icon: '📋', name: 'Platten', templates: ['spanplatte', 'mdf', 'sperrholz', 'multiplex', 'hpl', 'arbeitsplatte'] },
+        'holz': { icon: '🪵', name: 'Holz', templates: ['leimholz', 'massivholz', 'kantholz', 'leiste'] },
+        'schrauben': { icon: '⚙️', name: 'Schrauben', templates: ['holzschraube', 'spanplattenschraube', 'duebel', 'exzenter', 'rampa'] },
+        'lacke': { icon: '🎨', name: 'Lacke/Öle', templates: ['lack', 'oel', 'beize', 'grundierung'] },
+        'sonstiges': { icon: '🧴', name: 'Klebstoffe', templates: ['holzleim', 'montagekleber', 'kontaktkleber', 'pu_leim'] }
+    };
+
+    let html = '';
+
+    // Wenn Kategorie ausgewählt, nur diese anzeigen
+    const categoriesToShow = filterCategory && categoryGroups[filterCategory]
+        ? [filterCategory]
+        : Object.keys(categoryGroups);
+
+    for (const catId of categoriesToShow) {
+        const group = categoryGroups[catId];
+        if (!group) continue;
+
+        html += `<div style="width: 100%; margin-bottom: 12px;">`;
+        html += `<div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">${group.icon} ${group.name}</div>`;
+        html += `<div style="display: flex; flex-wrap: wrap; gap: 6px;">`;
+
+        for (const templateId of group.templates) {
+            const template = ARTICLE_TEMPLATES[templateId];
+            if (template) {
+                html += `<button type="button" onclick="applyTemplate('${templateId}'); toggleTemplates();"
+                    style="padding: 6px 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                    ${template.name}
+                </button>`;
+            }
+        }
+
+        html += `</div></div>`;
+    }
+
+    if (html === '') {
+        html = '<div style="color: #666; font-size: 13px;">Keine Vorlagen für diese Kategorie</div>';
+    }
+
+    container.innerHTML = html;
+}
+
+// Vorlagen nach Kategorie filtern
+function filterTemplatesByCategory(categoryId) {
+    if (templatesExpanded) {
+        renderTemplateButtons(categoryId);
+    }
+
+    // Platten-Maße ein/ausblenden
+    const dimensionsGroup = document.getElementById('dimensionsGroup');
+    if (dimensionsGroup) {
+        const catId = categoryId.toLowerCase();
+        if (catId === 'platten' || catId === 'holz' || catId.includes('platte') || catId.includes('holz')) {
+            dimensionsGroup.style.display = 'flex';
+        } else {
+            dimensionsGroup.style.display = 'none';
+        }
+    }
+}
+
 function applyTemplate(templateId) {
     if (!templateId) {
-        // Keine Vorlage - Formular zurücksetzen
         document.getElementById('dimensionsGroup').style.display = 'none';
         return;
     }
@@ -1849,69 +1897,40 @@ function applyTemplate(templateId) {
     const categorySelect = document.getElementById('itemCategory');
     if (categorySelect && template.category) {
         categorySelect.value = template.category;
-        // Trigger change event für Platten-Maße
-        categorySelect.dispatchEvent(new Event('change'));
+        filterTemplatesByCategory(template.category);
     }
 
-    // Name setzen
-    if (template.name) {
-        document.getElementById('itemName').value = template.name;
-    }
-
-    // Einheit setzen
-    if (template.unit) {
-        document.getElementById('itemUnit').value = template.unit;
-    }
-
-    // Minimum setzen
-    if (template.min) {
-        document.getElementById('itemMin').value = template.min;
-    }
-
-    // Notizen setzen
-    if (template.notes) {
-        document.getElementById('itemNotes').value = template.notes;
-    }
+    // Felder ausfüllen
+    if (template.name) document.getElementById('itemName').value = template.name;
+    if (template.unit) document.getElementById('itemUnit').value = template.unit;
+    if (template.min) document.getElementById('itemMin').value = template.min;
+    if (template.notes) document.getElementById('itemNotes').value = template.notes;
 
     // Platten-Maße anzeigen wenn nötig
     if (template.showDimensions) {
         document.getElementById('dimensionsGroup').style.display = 'flex';
-    } else {
-        document.getElementById('dimensionsGroup').style.display = 'none';
     }
 }
 
-// Kategorie-Wechsel: Platten-Maße ein/ausblenden
-function setupCategoryChangeHandler() {
-    const categorySelect = document.getElementById('itemCategory');
-    if (categorySelect) {
-        categorySelect.addEventListener('change', function() {
-            const catId = this.value.toLowerCase();
-            const dimensionsGroup = document.getElementById('dimensionsGroup');
-
-            // Zeige Platten-Maße für Platten oder Holz
-            if (catId === 'platten' || catId === 'holz' || catId.includes('platte') || catId.includes('holz')) {
-                dimensionsGroup.style.display = 'flex';
-            } else {
-                dimensionsGroup.style.display = 'none';
-            }
-        });
-    }
-}
-
-// Bei Modal-Öffnung: Vorlagen-Bereich und Handler initialisieren
+// Bei Modal-Öffnung: Vorlagen-Bereich initialisieren
 document.addEventListener('DOMContentLoaded', function() {
-    setupCategoryChangeHandler();
-
-    // Verstecke Vorlagen-Bereich wenn Item bearbeitet wird
+    // Verstecke/Zeige Vorlagen-Bereich je nach Modus
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.target.classList.contains('active')) {
                 const itemId = document.getElementById('itemId').value;
                 const templateGroup = document.getElementById('templateGroup');
+                const templateContent = document.getElementById('templateContent');
+
                 if (templateGroup) {
-                    // Nur bei neuem Artikel anzeigen
+                    // Bei neuem Artikel anzeigen, bei Bearbeitung verstecken
                     templateGroup.style.display = itemId ? 'none' : 'block';
+                }
+                if (templateContent) {
+                    templateContent.style.display = 'none';
+                    templatesExpanded = false;
+                    const arrow = document.getElementById('templateArrow');
+                    if (arrow) arrow.textContent = '▼';
                 }
             }
         });

@@ -1,9 +1,9 @@
 // ============================================================================
 // ef-sin INVENTUR APP - CORE JAVASCRIPT
-// Version: 2.3.4 - Vorlagen-System + Platten-Maße + Kategorie-Fix
+// Version: 2.3.5 - Vorlagen aufklappbar + Kategorie-Filter
 // ============================================================================
 
-const APP_VERSION = '2.3.4';
+const APP_VERSION = '2.3.5';
 
 (function() {
     'use strict';
