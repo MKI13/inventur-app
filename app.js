@@ -1,9 +1,9 @@
 // ============================================================================
 // ef-sin INVENTUR APP - CORE JAVASCRIPT
-// Version: 2.3.5 - Vorlagen aufklappbar + Kategorie-Filter
+// Version: 2.4.0 - Scanner + Artikel-Vorschau
 // ============================================================================
 
-const APP_VERSION = '2.3.5';
+const APP_VERSION = '2.4.0';
 
 (function() {
     'use strict';
@@ -176,12 +176,13 @@ const APP_VERSION = '2.3.5';
         },
         
         renderItemCard(item) {
-            const stockClass = item.min && parseInt(item.stock) <= parseInt(item.min) 
-                ? 'low-stock' 
+            const stockClass = item.min && parseInt(item.stock) <= parseInt(item.min)
+                ? 'low-stock'
                 : '';
-            
+
+            // Klick zeigt jetzt Vorschau statt direktes Bearbeiten
             return `
-                <div class="item-card ${stockClass}" onclick="app.editItem(${item.id})">
+                <div class="item-card ${stockClass}" onclick="showItemPreview(${item.id})">
                     ${item.photo ? `<img src="${item.photo}" alt="${item.name}" style="max-width: 100px; border-radius: 8px;">` : ''}
                     <div class="item-info">
                         <div class="item-name">${item.name}</div>
@@ -192,7 +193,7 @@ const APP_VERSION = '2.3.5';
                     </div>
                     <div class="item-actions">
                         <div class="item-stock">${item.stock} ${item.unit || 'Stk'}</div>
-                        <button class="btn-icon" onclick="event.stopPropagation(); app.deleteItem(${item.id})">
+                        <button class="btn-icon" onclick="event.stopPropagation(); app.deleteItem(${item.id})" title="Löschen">
                             🗑️
                         </button>
                     </div>
