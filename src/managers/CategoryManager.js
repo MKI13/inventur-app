@@ -1,5 +1,5 @@
 // =============================================================================
-// CategoryManager v2.0.0 - VOLLSTÄNDIG mit Export/Import
+// CategoryManager v2.1.0 - VOLLSTÄNDIG mit Export/Import (IndexedDB Fix)
 // =============================================================================
 
 class CategoryManager {
@@ -16,7 +16,7 @@ class CategoryManager {
 
     async init() {
         this.categories = await this.loadCategories();
-        console.log(`✅ CategoryManager: ${this.categories.length} Kategorien geladen`);
+        console.log(`✅ CategoryManager v2.1.0: ${this.categories.length} Kategorien geladen`);
     }
 
     async loadCategories() {
@@ -24,7 +24,7 @@ class CategoryManager {
         if (stored) {
             return JSON.parse(stored);
         }
-        
+
         // Default Kategorien
         return [
             { id: 'holz', name: 'Holz', icon: '🪵' },
@@ -81,7 +81,7 @@ class CategoryManager {
     }
 
     // -------------------------------------------------------------------------
-    // Items pro Kategorie laden
+    // Items pro Kategorie laden (KORRIGIERTE IndexedDB Methoden)
     // -------------------------------------------------------------------------
 
     async loadCategoryItems(categoryId) {
@@ -89,12 +89,45 @@ class CategoryManager {
             return this.categoryData.get(categoryId);
         }
 
-        const allItems = await this.db.getAll();
-        const items = allItems.filter(item => item.category === categoryId);
+        const allItems = await this.getAllItemsFromDB();
+
+        // Kategorie finden (für Name-Matching)
+        const category = this.getCategoryById(categoryId);
+
+        // Items filtern: nach ID ODER nach Name (für Kompatibilität)
+        const items = allItems.filter(item =>
+            item.category === categoryId ||
+            item.category === category?.name ||
+            item.category?.toLowerCase() === categoryId
+        );
+
         this.categoryData.set(categoryId, items);
-        
-        console.log(`📂 Kategorie "${categoryId}": ${items.length} Artikel`);
+
+        console.log(`📂 Kategorie "${categoryId}" (${category?.name}): ${items.length} Artikel`);
         return items;
+    }
+
+    // Korrigierte Methode: Alle Items aus IndexedDB laden
+    async getAllItemsFromDB() {
+        return new Promise((resolve, reject) => {
+            try {
+                const transaction = this.db.transaction(['items'], 'readonly');
+                const store = transaction.objectStore('items');
+                const request = store.getAll();
+
+                request.onsuccess = () => {
+                    resolve(request.result || []);
+                };
+
+                request.onerror = () => {
+                    console.error('❌ getAllItemsFromDB Fehler:', request.error);
+                    reject(request.error);
+                };
+            } catch (error) {
+                console.error('❌ getAllItemsFromDB Exception:', error);
+                reject(error);
+            }
+        });
     }
 
     async getAllItemsByCategory() {
@@ -111,14 +144,14 @@ class CategoryManager {
 
     async getCategoryStats(categoryId) {
         const items = await this.loadCategoryItems(categoryId);
-        
+
         return {
             itemCount: items.length,
-            totalValue: items.reduce((sum, item) => sum + (item.price * item.stock || 0), 0),
-            lowStock: items.filter(item => item.stock <= item.min).length,
-            totalStock: items.reduce((sum, item) => sum + item.stock, 0),
-            lastModified: items.length > 0 
-                ? Math.max(...items.map(i => new Date(i.updatedAt).getTime()))
+            totalValue: items.reduce((sum, item) => sum + ((item.price || 0) * (item.stock || 0)), 0),
+            lowStock: items.filter(item => item.min && item.stock <= item.min).length,
+            totalStock: items.reduce((sum, item) => sum + (item.stock || 0), 0),
+            lastModified: items.length > 0
+                ? Math.max(...items.map(i => new Date(i.updatedAt || 0).getTime()))
                 : Date.now()
         };
     }
@@ -140,7 +173,7 @@ class CategoryManager {
                 name: category.name,
                 ...catStats
             });
-            
+
             stats.totals.items += catStats.itemCount;
             stats.totals.value += catStats.totalValue;
             stats.totals.lowStock += catStats.lowStock;
@@ -154,9 +187,12 @@ class CategoryManager {
     // -------------------------------------------------------------------------
 
     async exportCategoryJSON(categoryId) {
+        // Cache invalidieren um frische Daten zu bekommen
+        this.invalidateCache(categoryId);
+
         const items = await this.loadCategoryItems(categoryId);
         const category = this.getCategoryById(categoryId);
-        
+
         return {
             category: categoryId,
             categoryName: category?.name || categoryId,
@@ -166,25 +202,28 @@ class CategoryManager {
                 id: item.id,
                 name: item.name,
                 sku: item.sku || '',
-                stock: item.stock,
-                unit: item.unit,
+                stock: item.stock || 0,
+                unit: item.unit || 'Stück',
                 min: item.min || 0,
                 max: item.max || 0,
                 price: item.price || 0,
                 location: item.location || '',
                 notes: item.notes || '',
                 photo: item.photo ? `images/${categoryId}/${item.id}.jpg` : '',
-                createdAt: item.createdAt,
-                updatedAt: item.updatedAt
+                createdAt: item.createdAt || new Date().toISOString(),
+                updatedAt: item.updatedAt || new Date().toISOString()
             }))
         };
     }
 
     async exportIndexJSON() {
+        // Cache invalidieren
+        this.invalidateCache();
+
         const stats = await this.getAllStats();
-        
+
         return {
-            version: '2.0.0',
+            version: '2.1.0',
             lastUpdated: new Date().toISOString(),
             categories: stats.categories.map(cat => ({
                 id: cat.id,
@@ -205,7 +244,7 @@ class CategoryManager {
     }
 
     // -------------------------------------------------------------------------
-    // Import von GitHub (pro Kategorie)
+    // Import von GitHub (pro Kategorie) - KORRIGIERT
     // -------------------------------------------------------------------------
 
     async importCategoryJSON(categoryId, data) {
@@ -213,15 +252,42 @@ class CategoryManager {
             throw new Error(`Category mismatch: expected ${categoryId}, got ${data.category}`);
         }
 
-        // Items in DB schreiben
+        // Items in DB schreiben (korrigierte Methode)
         for (const item of data.items) {
-            await this.db.update(item);
+            await this.saveItemToDB({
+                ...item,
+                category: categoryId
+            });
         }
 
         // Cache aktualisieren
         this.categoryData.set(categoryId, data.items);
-        
+
         console.log(`✅ Kategorie "${categoryId}" importiert: ${data.items.length} Artikel`);
+    }
+
+    // Korrigierte Methode: Item in IndexedDB speichern
+    async saveItemToDB(item) {
+        return new Promise((resolve, reject) => {
+            try {
+                const transaction = this.db.transaction(['items'], 'readwrite');
+                const store = transaction.objectStore('items');
+
+                const request = item.id ? store.put(item) : store.add(item);
+
+                request.onsuccess = () => {
+                    resolve(request.result);
+                };
+
+                request.onerror = () => {
+                    console.error('❌ saveItemToDB Fehler:', request.error);
+                    reject(request.error);
+                };
+            } catch (error) {
+                console.error('❌ saveItemToDB Exception:', error);
+                reject(error);
+            }
+        });
     }
 
     // -------------------------------------------------------------------------
@@ -234,6 +300,7 @@ class CategoryManager {
         } else {
             this.categoryData.clear();
         }
+        console.log(`🗑️ Cache invalidiert: ${categoryId || 'alle'}`);
     }
 
     async refreshCategory(categoryId) {

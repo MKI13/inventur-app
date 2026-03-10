@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="2.1.9">
-    <meta name="description" content="ef-sin Inventur v2.1.9 - Low Stock Modal">
-    <title>ef-sin Inventur v2.1.9</title>
+    <meta name="version" content="2.4.0">
+    <meta name="description" content="ef-sin Inventur v2.4.0 - Scanner + Artikel-Vorschau">
+    <title>ef-sin Inventur v2.4.0</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -478,6 +478,280 @@
         color: var(--text-secondary, #999);
         font-size: 12px;
     }
+
+    /* ========================================
+       SCANNER STYLES
+       ======================================== */
+
+    .scanner-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .scanner-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding: 0 4px;
+    }
+
+    .scanner-status {
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        background: var(--surface, #242424);
+        color: var(--text-secondary, #999);
+    }
+
+    .scanner-status.active {
+        background: #28a745;
+        color: white;
+    }
+
+    .scanner-status.error {
+        background: #dc3545;
+        color: white;
+    }
+
+    .scanner-preview {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4/3;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+
+    #scannerVideo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+    }
+
+    #scannerVideo.active {
+        display: block;
+    }
+
+    .scanner-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+    }
+
+    .scanner-frame {
+        width: 70%;
+        height: 40%;
+        border: 3px solid var(--primary, #ff6b00);
+        border-radius: 12px;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        animation: scanPulse 2s infinite;
+    }
+
+    @keyframes scanPulse {
+        0%, 100% { border-color: var(--primary, #ff6b00); }
+        50% { border-color: #ffaa00; }
+    }
+
+    .scanner-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .scanner-placeholder.hidden {
+        display: none;
+    }
+
+    .scanner-controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .scanner-btn {
+        flex: 1;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .scanner-manual {
+        background: var(--surface, #242424);
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    .scanner-history {
+        background: var(--surface, #242424);
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .scan-history-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        background: var(--card-bg, #1a1a1a);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .scan-history-item:hover {
+        background: var(--surface-elevated, #2a2a2a);
+    }
+
+    .scan-history-item-info {
+        flex: 1;
+    }
+
+    .scan-history-item-code {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-primary, #e0e0e0);
+    }
+
+    .scan-history-item-time {
+        font-size: 12px;
+        color: var(--text-secondary, #999);
+    }
+
+    .scan-history-item-status {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .scan-history-item-status.found {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .scan-history-item-status.not-found {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    /* ========================================
+       ARTIKEL VORSCHAU STYLES
+       ======================================== */
+
+    .preview-section {
+        margin-bottom: 16px;
+    }
+
+    .preview-photo {
+        width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        background: var(--surface, #242424);
+    }
+
+    .preview-title {
+        font-size: 22px;
+        font-weight: bold;
+        color: var(--text-primary, #e0e0e0);
+        margin-bottom: 4px;
+    }
+
+    .preview-category {
+        font-size: 14px;
+        color: var(--primary, #ff6b00);
+        margin-bottom: 16px;
+    }
+
+    .preview-stock-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 20px;
+        background: linear-gradient(135deg, var(--primary, #ff6b00), #ff8533);
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+
+    .preview-stock-value {
+        font-size: 42px;
+        font-weight: bold;
+        color: white;
+    }
+
+    .preview-stock-unit {
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .preview-stock-box.low-stock {
+        background: linear-gradient(135deg, #dc3545, #e85c6a);
+    }
+
+    .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .preview-item {
+        background: var(--surface, #242424);
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    .preview-item-label {
+        font-size: 11px;
+        color: var(--text-secondary, #999);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .preview-item-value {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary, #e0e0e0);
+    }
+
+    .preview-item.full-width {
+        grid-column: span 2;
+    }
+
+    .preview-dimensions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .preview-dimension-tag {
+        background: var(--primary, #ff6b00);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
     </style>
 </head>
 <body>
@@ -485,7 +759,7 @@
 <!-- ================= HEADER ================= -->
 <header class="app-header">
     <div class="header-left">
-        <h1>📦 ef-sin Inventur <span class="version">v2.1.9</span></h1>
+        <h1>📦 ef-sin Inventur <span class="version" id="appVersion">v2.4.0</span></h1>
     </div>
     <div class="header-right">
         <button id="themeToggle" class="btn-icon" title="Dark Mode">
@@ -571,10 +845,51 @@
 
 <!-- ================= SCANNER TAB ================= -->
 <div id="scanner" class="tab-content">
-    <div class="empty-state">
-        <div class="empty-state-icon">📷</div>
-        <div class="empty-state-text">Scanner-Funktion</div>
-        <p style="color: var(--text-secondary, #999);">Wird in der nächsten Version implementiert</p>
+    <!-- Scanner Controls -->
+    <div class="scanner-container">
+        <div class="scanner-header">
+            <h3 style="margin: 0; font-size: 18px;">📷 Barcode Scanner</h3>
+            <div class="scanner-status" id="scannerStatus">Bereit zum Scannen</div>
+        </div>
+
+        <!-- Kamera-Vorschau -->
+        <div class="scanner-preview" id="scannerPreview">
+            <video id="scannerVideo" autoplay playsinline muted></video>
+            <div class="scanner-overlay">
+                <div class="scanner-frame"></div>
+            </div>
+            <div class="scanner-placeholder" id="scannerPlaceholder">
+                <div style="font-size: 64px; margin-bottom: 16px;">📷</div>
+                <div>Tippe auf "Scanner starten"</div>
+            </div>
+        </div>
+
+        <!-- Scanner Buttons -->
+        <div class="scanner-controls">
+            <button class="btn-primary scanner-btn" id="startScannerBtn" onclick="startScanner()">
+                📷 Scanner starten
+            </button>
+            <button class="btn-secondary scanner-btn" id="stopScannerBtn" onclick="stopScanner()" style="display: none;">
+                ⏹️ Scanner stoppen
+            </button>
+        </div>
+
+        <!-- Manuelle Eingabe -->
+        <div class="scanner-manual">
+            <div style="font-weight: 600; margin-bottom: 8px;">Oder Barcode/SKU manuell eingeben:</div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="manualBarcodeInput" placeholder="Barcode oder SKU..." style="flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px;">
+                <button class="btn-primary" onclick="searchByBarcode(document.getElementById('manualBarcodeInput').value)">🔍 Suchen</button>
+            </div>
+        </div>
+
+        <!-- Letzte Scans -->
+        <div class="scanner-history" id="scannerHistory">
+            <div style="font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">📋 Letzte Scans</div>
+            <div id="scanHistoryList" style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="empty-state-text" style="text-align: center; padding: 20px;">Noch keine Scans</div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -612,18 +927,50 @@
         </div>
         <div class="modal-body">
             <input type="hidden" id="itemId">
+
+            <!-- VORLAGEN-AUSWAHL (aufklappbar, nur für neue Artikel) -->
+            <div id="templateGroup" style="margin-bottom: 16px;">
+                <button type="button" id="templateToggleBtn" onclick="toggleTemplates()"
+                    style="width: 100%; padding: 12px; background: var(--card-bg); border: 2px dashed var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px;">
+                    <span>📋 Vorlage verwenden (Schreinerei)</span>
+                    <span id="templateArrow">▼</span>
+                </button>
+                <div id="templateContent" style="display: none; margin-top: 8px; padding: 12px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div id="templateButtons" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <!-- Buttons werden dynamisch generiert -->
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label for="itemCategory">Kategorie *</label>
-                <select id="itemCategory" required></select>
+                <select id="itemCategory" required onchange="filterTemplatesByCategory(this.value)"></select>
             </div>
             <div class="form-group">
                 <label for="itemName">Name *</label>
                 <input type="text" id="itemName" required>
             </div>
             <div class="form-group">
-                <label for="itemSKU">SKU</label>
-                <input type="text" id="itemSKU">
+                <label for="itemSKU">SKU / Artikelnummer</label>
+                <input type="text" id="itemSKU" placeholder="z.B. BES-001">
             </div>
+
+            <!-- PLATTEN-MASSE (nur sichtbar bei Platten-Kategorie) -->
+            <div id="dimensionsGroup" class="form-row" style="display: none; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                <div class="form-group">
+                    <label for="itemLength">Länge (mm)</label>
+                    <input type="number" id="itemLength" placeholder="2800">
+                </div>
+                <div class="form-group">
+                    <label for="itemWidth">Breite (mm)</label>
+                    <input type="number" id="itemWidth" placeholder="2070">
+                </div>
+                <div class="form-group">
+                    <label for="itemThickness">Dicke (mm)</label>
+                    <input type="number" id="itemThickness" placeholder="19">
+                </div>
+            </div>
+
             <div class="form-row">
                 <div class="form-group">
                     <label for="itemStock">Bestand *</label>
@@ -638,6 +985,9 @@
                         <option>Liter</option>
                         <option>Paket</option>
                         <option>m²</option>
+                        <option>Platte</option>
+                        <option>Dose</option>
+                        <option>Tube</option>
                     </select>
                 </div>
             </div>
@@ -656,8 +1006,8 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="itemLocation">Standort</label>
-                <input type="text" id="itemLocation">
+                <label for="itemLocation">Standort / Lagerplatz</label>
+                <input type="text" id="itemLocation" placeholder="z.B. Regal 2, Fach 3">
             </div>
             <div class="form-group">
                 <label for="itemPhoto">Foto</label>
@@ -666,7 +1016,7 @@
             </div>
             <div class="form-group">
                 <label for="itemNotes">Notizen</label>
-                <textarea id="itemNotes" rows="3"></textarea>
+                <textarea id="itemNotes" rows="3" placeholder="Zusätzliche Informationen..."></textarea>
             </div>
         </div>
         <div class="modal-footer">
@@ -779,7 +1129,7 @@
 <div class="modal" id="githubSettingsModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>⚙️ GitHub Einstellungen</h2>
+            <h2>⚙️ GitHub Backup (inventur-v2)</h2>
             <button class="btn-close" onclick="closeGitHubSettingsModal()">×</button>
         </div>
         <div class="modal-body">
@@ -795,13 +1145,45 @@
             <div class="form-group">
                 <label for="ghRepo">📦 Backup Repository</label>
                 <input type="text" id="ghRepo" placeholder="inventur-v2">
-                <small>Struktur: categories/*.json + index.json</small>
+                <small>Verbunden mit: MKI13/inventur-v2</small>
+            </div>
+
+            <!-- Status-Anzeige -->
+            <div id="syncStatus" class="sync-status" style="display: none; padding: 12px; margin: 12px 0; border-radius: 8px; background: var(--card-bg);">
+                <span id="syncStatusText"></span>
+            </div>
+
+            <!-- Sync Bereich -->
+            <div style="margin-top: 20px; padding: 16px; background: var(--card-bg); border-radius: 12px; border: 2px solid #6f42c1;">
+                <h3 style="margin: 0 0 12px 0; font-size: 16px;">🔄 Jetzt Synchronisieren</h3>
+                <p style="margin: 0 0 16px 0; font-size: 13px; opacity: 0.8;">
+                    Bidirektionaler Sync: Lädt neue Daten von GitHub und lädt lokale Änderungen hoch.<br>
+                    <strong>Deine Daten werden NICHT gelöscht!</strong>
+                </p>
+                <button class="btn-primary" onclick="syncNowMultiFile()" style="width: 100%; background: #6f42c1; padding: 14px; font-size: 16px;">
+                    🔄 Jetzt Synchronisieren
+                </button>
+            </div>
+
+            <!-- 1:1 Backup Bereich -->
+            <div style="margin-top: 16px; padding: 16px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+                <h3 style="margin: 0 0 12px 0; font-size: 16px;">📦 Vollständiger Backup (1:1)</h3>
+                <p style="margin: 0 0 16px 0; font-size: 13px; opacity: 0.8;">
+                    Kompletter Export/Import - <strong>überschreibt</strong> alle Daten.
+                </p>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn-primary" onclick="fullExportToGitHub()" style="flex: 1; min-width: 140px; background: #2ea44f;">
+                        📤 Alles Exportieren
+                    </button>
+                    <button class="btn-primary" onclick="fullImportFromGitHub()" style="flex: 1; min-width: 140px; background: #0969da;">
+                        📥 Alles Importieren
+                    </button>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn-secondary" onclick="closeGitHubSettingsModal()">Abbrechen</button>
-            <button class="btn-primary" onclick="saveGitHubSettings()">💾 Speichern</button>
-            <button class="btn-primary" onclick="syncNowMultiFile()">🔄 Jetzt Synchronisieren</button>
+            <button class="btn-secondary" onclick="closeGitHubSettingsModal()">Schließen</button>
+            <button class="btn-primary" onclick="saveGitHubSettings()">💾 Einstellungen Speichern</button>
         </div>
     </div>
 </div>
@@ -826,8 +1208,84 @@
     </div>
 </div>
 
+<!-- Artikel Vorschau Modal (NEU) -->
+<div class="modal" id="itemPreviewModal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2 id="previewTitle">📦 Artikel Details</h2>
+            <button class="btn-close" onclick="closeItemPreview()">×</button>
+        </div>
+        <div class="modal-body" id="previewBody">
+            <!-- Wird dynamisch gefüllt -->
+        </div>
+        <div class="modal-footer" style="flex-wrap: wrap; gap: 8px;">
+            <button class="btn-secondary" onclick="closeItemPreview()" style="flex: 1; min-width: 100px;">
+                ❌ Schließen
+            </button>
+            <button class="btn-primary" id="previewAdjustBtn" onclick="adjustQuantityFromPreview()" style="flex: 1; min-width: 100px; background: #28a745;">
+                ±️ Menge anpassen
+            </button>
+            <button class="btn-primary" id="previewEditBtn" onclick="editFromPreview()" style="flex: 1; min-width: 100px;">
+                ✏️ Bearbeiten
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Mengen-Anpassen Modal (Schnell +/-) -->
+<div class="modal" id="adjustQuantityModal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h2>±️ Menge anpassen</h2>
+            <button class="btn-close" onclick="closeAdjustModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="adjustItemId">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 18px; font-weight: 600;" id="adjustItemName">Artikelname</div>
+                <div style="font-size: 14px; color: var(--text-secondary);" id="adjustItemLocation">Standort</div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                <button class="btn-primary" onclick="adjustBy(-10)" style="width: 50px; height: 50px; font-size: 20px; border-radius: 50%; background: #dc3545;">-10</button>
+                <button class="btn-primary" onclick="adjustBy(-1)" style="width: 60px; height: 60px; font-size: 24px; border-radius: 50%; background: #dc3545;">-</button>
+                <div style="text-align: center;">
+                    <div style="font-size: 36px; font-weight: bold; color: var(--primary-color);" id="adjustCurrentStock">0</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);" id="adjustUnit">Stück</div>
+                </div>
+                <button class="btn-primary" onclick="adjustBy(1)" style="width: 60px; height: 60px; font-size: 24px; border-radius: 50%; background: #28a745;">+</button>
+                <button class="btn-primary" onclick="adjustBy(10)" style="width: 50px; height: 50px; font-size: 20px; border-radius: 50%; background: #28a745;">+10</button>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="number" id="adjustCustomAmount" placeholder="Wert eingeben..." style="flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; text-align: center;">
+                <button class="btn-secondary" onclick="setCustomAmount()" style="padding: 12px 16px;">Setzen</button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeAdjustModal()">Abbrechen</button>
+            <button class="btn-primary" onclick="saveAdjustedQuantity()">💾 Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- Scanner Suchergebnis Modal -->
+<div class="modal" id="scanResultModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h2 id="scanResultTitle">🔍 Scan Ergebnis</h2>
+            <button class="btn-close" onclick="closeScanResult()">×</button>
+        </div>
+        <div class="modal-body" id="scanResultBody">
+            <!-- Wird dynamisch gefüllt -->
+        </div>
+        <div class="modal-footer" id="scanResultFooter">
+            <!-- Wird dynamisch gefüllt -->
+        </div>
+    </div>
+</div>
+
 <!-- Low Stock Items Modal -->
-<div class="modal" id="lowStockModal">
     <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
             <h2>⚠️ Artikel mit niedrigem Bestand</h2>
@@ -882,7 +1340,7 @@
 
 <!-- KATEGORIE-SYSTEM & APP-INTEGRATION -->
 <script>
-console.log('🚀 ef-sin Inventur v2.1.9 initializing...');
+console.log('🚀 ef-sin Inventur v2.4.0 initializing...');
 
 // =============================================================================
 // KATEGORIE-VERWALTUNG (localStorage-basiert)
@@ -934,37 +1392,39 @@ function saveCategories(categories) {
     updateStatistics();
 }
 
-// Zu Kategorie-Ansicht wechseln
-function switchToCategoryView(categoryName) {
-    console.log('🔄 Wechsle zu Kategorie:', categoryName);
-    
+// Zu Kategorie-Ansicht wechseln (unterstützt ID und Name)
+function switchToCategoryView(categoryId, categoryName) {
+    console.log('🔄 Wechsle zu Kategorie:', categoryId, categoryName);
+
     // Zum Bestand-Tab wechseln
     document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    
+
     const inventoryTab = document.querySelector('[data-tab="inventory"]');
     if (inventoryTab) {
         inventoryTab.classList.add('active');
     }
-    
+
     const inventoryContent = document.getElementById('inventory');
     if (inventoryContent) {
         inventoryContent.classList.add('active');
     }
-    
+
     // Kategorie-Tab aktivieren
     setTimeout(() => {
         const categoryTabs = document.querySelectorAll('.category-tab');
         categoryTabs.forEach(tab => {
             tab.classList.remove('active');
-            if (tab.dataset.category === categoryName) {
+            // Vergleiche mit ID
+            if (tab.dataset.category === categoryId) {
                 tab.classList.add('active');
             }
         });
-        
-        // App-Filter setzen
+
+        // App-Filter setzen (ID und Name für Kompatibilität)
         if (window.app) {
-            window.app.currentCategory = categoryName;
+            window.app.currentCategory = categoryId;
+            window.app.currentCategoryName = categoryName || categoryId;
             window.app.renderItems();
         }
     }, 100);
@@ -1143,22 +1603,27 @@ function updateDashboard() {
     
     // Kategorie-Karten rendern
     const categoryCardsContainer = document.getElementById('categoryCards');
-    
+
     if (categoryCardsContainer) {
         const categoryStats = categories.map(cat => {
-            const catItems = items.filter(item => item.category === cat.name);
+            // Robust: Filtert nach ID ODER Name (für Kompatibilität)
+            const catItems = items.filter(item =>
+                item.category === cat.id ||
+                item.category === cat.name ||
+                item.category?.toLowerCase() === cat.id?.toLowerCase()
+            );
             const count = catItems.length;
             const value = catItems.reduce((sum, item) => {
                 return sum + ((parseFloat(item.price) || 0) * (parseFloat(item.stock) || 0));
             }, 0);
             return { ...cat, count, value };
         });
-        
+
         if (categoryStats.length === 0) {
             categoryCardsContainer.innerHTML = '<div class="empty-state-text">Keine Kategorien vorhanden</div>';
         } else {
             categoryCardsContainer.innerHTML = categoryStats.map(cat => `
-                <div class="category-card" onclick="switchToCategoryView('${cat.name}')">
+                <div class="category-card" onclick="switchToCategoryView('${cat.id}', '${cat.name}')">
                     <div class="category-card-icon">${cat.icon}</div>
                     <div class="category-card-name">${cat.name}</div>
                     <div class="category-card-count">${cat.count}</div>
@@ -1171,18 +1636,27 @@ function updateDashboard() {
 
 function updateStatistics() {
     if (!window.app || !window.app.items) return;
-    
+
     const items = window.app.items;
     const categories = loadCategories();
-    
+
+    // Helper: Items nach Kategorie filtern (robust: ID oder Name)
+    function filterByCategory(cat) {
+        return items.filter(item =>
+            item.category === cat.id ||
+            item.category === cat.name ||
+            item.category?.toLowerCase() === cat.id?.toLowerCase()
+        );
+    }
+
     // Artikel pro Kategorie
     const categoryStats = categories.map(cat => {
-        const count = items.filter(item => item.category === cat.name).length;
+        const count = filterByCategory(cat).length;
         return { ...cat, count };
     }).filter(cat => cat.count > 0);
-    
+
     const maxCount = Math.max(...categoryStats.map(c => c.count), 1);
-    
+
     const chartContainer = document.getElementById('categoryChart');
     if (categoryStats.length === 0) {
         chartContainer.innerHTML = '<div class="empty-state-text">Keine Artikel vorhanden</div>';
@@ -1199,10 +1673,10 @@ function updateStatistics() {
             </div>
         `).join('');
     }
-    
+
     // Wertverteilung
     const valueStats = categories.map(cat => {
-        const catItems = items.filter(item => item.category === cat.name);
+        const catItems = filterByCategory(cat);
         const value = catItems.reduce((sum, item) => {
             return sum + ((parseFloat(item.price) || 0) * (parseFloat(item.stock) || 0));
         }, 0);
@@ -1668,7 +2142,762 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    console.log('✅ ef-sin Inventur v2.1.9 - Initialization complete!');
+    console.log('✅ ef-sin Inventur v2.4.0 - Initialization complete!');
+});
+
+// =============================================================================
+// VORLAGEN-SYSTEM FÜR SCHREINEREI-ARTIKEL
+// =============================================================================
+
+const ARTICLE_TEMPLATES = {
+    // BESCHLÄGE
+    scharnier: { category: 'beschlaege', name: 'Scharnier', unit: 'Stück', min: 10, notes: 'Typ: ' },
+    griff: { category: 'beschlaege', name: 'Möbelgriff', unit: 'Stück', min: 5, notes: 'Bohrmaß: ' },
+    schubladenfuehrung: { category: 'beschlaege', name: 'Schubladenführung', unit: 'Paar', min: 5, notes: 'Länge: ' },
+    schloss: { category: 'beschlaege', name: 'Möbelschloss', unit: 'Stück', min: 3 },
+    verbinder: { category: 'beschlaege', name: 'Möbelverbinder', unit: 'Stück', min: 20 },
+    winkel: { category: 'beschlaege', name: 'Winkel/Eckverbinder', unit: 'Stück', min: 20 },
+    puffer: { category: 'beschlaege', name: 'Anschlagpuffer', unit: 'Stück', min: 50 },
+    regal_traeger: { category: 'beschlaege', name: 'Regalträger', unit: 'Stück', min: 20 },
+
+    // PLATTEN
+    spanplatte: { category: 'platten', name: 'Spanplatte', unit: 'Platte', min: 2, showDimensions: true, notes: 'Dekor: ' },
+    mdf: { category: 'platten', name: 'MDF-Platte', unit: 'Platte', min: 2, showDimensions: true },
+    sperrholz: { category: 'platten', name: 'Sperrholz', unit: 'Platte', min: 2, showDimensions: true },
+    multiplex: { category: 'platten', name: 'Multiplex', unit: 'Platte', min: 2, showDimensions: true },
+    hpl: { category: 'platten', name: 'HPL/Schichtstoff', unit: 'Platte', min: 1, showDimensions: true },
+    arbeitsplatte: { category: 'platten', name: 'Arbeitsplatte', unit: 'Stück', min: 1, showDimensions: true, notes: 'Dekor: ' },
+
+    // HOLZ
+    leimholz: { category: 'holz', name: 'Leimholz', unit: 'Stück', min: 2, showDimensions: true, notes: 'Holzart: ' },
+    massivholz: { category: 'holz', name: 'Massivholz', unit: 'Stück', min: 1, showDimensions: true, notes: 'Holzart: ' },
+    kantholz: { category: 'holz', name: 'Kantholz', unit: 'Stück', min: 5, notes: 'Querschnitt: ' },
+    leiste: { category: 'holz', name: 'Leiste/Profil', unit: 'Meter', min: 10, notes: 'Profil: ' },
+
+    // SCHRAUBEN
+    holzschraube: { category: 'schrauben', name: 'Holzschraube', unit: 'Paket', min: 2, notes: 'Größe: ' },
+    spanplattenschraube: { category: 'schrauben', name: 'Spanplattenschraube', unit: 'Paket', min: 2, notes: 'Größe: ' },
+    duebel: { category: 'schrauben', name: 'Holzdübel', unit: 'Paket', min: 2, notes: 'Durchmesser: ' },
+    exzenter: { category: 'schrauben', name: 'Exzenterverbinder', unit: 'Paket', min: 1 },
+    rampa: { category: 'schrauben', name: 'Rampamuffe', unit: 'Paket', min: 1, notes: 'Gewinde: ' },
+
+    // LACKE
+    lack: { category: 'lacke', name: 'Holzlack', unit: 'Dose', min: 1, notes: 'Farbe/Glanz: ' },
+    oel: { category: 'lacke', name: 'Holzöl', unit: 'Dose', min: 1, notes: 'Typ: ' },
+    beize: { category: 'lacke', name: 'Holzbeize', unit: 'Dose', min: 1, notes: 'Farbton: ' },
+    grundierung: { category: 'lacke', name: 'Grundierung', unit: 'Dose', min: 1 },
+
+    // KLEBSTOFFE
+    holzleim: { category: 'sonstiges', name: 'Holzleim', unit: 'Flasche', min: 2, notes: 'Typ: D3/D4' },
+    montagekleber: { category: 'sonstiges', name: 'Montagekleber', unit: 'Tube', min: 2 },
+    kontaktkleber: { category: 'sonstiges', name: 'Kontaktkleber', unit: 'Dose', min: 1 },
+    pu_leim: { category: 'sonstiges', name: 'PU-Leim', unit: 'Flasche', min: 1 }
+};
+
+// Vorlagen aufklappen/zuklappen
+let templatesExpanded = false;
+
+function toggleTemplates() {
+    templatesExpanded = !templatesExpanded;
+    const content = document.getElementById('templateContent');
+    const arrow = document.getElementById('templateArrow');
+
+    if (templatesExpanded) {
+        content.style.display = 'block';
+        arrow.textContent = '▲';
+        renderTemplateButtons();
+    } else {
+        content.style.display = 'none';
+        arrow.textContent = '▼';
+    }
+}
+
+// Vorlagen-Buttons rendern (nach Kategorie gefiltert)
+function renderTemplateButtons(filterCategory = null) {
+    const container = document.getElementById('templateButtons');
+    if (!container) return;
+
+    // Kategorie-Gruppen definieren
+    const categoryGroups = {
+        'beschlaege': { icon: '🔩', name: 'Beschläge', templates: ['scharnier', 'griff', 'schubladenfuehrung', 'schloss', 'verbinder', 'winkel', 'puffer', 'regal_traeger'] },
+        'platten': { icon: '📋', name: 'Platten', templates: ['spanplatte', 'mdf', 'sperrholz', 'multiplex', 'hpl', 'arbeitsplatte'] },
+        'holz': { icon: '🪵', name: 'Holz', templates: ['leimholz', 'massivholz', 'kantholz', 'leiste'] },
+        'schrauben': { icon: '⚙️', name: 'Schrauben', templates: ['holzschraube', 'spanplattenschraube', 'duebel', 'exzenter', 'rampa'] },
+        'lacke': { icon: '🎨', name: 'Lacke/Öle', templates: ['lack', 'oel', 'beize', 'grundierung'] },
+        'sonstiges': { icon: '🧴', name: 'Klebstoffe', templates: ['holzleim', 'montagekleber', 'kontaktkleber', 'pu_leim'] }
+    };
+
+    let html = '';
+
+    // Wenn Kategorie ausgewählt, nur diese anzeigen
+    const categoriesToShow = filterCategory && categoryGroups[filterCategory]
+        ? [filterCategory]
+        : Object.keys(categoryGroups);
+
+    for (const catId of categoriesToShow) {
+        const group = categoryGroups[catId];
+        if (!group) continue;
+
+        html += `<div style="width: 100%; margin-bottom: 12px;">`;
+        html += `<div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: var(--text-color, inherit);">${group.icon} ${group.name}</div>`;
+        html += `<div style="display: flex; flex-wrap: wrap; gap: 6px;">`;
+
+        for (const templateId of group.templates) {
+            const template = ARTICLE_TEMPLATES[templateId];
+            if (template) {
+                html += `<button type="button" onclick="applyTemplate('${templateId}'); toggleTemplates();"
+                    class="template-btn"
+                    style="padding: 6px 12px; background: var(--primary-color, #e65100); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; transition: opacity 0.2s;">
+                    ${template.name}
+                </button>`;
+            }
+        }
+
+        html += `</div></div>`;
+    }
+
+    if (html === '') {
+        html = '<div style="color: #666; font-size: 13px;">Keine Vorlagen für diese Kategorie</div>';
+    }
+
+    container.innerHTML = html;
+}
+
+// Vorlagen nach Kategorie filtern
+function filterTemplatesByCategory(categoryId) {
+    if (templatesExpanded) {
+        renderTemplateButtons(categoryId);
+    }
+
+    // Platten-Maße ein/ausblenden
+    const dimensionsGroup = document.getElementById('dimensionsGroup');
+    if (dimensionsGroup) {
+        const catId = categoryId.toLowerCase();
+        if (catId === 'platten' || catId === 'holz' || catId.includes('platte') || catId.includes('holz')) {
+            dimensionsGroup.style.display = 'flex';
+        } else {
+            dimensionsGroup.style.display = 'none';
+        }
+    }
+}
+
+// =============================================================================
+// BARCODE SCANNER FUNKTIONEN
+// =============================================================================
+
+let scannerStream = null;
+let barcodeDetector = null;
+let scannerInterval = null;
+let scanHistory = [];
+
+// Scanner starten
+async function startScanner() {
+    const video = document.getElementById('scannerVideo');
+    const placeholder = document.getElementById('scannerPlaceholder');
+    const startBtn = document.getElementById('startScannerBtn');
+    const stopBtn = document.getElementById('stopScannerBtn');
+    const status = document.getElementById('scannerStatus');
+
+    try {
+        // Prüfe BarcodeDetector API Unterstützung
+        if ('BarcodeDetector' in window) {
+            const formats = await BarcodeDetector.getSupportedFormats();
+            console.log('📷 Unterstützte Formate:', formats);
+            barcodeDetector = new BarcodeDetector({ formats: formats });
+        } else {
+            console.warn('⚠️ BarcodeDetector API nicht unterstützt - Manuelle Eingabe verfügbar');
+            status.textContent = 'Browser unterstützt keinen Scanner';
+            status.classList.add('error');
+            alert('Dein Browser unterstützt leider keinen Barcode-Scanner.\n\nBitte nutze die manuelle Eingabe oder einen anderen Browser (Chrome, Edge).');
+            return;
+        }
+
+        // Kamera anfordern
+        status.textContent = 'Kamera wird gestartet...';
+        scannerStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'environment', // Rückkamera bevorzugen
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        });
+
+        video.srcObject = scannerStream;
+        video.classList.add('active');
+        placeholder.classList.add('hidden');
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'block';
+        status.textContent = 'Scanner aktiv - Barcode ins Feld halten';
+        status.classList.add('active');
+
+        // Barcode-Erkennung starten
+        scannerInterval = setInterval(async () => {
+            if (barcodeDetector && video.readyState === video.HAVE_ENOUGH_DATA) {
+                try {
+                    const barcodes = await barcodeDetector.detect(video);
+                    if (barcodes.length > 0) {
+                        const code = barcodes[0].rawValue;
+                        console.log('✅ Barcode erkannt:', code);
+
+                        // Vibration Feedback
+                        if (navigator.vibrate) {
+                            navigator.vibrate(100);
+                        }
+
+                        // Scanner stoppen und Ergebnis verarbeiten
+                        stopScanner();
+                        processScannedCode(code);
+                    }
+                } catch (error) {
+                    // Ignoriere Fehler bei der Erkennung
+                }
+            }
+        }, 200);
+
+    } catch (error) {
+        console.error('❌ Scanner Fehler:', error);
+        status.textContent = 'Kamera-Zugriff verweigert';
+        status.classList.add('error');
+        alert('Kamera-Zugriff wurde verweigert.\n\nBitte erlaube den Kamera-Zugriff in den Browser-Einstellungen.');
+    }
+}
+
+// Scanner stoppen
+function stopScanner() {
+    const video = document.getElementById('scannerVideo');
+    const placeholder = document.getElementById('scannerPlaceholder');
+    const startBtn = document.getElementById('startScannerBtn');
+    const stopBtn = document.getElementById('stopScannerBtn');
+    const status = document.getElementById('scannerStatus');
+
+    // Interval stoppen
+    if (scannerInterval) {
+        clearInterval(scannerInterval);
+        scannerInterval = null;
+    }
+
+    // Kamera-Stream stoppen
+    if (scannerStream) {
+        scannerStream.getTracks().forEach(track => track.stop());
+        scannerStream = null;
+    }
+
+    // UI zurücksetzen
+    video.srcObject = null;
+    video.classList.remove('active');
+    placeholder.classList.remove('hidden');
+    startBtn.style.display = 'block';
+    stopBtn.style.display = 'none';
+    status.textContent = 'Bereit zum Scannen';
+    status.classList.remove('active', 'error');
+}
+
+// Gescannten Code verarbeiten
+function processScannedCode(code) {
+    if (!code || code.trim() === '') return;
+
+    console.log('🔍 Verarbeite Code:', code);
+
+    // Zur History hinzufügen
+    addToScanHistory(code);
+
+    // Artikel suchen
+    searchByBarcode(code);
+}
+
+// Artikel per Barcode/SKU suchen
+function searchByBarcode(code) {
+    if (!code || code.trim() === '') {
+        alert('Bitte einen Barcode oder SKU eingeben!');
+        return;
+    }
+
+    code = code.trim();
+    console.log('🔍 Suche nach:', code);
+
+    const items = window.app ? window.app.items : [];
+
+    // Suche nach SKU oder im Namen
+    const foundItems = items.filter(item => {
+        const sku = (item.sku || '').toLowerCase();
+        const name = (item.name || '').toLowerCase();
+        const searchCode = code.toLowerCase();
+
+        return sku === searchCode ||
+               sku.includes(searchCode) ||
+               name.includes(searchCode);
+    });
+
+    if (foundItems.length === 0) {
+        // Nicht gefunden - Optionen anzeigen
+        showScanResultNotFound(code);
+        updateScanHistoryStatus(code, 'not-found');
+    } else if (foundItems.length === 1) {
+        // Genau ein Treffer - direkt Vorschau anzeigen
+        updateScanHistoryStatus(code, 'found');
+        showItemPreview(foundItems[0].id);
+    } else {
+        // Mehrere Treffer - Auswahl anzeigen
+        updateScanHistoryStatus(code, 'found');
+        showMultipleResults(code, foundItems);
+    }
+
+    // Input leeren
+    const input = document.getElementById('manualBarcodeInput');
+    if (input) input.value = '';
+}
+
+// Scan-Ergebnis: Nicht gefunden
+function showScanResultNotFound(code) {
+    const modal = document.getElementById('scanResultModal');
+    const title = document.getElementById('scanResultTitle');
+    const body = document.getElementById('scanResultBody');
+    const footer = document.getElementById('scanResultFooter');
+
+    title.textContent = '❓ Artikel nicht gefunden';
+
+    body.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+            <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Kein Artikel gefunden</div>
+            <div style="color: var(--text-secondary); margin-bottom: 20px;">
+                Für: <strong style="color: var(--primary);">${escapeHtml(code)}</strong>
+            </div>
+            <div style="font-size: 14px; color: var(--text-secondary);">
+                Möchtest du einen neuen Artikel mit diesem Code anlegen?
+            </div>
+        </div>
+    `;
+
+    footer.innerHTML = `
+        <button class="btn-secondary" onclick="closeScanResult()">Abbrechen</button>
+        <button class="btn-primary" onclick="createNewFromScan('${escapeHtml(code)}')" style="background: #28a745;">
+            ➕ Neuen Artikel anlegen
+        </button>
+    `;
+
+    modal.classList.add('active');
+}
+
+// Mehrere Ergebnisse anzeigen
+function showMultipleResults(code, items) {
+    const modal = document.getElementById('scanResultModal');
+    const title = document.getElementById('scanResultTitle');
+    const body = document.getElementById('scanResultBody');
+    const footer = document.getElementById('scanResultFooter');
+
+    title.textContent = `🔍 ${items.length} Treffer gefunden`;
+
+    body.innerHTML = `
+        <div style="margin-bottom: 12px; color: var(--text-secondary);">
+            Suche: <strong>${escapeHtml(code)}</strong>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto;">
+            ${items.map(item => `
+                <div class="scan-history-item" onclick="closeScanResult(); showItemPreview(${item.id});">
+                    <div class="scan-history-item-info">
+                        <div class="scan-history-item-code">${item.name}</div>
+                        <div class="scan-history-item-time">${item.category} • ${item.location || 'Kein Standort'}</div>
+                    </div>
+                    <div style="font-weight: bold; color: var(--primary);">${item.stock} ${item.unit || 'Stk'}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    footer.innerHTML = `
+        <button class="btn-secondary" onclick="closeScanResult()">Schließen</button>
+    `;
+
+    modal.classList.add('active');
+}
+
+// Neuen Artikel aus Scan anlegen
+function createNewFromScan(code) {
+    closeScanResult();
+
+    // Item Modal öffnen und SKU vorausfüllen
+    if (window.app) {
+        window.app.clearForm();
+        document.getElementById('itemSKU').value = code;
+        window.app.openModal('itemModal');
+    }
+}
+
+function closeScanResult() {
+    document.getElementById('scanResultModal').classList.remove('active');
+}
+
+// Scan-History verwalten
+function addToScanHistory(code) {
+    const now = new Date();
+    scanHistory.unshift({
+        code: code,
+        time: now,
+        status: 'pending'
+    });
+
+    // Max 10 Einträge behalten
+    if (scanHistory.length > 10) {
+        scanHistory = scanHistory.slice(0, 10);
+    }
+
+    renderScanHistory();
+}
+
+function updateScanHistoryStatus(code, status) {
+    const entry = scanHistory.find(h => h.code === code && h.status === 'pending');
+    if (entry) {
+        entry.status = status;
+        renderScanHistory();
+    }
+}
+
+function renderScanHistory() {
+    const container = document.getElementById('scanHistoryList');
+    if (!container) return;
+
+    if (scanHistory.length === 0) {
+        container.innerHTML = '<div class="empty-state-text" style="text-align: center; padding: 20px;">Noch keine Scans</div>';
+        return;
+    }
+
+    container.innerHTML = scanHistory.map(entry => {
+        const timeStr = entry.time.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        const statusClass = entry.status === 'found' ? 'found' : entry.status === 'not-found' ? 'not-found' : '';
+        const statusText = entry.status === 'found' ? '✓ Gefunden' : entry.status === 'not-found' ? '✗ Neu' : '...';
+
+        return `
+            <div class="scan-history-item" onclick="searchByBarcode('${escapeHtml(entry.code)}')">
+                <div class="scan-history-item-info">
+                    <div class="scan-history-item-code">${escapeHtml(entry.code)}</div>
+                    <div class="scan-history-item-time">${timeStr}</div>
+                </div>
+                <div class="scan-history-item-status ${statusClass}">${statusText}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// =============================================================================
+// ARTIKEL VORSCHAU FUNKTIONEN
+// =============================================================================
+
+let currentPreviewItem = null;
+
+function showItemPreview(itemId) {
+    const items = window.app ? window.app.items : [];
+    const item = items.find(i => i.id === itemId);
+
+    if (!item) {
+        console.error('Artikel nicht gefunden:', itemId);
+        return;
+    }
+
+    currentPreviewItem = item;
+    console.log('📋 Zeige Vorschau für:', item.name);
+
+    const modal = document.getElementById('itemPreviewModal');
+    const body = document.getElementById('previewBody');
+
+    // Prüfen ob niedriger Bestand
+    const isLowStock = item.min && parseInt(item.stock) <= parseInt(item.min);
+
+    // Kategorie-Info laden
+    const categories = loadCategories();
+    const category = categories.find(c => c.id === item.category || c.name === item.category);
+    const categoryDisplay = category ? `${category.icon} ${category.name}` : item.category;
+
+    // HTML generieren
+    let html = '';
+
+    // Foto (wenn vorhanden)
+    if (item.photo) {
+        html += `<img src="${item.photo}" alt="${item.name}" class="preview-photo">`;
+    }
+
+    // Titel & Kategorie
+    html += `
+        <div class="preview-title">${escapeHtml(item.name)}</div>
+        <div class="preview-category">${categoryDisplay}</div>
+    `;
+
+    // Bestand-Box
+    html += `
+        <div class="preview-stock-box ${isLowStock ? 'low-stock' : ''}">
+            <div class="preview-stock-value">${item.stock}</div>
+            <div class="preview-stock-unit">${item.unit || 'Stück'}</div>
+        </div>
+    `;
+
+    // Warnung bei niedrigem Bestand
+    if (isLowStock) {
+        html += `
+            <div style="background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: center;">
+                ⚠️ Niedriger Bestand! Min: ${item.min} ${item.unit || 'Stk'}
+            </div>
+        `;
+    }
+
+    // Details Grid
+    html += '<div class="preview-grid">';
+
+    // Standort
+    if (item.location) {
+        html += `
+            <div class="preview-item full-width">
+                <div class="preview-item-label">📍 Standort</div>
+                <div class="preview-item-value">${escapeHtml(item.location)}</div>
+            </div>
+        `;
+    }
+
+    // SKU
+    if (item.sku) {
+        html += `
+            <div class="preview-item">
+                <div class="preview-item-label">📋 SKU</div>
+                <div class="preview-item-value">${escapeHtml(item.sku)}</div>
+            </div>
+        `;
+    }
+
+    // Preis
+    if (item.price) {
+        const totalValue = (parseFloat(item.price) * parseFloat(item.stock)).toFixed(2);
+        html += `
+            <div class="preview-item">
+                <div class="preview-item-label">💰 Preis/Stk</div>
+                <div class="preview-item-value">${item.price} €</div>
+            </div>
+            <div class="preview-item">
+                <div class="preview-item-label">💶 Gesamtwert</div>
+                <div class="preview-item-value">${totalValue} €</div>
+            </div>
+        `;
+    }
+
+    // Min/Max
+    if (item.min || item.max) {
+        html += `
+            <div class="preview-item">
+                <div class="preview-item-label">📊 Min/Max</div>
+                <div class="preview-item-value">${item.min || '-'} / ${item.max || '-'}</div>
+            </div>
+        `;
+    }
+
+    // Platten-Maße
+    if (item.length || item.width || item.thickness) {
+        html += `
+            <div class="preview-item full-width">
+                <div class="preview-item-label">📐 Maße</div>
+                <div class="preview-dimensions">
+                    ${item.length ? `<span class="preview-dimension-tag">L: ${item.length}mm</span>` : ''}
+                    ${item.width ? `<span class="preview-dimension-tag">B: ${item.width}mm</span>` : ''}
+                    ${item.thickness ? `<span class="preview-dimension-tag">D: ${item.thickness}mm</span>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // Notizen
+    if (item.notes) {
+        html += `
+            <div class="preview-item full-width">
+                <div class="preview-item-label">📝 Notizen</div>
+                <div class="preview-item-value">${escapeHtml(item.notes)}</div>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+
+    // Letzte Aktualisierung
+    if (item.updatedAt) {
+        const date = new Date(item.updatedAt);
+        const dateStr = date.toLocaleDateString('de-DE') + ' ' + date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        html += `
+            <div style="text-align: center; margin-top: 16px; font-size: 12px; color: var(--text-secondary);">
+                Zuletzt aktualisiert: ${dateStr}
+            </div>
+        `;
+    }
+
+    body.innerHTML = html;
+    modal.classList.add('active');
+}
+
+function closeItemPreview() {
+    document.getElementById('itemPreviewModal').classList.remove('active');
+    currentPreviewItem = null;
+}
+
+function editFromPreview() {
+    if (!currentPreviewItem) return;
+
+    closeItemPreview();
+
+    if (window.app && window.app.editItem) {
+        window.app.editItem(currentPreviewItem.id);
+    }
+}
+
+// =============================================================================
+// MENGEN ANPASSEN FUNKTIONEN
+// =============================================================================
+
+let adjustOriginalStock = 0;
+
+function adjustQuantityFromPreview() {
+    if (!currentPreviewItem) return;
+
+    const item = currentPreviewItem;
+    adjustOriginalStock = parseFloat(item.stock) || 0;
+
+    document.getElementById('adjustItemId').value = item.id;
+    document.getElementById('adjustItemName').textContent = item.name;
+    document.getElementById('adjustItemLocation').textContent = item.location || 'Kein Standort';
+    document.getElementById('adjustCurrentStock').textContent = item.stock;
+    document.getElementById('adjustUnit').textContent = item.unit || 'Stück';
+    document.getElementById('adjustCustomAmount').value = '';
+
+    closeItemPreview();
+    document.getElementById('adjustQuantityModal').classList.add('active');
+}
+
+function adjustBy(amount) {
+    const display = document.getElementById('adjustCurrentStock');
+    let current = parseFloat(display.textContent) || 0;
+    current += amount;
+    if (current < 0) current = 0;
+    display.textContent = current;
+}
+
+function setCustomAmount() {
+    const input = document.getElementById('adjustCustomAmount');
+    const value = parseFloat(input.value);
+
+    if (isNaN(value) || value < 0) {
+        alert('Bitte eine gültige Zahl eingeben!');
+        return;
+    }
+
+    document.getElementById('adjustCurrentStock').textContent = value;
+    input.value = '';
+}
+
+async function saveAdjustedQuantity() {
+    const itemId = parseInt(document.getElementById('adjustItemId').value);
+    const newStock = parseFloat(document.getElementById('adjustCurrentStock').textContent);
+
+    if (!window.app || !window.app.items) return;
+
+    const item = window.app.items.find(i => i.id === itemId);
+    if (!item) {
+        alert('Artikel nicht gefunden!');
+        return;
+    }
+
+    // Bestand aktualisieren
+    item.stock = newStock;
+    item.updatedAt = new Date().toISOString();
+
+    // In DB speichern
+    try {
+        const transaction = window.app.db.transaction(['items'], 'readwrite');
+        const store = transaction.objectStore('items');
+        await new Promise((resolve, reject) => {
+            const request = store.put(item);
+            request.onsuccess = resolve;
+            request.onerror = reject;
+        });
+
+        console.log('✅ Menge angepasst:', item.name, newStock);
+
+        // UI aktualisieren
+        await window.app.loadItems();
+        window.app.renderItems();
+
+        closeAdjustModal();
+        alert(`✅ Menge aktualisiert!\n\n${item.name}: ${newStock} ${item.unit || 'Stk'}`);
+
+    } catch (error) {
+        console.error('Fehler beim Speichern:', error);
+        alert('Fehler beim Speichern!');
+    }
+}
+
+function closeAdjustModal() {
+    document.getElementById('adjustQuantityModal').classList.remove('active');
+}
+
+// HTML Escape Helper
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function applyTemplate(templateId) {
+    if (!templateId) {
+        document.getElementById('dimensionsGroup').style.display = 'none';
+        return;
+    }
+
+    const template = ARTICLE_TEMPLATES[templateId];
+    if (!template) return;
+
+    console.log('📋 Vorlage anwenden:', templateId, template);
+
+    // Kategorie setzen
+    const categorySelect = document.getElementById('itemCategory');
+    if (categorySelect && template.category) {
+        categorySelect.value = template.category;
+        filterTemplatesByCategory(template.category);
+    }
+
+    // Felder ausfüllen
+    if (template.name) document.getElementById('itemName').value = template.name;
+    if (template.unit) document.getElementById('itemUnit').value = template.unit;
+    if (template.min) document.getElementById('itemMin').value = template.min;
+    if (template.notes) document.getElementById('itemNotes').value = template.notes;
+
+    // Platten-Maße anzeigen wenn nötig
+    if (template.showDimensions) {
+        document.getElementById('dimensionsGroup').style.display = 'flex';
+    }
+}
+
+// Bei Modal-Öffnung: Vorlagen-Bereich initialisieren
+document.addEventListener('DOMContentLoaded', function() {
+    // Verstecke/Zeige Vorlagen-Bereich je nach Modus
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.target.classList.contains('active')) {
+                const itemId = document.getElementById('itemId').value;
+                const templateGroup = document.getElementById('templateGroup');
+                const templateContent = document.getElementById('templateContent');
+
+                if (templateGroup) {
+                    // Bei neuem Artikel anzeigen, bei Bearbeitung verstecken
+                    templateGroup.style.display = itemId ? 'none' : 'block';
+                }
+                if (templateContent) {
+                    templateContent.style.display = 'none';
+                    templatesExpanded = false;
+                    const arrow = document.getElementById('templateArrow');
+                    if (arrow) arrow.textContent = '▼';
+                }
+            }
+        });
+    });
+
+    const itemModal = document.getElementById('itemModal');
+    if (itemModal) {
+        observer.observe(itemModal, { attributes: true, attributeFilter: ['class'] });
+    }
 });
 </script>
 
@@ -1698,20 +2927,22 @@ window.addEventListener('load', function() {
                 tabsContainer.innerHTML = `
                     <button class="category-tab active" data-category="Alle">Alle</button>
                     ${categories.map(cat => `
-                        <button class="category-tab" data-category="${cat.name}">
+                        <button class="category-tab" data-category="${cat.id}" data-name="${cat.name}">
                             ${cat.icon} ${cat.name}
                         </button>
                     `).join('')}
                 `;
-                
+
                 // Event-Listener für Tabs
                 tabsContainer.querySelectorAll('.category-tab').forEach(tab => {
                     tab.addEventListener('click', function() {
-                        tabsContainer.querySelectorAll('.category-tab').forEach(t => 
+                        tabsContainer.querySelectorAll('.category-tab').forEach(t =>
                             t.classList.remove('active')
                         );
                         this.classList.add('active');
+                        // Speichere sowohl ID als auch Name für Filterung
                         window.app.currentCategory = this.dataset.category;
+                        window.app.currentCategoryName = this.dataset.name;
                         window.app.renderItems();
                     });
                 });
@@ -1722,14 +2953,14 @@ window.addEventListener('load', function() {
             const quickCategorySelect = document.getElementById('quickCategory');
             
             if (categorySelect) {
-                categorySelect.innerHTML = categories.map(cat => 
-                    `<option value="${cat.name}">${cat.icon} ${cat.name}</option>`
+                categorySelect.innerHTML = categories.map(cat =>
+                    `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`
                 ).join('');
             }
-            
+
             if (quickCategorySelect) {
-                quickCategorySelect.innerHTML = categories.map(cat => 
-                    `<option value="${cat.name}">${cat.icon} ${cat.name}</option>`
+                quickCategorySelect.innerHTML = categories.map(cat =>
+                    `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`
                 ).join('');
             }
             

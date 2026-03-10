@@ -1,12 +1,14 @@
 // ============================================================================
 // ef-sin INVENTUR APP - CORE JAVASCRIPT
-// Version: 2.1.6 - Mit Dashboard/Statistik Integration
+// Version: 2.4.0 - Scanner + Artikel-Vorschau
 // ============================================================================
+
+const APP_VERSION = '2.4.0';
 
 (function() {
     'use strict';
-    
-    console.log('📦 app.js v2.2.0 loading...');
+
+    console.log(`📦 app.js v${APP_VERSION} loading...`);
     
     // ========================================================================
     // DATENBANK (IndexedDB)
@@ -137,12 +139,21 @@
         renderItems() {
             const container = document.getElementById('itemsContainer');
             if (!container) return;
-            
-            // Filter nach Kategorie
-            let filtered = this.currentCategory === 'Alle' 
-                ? this.items 
-                : this.items.filter(item => item.category === this.currentCategory);
-            
+
+            // Filter nach Kategorie (ID oder Name für Kompatibilität)
+            let filtered;
+            if (this.currentCategory === 'Alle') {
+                filtered = this.items;
+            } else {
+                const catId = this.currentCategory;
+                const catName = this.currentCategoryName || this.currentCategory;
+                filtered = this.items.filter(item =>
+                    item.category === catId ||
+                    item.category === catName ||
+                    item.category?.toLowerCase() === catId?.toLowerCase()
+                );
+            }
+
             // Sortieren nach updatedAt
             filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
             
@@ -165,12 +176,13 @@
         },
         
         renderItemCard(item) {
-            const stockClass = item.min && parseInt(item.stock) <= parseInt(item.min) 
-                ? 'low-stock' 
+            const stockClass = item.min && parseInt(item.stock) <= parseInt(item.min)
+                ? 'low-stock'
                 : '';
-            
+
+            // Klick zeigt jetzt Vorschau statt direktes Bearbeiten
             return `
-                <div class="item-card ${stockClass}" onclick="app.editItem(${item.id})">
+                <div class="item-card ${stockClass}" onclick="showItemPreview(${item.id})">
                     ${item.photo ? `<img src="${item.photo}" alt="${item.name}" style="max-width: 100px; border-radius: 8px;">` : ''}
                     <div class="item-info">
                         <div class="item-name">${item.name}</div>
@@ -181,7 +193,7 @@
                     </div>
                     <div class="item-actions">
                         <div class="item-stock">${item.stock} ${item.unit || 'Stk'}</div>
-                        <button class="btn-icon" onclick="event.stopPropagation(); app.deleteItem(${item.id})">
+                        <button class="btn-icon" onclick="event.stopPropagation(); app.deleteItem(${item.id})" title="Löschen">
                             🗑️
                         </button>
                     </div>
@@ -206,12 +218,20 @@
             const location = document.getElementById('itemLocation').value;
             const notes = document.getElementById('itemNotes').value;
             const photoInput = document.getElementById('itemPhoto');
-            
+
+            // Platten-Maße (optional)
+            const lengthEl = document.getElementById('itemLength');
+            const widthEl = document.getElementById('itemWidth');
+            const thicknessEl = document.getElementById('itemThickness');
+            const length = lengthEl ? lengthEl.value : '';
+            const width = widthEl ? widthEl.value : '';
+            const thickness = thicknessEl ? thicknessEl.value : '';
+
             if (!name || !stock) {
                 alert('Bitte Name und Bestand ausfüllen!');
                 return;
             }
-            
+
             const item = {
                 category,
                 name,
@@ -223,6 +243,10 @@
                 price: price ? parseFloat(price) : null,
                 location,
                 notes,
+                // Platten-Maße (nur wenn ausgefüllt)
+                length: length ? parseInt(length) : null,
+                width: width ? parseInt(width) : null,
+                thickness: thickness ? parseInt(thickness) : null,
                 updatedAt: new Date().toISOString()
             };
             
@@ -284,7 +308,7 @@
         editItem(id) {
             const item = this.items.find(i => i.id === id);
             if (!item) return;
-            
+
             document.getElementById('itemId').value = item.id;
             document.getElementById('itemCategory').value = item.category;
             document.getElementById('itemName').value = item.name;
@@ -296,12 +320,31 @@
             document.getElementById('itemPrice').value = item.price || '';
             document.getElementById('itemLocation').value = item.location || '';
             document.getElementById('itemNotes').value = item.notes || '';
-            
+
+            // Platten-Maße laden
+            const lengthEl = document.getElementById('itemLength');
+            const widthEl = document.getElementById('itemWidth');
+            const thicknessEl = document.getElementById('itemThickness');
+            const dimensionsGroup = document.getElementById('dimensionsGroup');
+
+            if (lengthEl) lengthEl.value = item.length || '';
+            if (widthEl) widthEl.value = item.width || '';
+            if (thicknessEl) thicknessEl.value = item.thickness || '';
+
+            // Zeige Platten-Maße wenn vorhanden
+            if (dimensionsGroup && (item.length || item.width || item.thickness)) {
+                dimensionsGroup.style.display = 'flex';
+            }
+
+            // Vorlage-Bereich verstecken beim Bearbeiten
+            const templateGroup = document.getElementById('templateGroup');
+            if (templateGroup) templateGroup.style.display = 'none';
+
             if (item.photo) {
                 const preview = document.getElementById('photoPreview');
                 preview.innerHTML = `<img src="${item.photo}" style="max-width: 200px; border-radius: 8px;">`;
             }
-            
+
             this.openModal('itemModal');
         },
         
@@ -413,18 +456,48 @@ async function syncNowMultiFile() {
         alert('⚠️ Multi-File Sync nicht initialisiert!');
         return;
     }
-    
+
+    // Einstellungen speichern
+    saveGitHubSettings();
+
     if (!window.multiFileSync.isConfigured()) {
         alert('⚠️ Bitte erst GitHub Token eingeben!');
         return;
     }
-    
+
+    updateSyncStatus('🔄 Synchronisierung läuft... Bitte warten.', 'info');
+
     try {
-        const result = await window.multiFileSync.smartSync();
-        alert(`✅ Backup erfolgreich!\n\nKategorien: ${result.categories?.length || 0}\nDauer: ${result.duration}ms`);
-        closeGitHubSettingsModal();
+        // MERGE SYNC verwenden - bidirektional ohne Datenverlust
+        const result = await window.multiFileSync.mergeSync();
+
+        if (result.status === 'success') {
+            const stats = result.stats;
+            updateSyncStatus(
+                `✅ Sync erfolgreich! ↑${stats.localToGitHub} ↓${stats.gitHubToLocal} (${result.duration}ms)`,
+                'success'
+            );
+
+            alert(
+                `✅ SYNCHRONISIERUNG ERFOLGREICH!\n\n` +
+                `📤 Zu GitHub hochgeladen: ${stats.localToGitHub} Artikel\n` +
+                `📥 Von GitHub geladen: ${stats.gitHubToLocal} Artikel\n` +
+                `📸 Bilder: ${stats.images.uploaded}↑ ${stats.images.downloaded}↓\n` +
+                `⏱️ Dauer: ${result.duration}ms\n\n` +
+                `Repository: ${window.multiFileSync.owner}/${window.multiFileSync.repo}`
+            );
+
+            // Seite neu laden wenn Daten von GitHub geladen wurden
+            if (stats.gitHubToLocal > 0) {
+                setTimeout(() => window.location.reload(), 1000);
+            }
+        } else {
+            updateSyncStatus(`❌ Sync fehlgeschlagen: ${result.error}`, 'error');
+            alert(`❌ Sync fehlgeschlagen:\n${result.error}`);
+        }
     } catch (error) {
-        alert(`❌ Backup fehlgeschlagen:\n${error.message}`);
+        updateSyncStatus(`❌ Fehler: ${error.message}`, 'error');
+        alert(`❌ Sync Fehler:\n${error.message}`);
     }
 }
 
@@ -506,4 +579,121 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => setTimeout(initMultiFileSync, 500));
 } else {
     setTimeout(initMultiFileSync, 500);
+}
+
+// ============================================================================
+// 1:1 FULL EXPORT / IMPORT FUNKTIONEN
+// ============================================================================
+
+function updateSyncStatus(message, type = 'info') {
+    const statusDiv = document.getElementById('syncStatus');
+    const statusText = document.getElementById('syncStatusText');
+    if (statusDiv && statusText) {
+        statusDiv.style.display = 'block';
+        statusText.textContent = message;
+        statusDiv.style.background = type === 'success' ? '#d4edda' :
+                                     type === 'error' ? '#f8d7da' :
+                                     type === 'warning' ? '#fff3cd' : 'var(--card-bg)';
+        statusDiv.style.color = type === 'success' ? '#155724' :
+                                type === 'error' ? '#721c24' :
+                                type === 'warning' ? '#856404' : 'inherit';
+    }
+}
+
+async function fullExportToGitHub() {
+    if (!window.multiFileSync) {
+        alert('⚠️ Sync nicht initialisiert! Bitte Seite neu laden.');
+        return;
+    }
+
+    // Einstellungen speichern
+    saveGitHubSettings();
+
+    if (!window.multiFileSync.isConfigured()) {
+        alert('⚠️ Bitte erst GitHub Token eingeben!');
+        return;
+    }
+
+    if (!confirm('📤 EXPORT: Alle lokalen Daten zu GitHub hochladen?\n\nDies überschreibt die Daten im Repository inventur-v2!')) {
+        return;
+    }
+
+    updateSyncStatus('📤 Export läuft... Bitte warten.', 'info');
+
+    try {
+        const result = await window.multiFileSync.fullExport();
+
+        if (result.status === 'success') {
+            updateSyncStatus(
+                `✅ Export erfolgreich! ${result.categories.length} Kategorien, ${result.totalItems} Artikel, ${result.totalImages} Bilder (${result.duration}ms)`,
+                'success'
+            );
+
+            alert(
+                `✅ EXPORT ERFOLGREICH!\n\n` +
+                `📁 Kategorien: ${result.categories.length}\n` +
+                `📦 Artikel: ${result.totalItems}\n` +
+                `📸 Bilder: ${result.totalImages}\n` +
+                `⏱️ Dauer: ${result.duration}ms\n\n` +
+                `Ziel: ${window.multiFileSync.owner}/${window.multiFileSync.repo}`
+            );
+        } else {
+            updateSyncStatus(`❌ Export fehlgeschlagen: ${result.error}`, 'error');
+            alert(`❌ Export fehlgeschlagen:\n${result.error}`);
+        }
+    } catch (error) {
+        updateSyncStatus(`❌ Fehler: ${error.message}`, 'error');
+        alert(`❌ Export Fehler:\n${error.message}`);
+    }
+}
+
+async function fullImportFromGitHub() {
+    if (!window.multiFileSync) {
+        alert('⚠️ Sync nicht initialisiert! Bitte Seite neu laden.');
+        return;
+    }
+
+    // Einstellungen speichern
+    saveGitHubSettings();
+
+    if (!window.multiFileSync.isConfigured()) {
+        alert('⚠️ Bitte erst GitHub Token eingeben!');
+        return;
+    }
+
+    if (!confirm('📥 IMPORT: Alle Daten von GitHub herunterladen?\n\n⚠️ ACHTUNG: Dies überschreibt alle lokalen Daten!')) {
+        return;
+    }
+
+    updateSyncStatus('📥 Import läuft... Bitte warten.', 'info');
+
+    try {
+        const result = await window.multiFileSync.fullImport();
+
+        if (result.status === 'success') {
+            updateSyncStatus(
+                `✅ Import erfolgreich! ${result.categories.length} Kategorien, ${result.totalItems} Artikel, ${result.totalImages} Bilder`,
+                'success'
+            );
+
+            alert(
+                `✅ IMPORT ERFOLGREICH!\n\n` +
+                `📁 Kategorien: ${result.categories.length}\n` +
+                `📦 Artikel: ${result.totalItems}\n` +
+                `📸 Bilder: ${result.totalImages}\n` +
+                `⏱️ Dauer: ${result.duration}ms\n\n` +
+                `Quelle: ${window.multiFileSync.owner}/${window.multiFileSync.repo}\n\n` +
+                `Die Seite wird neu geladen...`
+            );
+
+            // Seite neu laden um alle Daten anzuzeigen
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            updateSyncStatus(`❌ Import fehlgeschlagen: ${result.error}`, 'error');
+            alert(`❌ Import fehlgeschlagen:\n${result.error}`);
+        }
+    } catch (error) {
+        updateSyncStatus(`❌ Fehler: ${error.message}`, 'error');
+        alert(`❌ Import Fehler:\n${error.message}`);
+    }
 }
